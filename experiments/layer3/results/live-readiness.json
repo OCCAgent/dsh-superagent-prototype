@@ -1,0 +1,119 @@
+{
+  "generated_at": "2026-11-04T00:23:21+08:00",
+  "read_only": true,
+  "state_db": "~/.dsh/state/superagent/orchestrator.sqlite",
+  "ticket_id": "962cf90238fc83565949bdc83d47f63f",
+  "ticket_created_at": "2026-11-03T15:32:14.194Z",
+  "human_interventions_on_ticket_thread": {
+    "count": 2,
+    "decision": [
+      {
+        "trigger_id": "9a34f34128b4b8ecee9018b1ad8032ce",
+        "at": "2026-11-03T15:31:53.123Z",
+        "classification": "decision: the request itself"
+      },
+      {
+        "trigger_id": "28f2860b2c42bf74593d0a4952d3b8ed",
+        "at": "2026-11-03T15:44:53.643Z",
+        "classification": "decision: sets the readiness gate"
+      }
+    ],
+    "corrective": []
+  },
+  "token_cost": {
+    "cap_total_tokens_per_work_unit": 26100000,
+    "worker_usage": {
+      "input_tokens": 163022,
+      "output_tokens": 91832,
+      "cache_read_tokens": 23589888,
+      "total_tokens": 23844742,
+      "messages": 144
+    },
+    "share_of_cap": 0.9136,
+    "within_cap": true
+  },
+  "criteria": {
+    "C1_intake_under_60s": {
+      "met": true,
+      "seconds": 21.071,
+      "trigger_id": "9a34f34128b4b8ecee9018b1ad8032ce",
+      "decision_id": "280973add0bfb8657f59689e1dd6dc08",
+      "accepted_at": "2026-11-03T15:32:14.194Z",
+      "ticket_created_at": "2026-11-03T15:32:14.194Z",
+      "assignment_started_at": "2026-11-03T16:03:44.019Z",
+      "execution_start_seconds": 1910.896,
+      "execution_start_note": "the Ticket and its pending Assignment were created at once; the worker launch waited for the only worker slot, then held by the open four-feature ticket"
+    },
+    "C2_worker_deepseek_flash_and_pr": {
+      "met": true,
+      "worker_models": {
+        "deepseek-flash": 435
+      },
+      "worker_messages": 144,
+      "directory": true,
+      "pr_checks": "the ticket branch opens a PR; the run report cites the PR number"
+    },
+    "C3_pr_link_in_feishu": {
+      "met": true,
+      "sent_messages_with_pr_link": 15,
+      "examples": [
+        {
+          "outbox_id": "79a069c3f068e1fe706c7fde35ab2beb",
+          "kind": "reply",
+          "ticket_id": "8f6f1d62f6dce6e742e9d37cf0421ae9",
+          "pr_url": "https://github.com/OCCAgent/dsh-superagent-prototype/pull/8",
+          "at": null
+        },
+        {
+          "outbox_id": "3f477db9574906bc7793d96cda0100b3",
+          "kind": "notice",
+          "ticket_id": "8f6f1d62f6dce6e742e9d37cf0421ae9",
+          "pr_url": "https://github.com/OCCAgent/dsh-superagent-prototype/pull/8",
+          "at": null
+        },
+        {
+          "outbox_id": "61941c6f41ac09afbca82e6c5e945f6a",
+          "kind": "reply",
+          "ticket_id": "1f3243b472331f5d393a19506b297116",
+          "pr_url": "https://github.com/OCCAgent/dsh-superagent-prototype/pull/9",
+          "at": null
+        }
+      ]
+    },
+    "C4_followup_attaches": {
+      "met": true,
+      "configured_scope": "one listened Feishu chat; the same-thread follow-up form",
+      "followups": [
+        {
+          "trigger_id": "28f2860b2c42bf74593d0a4952d3b8ed",
+          "at": "2026-11-03T15:44:53.643Z",
+          "mentioned": true,
+          "evaluated": false,
+          "fanned_out_to_ticket": true,
+          "attached_as_input": true,
+          "new_ticket_created": false
+        }
+      ],
+      "unlinked_cross_channel": {
+        "met": false,
+        "blocked_by": "C4/architecture",
+        "reason": "Correlation adds context but never routes; an unlinked channel has no attach path."
+      }
+    },
+    "C5_restart_keeps_state": {
+      "met": true,
+      "recovered_tickets": [
+        {
+          "ticket_id": "58c2af537f9fb977ed0d49ff8eda10de",
+          "assignments": 4,
+          "recovery_note": true,
+          "directory_preserved": true,
+          "ended": "stopped"
+        }
+      ],
+      "mid_work_restart": "covered by the four-feature persistence baseline and ticket 58c2af53; this ticket did not restart the live service"
+    }
+  },
+  "gate_met_as_written": true,
+  "gate_met_strict_c4": false
+}
