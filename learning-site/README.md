@@ -2,7 +2,7 @@
 
 阶段 2 的静态学习站：5 个页面加本 README，按「概念 → 进化 → 费曼拆解 → 测试日志」的路线阅读两篇论文。
 
-**当前进度：WU-1 站点骨架、WU-2 首页正文、WU-3 概念页、WU-4 进化页、WU-5 费曼拆解。** 费曼页已补齐 2×2 地图、两篇论文对照表与 10 道自测题；测试日志页由 WU-6 完成。
+**当前进度：WU-1 ~ WU-6 全部完成。** 五个页面正文与测试日志已补齐，站内导航、视觉 token、自检脚本与本地打开说明均已就位。
 
 ## 页面
 
@@ -12,7 +12,7 @@
 | 概念(A论文) | [concept.html](concept.html) | 四特征、五模块、架构示意与设计动机 |
 | 进化(B论文) | [evolution.html](evolution.html) | Self-Harness 三步闭环、held-in/held-out 规则与术语表 |
 | 费曼拆解 | [feynman.html](feynman.html) | 2×2 地图、两篇论文对照表、10 道苏格拉底式自测题 |
-| 测试日志 | [test-log.html](test-log.html) | 阶段 0 / 阶段 2 的执行记录与 WU 验收 |
+| 测试日志 | [test-log.html](test-log.html) | 阶段 0 六项判据、阶段 2 六个 WU、第一层采纳记录与继续测试说明 |
 
 统一导航：首页｜概念(A论文)｜进化(B论文)｜费曼拆解｜测试日志。
 
@@ -49,6 +49,9 @@ learning-site/
 ├── README.md
 ├── shot.py           # 自检：结构检查 + 无头 Chrome 截图
 ├── evidence/         # PR 用的 Before/After 截图
+├── SuperAgent阶段2-实测发现与学习素材.md
+├── SuperAgent三层四阶段测试-完整案例分析.md
+├── SuperAgent三层四阶段测试方案.md
 └── SuperAgent三层四阶段测试-阶段0执行报告.md
 ```
 
@@ -62,9 +65,19 @@ python3 learning-site/shot.py
 
 `shot.py` 会检查每个页面的文件、`title`、viewport、内联样式、统一导航、相对链接与 TODO 标记，并用无头 Chrome 在 1280×800 下截取每页。报告写入 `learning-site/.shot/report.md` 与 `report.json`，截图写入 `learning-site/.shot/shots/`；有 error 或 blocker 时返回非零退出码。
 
+## 如何继续测试
+
+1. **新增或修改页面**后运行 `python3 learning-site/shot.py`，必须 0 error / blocker；报告与 1280×800 截图写入 `learning-site/.shot/`。
+2. **推进一个 WU**：一个单元一个分支 / PR，PR 附同视口的 Before/After；同时更新 `test-log.html` 的进度表与本 README 的 WU 表。
+3. **保持规格**：五个页面统一导航、内联 CSS、无外部字体/脚本/图片，`file://` 直接可开；不引入构建步骤。
+4. **进入下一层**：阶段 2 的四特征矩阵（测试方案 4.3，每特征 2 个场景）全部通过后，才进入阶段 3。
+5. **阶段 1 数据**：Harness 基线的实测与采纳/未采纳记录见 [test-log.html](test-log.html)「第一层 · Harness 自改进实测」；本轮未单独跑脚本实验，零代码级采纳已按方案 E1-6 记录原因。
+
 ## 内容来源
 
 - 阶段 0 执行报告：[SuperAgent三层四阶段测试-阶段0执行报告.md](SuperAgent三层四阶段测试-阶段0执行报告.md)
+- 阶段 2 实测发现：[SuperAgent阶段2-实测发现与学习素材.md](SuperAgent阶段2-实测发现与学习素材.md)
+- 完整案例分析与测试方案：[SuperAgent三层四阶段测试-完整案例分析.md](SuperAgent三层四阶段测试-完整案例分析.md)、[SuperAgent三层四阶段测试方案.md](SuperAgent三层四阶段测试方案.md)
 - 费曼拆解底稿：《一个管“组织”，一个管“进化”》（阶段 1 交付物）
 - 论文：*Exploring Super-agent Design: Towards a More Autonomous Agent System*（A）；*Self-Harness: Harnesses That Improve Themselves*（B）
 
@@ -77,6 +90,6 @@ python3 learning-site/shot.py
 | WU-3 | 概念页：四特征、五模块、架构示意 | 完成 |
 | WU-4 | 进化页：三步闭环、held-in/held-out 规则、术语表 | 完成 |
 | WU-5 | 费曼拆解页：2×2 对比表、10 道自测题 | 完成 |
-| WU-6 | 测试日志页 + README 本地打开与继续测试说明 | 待下发 |
+| WU-6 | 测试日志页 + README 本地打开与继续测试说明 | 完成 |
 
 每个单元独立成一个 PR；未下发的单元不提前开工。
