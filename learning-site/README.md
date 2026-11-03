@@ -2,13 +2,13 @@
 
 阶段 2 的静态学习站：5 个页面加本 README，按「概念 → 进化 → 费曼拆解 → 测试日志」的路线阅读两篇论文。
 
-**当前进度：WU-1 站点骨架。** 版式、导航与视觉 token 已就位，正文由后续逐条下发的 WU 逐页填充。
+**当前进度：WU-1 站点骨架、WU-2 首页正文。** 首页已补齐一句话定义、三层测试导航与项目背景；其余页面正文由后续逐条下发的 WU 填充。
 
 ## 页面
 
 | 页面 | 文件 | 内容 |
 | --- | --- | --- |
-| 首页 | [index.html](index.html) | 全站入口与阅读路线 |
+| 首页 | [index.html](index.html) | 全站入口、Super-agent 一句话定义、三层测试导航与项目背景 |
 | 概念(A论文) | [concept.html](concept.html) | *Exploring Super-agent Design* 的章节地图 |
 | 进化(B论文) | [evolution.html](evolution.html) | *Self-Harness* 的三步闭环与证据 |
 | 费曼拆解 | [feynman.html](feynman.html) | 费曼学习法与苏格拉底式问答的拆解路线 |
@@ -73,6 +73,7 @@ python3 learning-site/shot.py
 | 单元 | 范围 | 状态 |
 | --- | --- | --- |
 | WU-1 | 站点骨架：5 页 + README + 统一导航 + 视觉 token | 完成 |
-| WU-2 ~ WU-6 | 按逐条下发的单元消息推进 | 待下发 |
+| WU-2 | 首页正文：一句话定义、三层测试导航卡片、项目背景 | 完成 |
+| WU-3 ~ WU-6 | 按逐条下发的单元消息推进 | 待下发 |
 
 每个单元独立成一个 PR；未下发的单元不提前开工。
