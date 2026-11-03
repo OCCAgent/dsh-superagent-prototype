@@ -245,6 +245,7 @@ th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowr
           </table>
         </div>
         <p class="note"><b>架构层归因（连续 C4）：</b>实现只用三种结构关系建立归属——发起 Thread、工单跟随的 PR Thread、同一 Trigger 同属多个 Thread。Correlation 只补上下文、不路由；attach 要求消息显式指向工单。因此 C4“无显式引用的跨渠道追加”不是模型偶然失败，而是当前架构没有这条路径。按第三层入口判据，“群聊追加要求关联到现有 Ticket”这一条当前不满足，先不应启动第三层端到端测试。</p>
+        <p class="note"><b>连续深挖：</b>Ticket 才是持久实体。PR 合并、工单结束后，人在 PR 评论追加要求可恢复同一工单（Mandate 不变）；删掉 worker Session 后重启，Ticket/目录/progress 报告保留、Session 重建；两个工单的跟进 0 串任务。边界：CI 不能唤醒结束工单；群 B 更新只有在 router 显式 attach 时才进入群 A 工单，跨群/跨端自动归属不存在。七层分析见仓库 <code>experiments/four-features/continuity-deep-dive.md</code>。</p>
         <p class="section-lede"><b>Token 成本（与延迟同等重要）：</b>learning-site 6 个 WU 共 52,284,551 total tokens，其中 cache read 51,922,304（99.3%），约 8.71M / WU。第三层暂定 cap = 3 × 基线 ≈ 26.1M total tokens / 工作单元；未收敛即超预算时转人工复核，不自动重试。</p>
         <p class="pending"><b>数据说明：</b>机制基线是可复现的 Runtime 级实验（fake DSH host、脚本化 Router/worker 步骤），只验证协调机制；真实运行数据为单部署、小样本观测，不足以宣称正式 p50/p95。完整用例、指标、token 表与现场协议见仓库 <code>experiments/four-features/README.md</code>。</p>
       </section>

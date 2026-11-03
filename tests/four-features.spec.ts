@@ -11,7 +11,7 @@
 import { afterAll, afterEach, describe, expect, it } from 'vitest'
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { branchCiTrigger, commentTrigger } from '../src/sources/github-trigger.ts'
+import { branchCiTrigger, ciTrigger, commentTrigger } from '../src/sources/github-trigger.ts'
 import { CHAT, feishu, startRuntime, type Host } from './fixtures/host.ts'
 import { waitUntil } from './fixtures/async.ts'
 import type { Trigger } from '../src/core/index.ts'
@@ -123,6 +123,97 @@ describe('four features', () => {
     expect(unlinkedDelivered).toBe(false)
     expect(card?.tickets_total).toBe(0)
     expect((accepted.ticket as { ticket_id: string }).ticket_id).not.toBe(ticket.id)
+  })
+
+  it('continuity deep: post-completion resume, Session loss, multiple tasks and explicit attach', async () => {
+    host = await startRuntime()
+    const configured = settingsOf(host)
+    host.runtime.store.saveSettings({ ...configured, executor: { ...configured.executor, maxWorkers: 10 },
+      sources: { ...configured.sources, feishu: { enabled: true,
+        config: { ...configured.sources.feishu!.config, chats: [{ chatId: CHAT, listen: 'all' }, { chatId: 'oc_team2', listen: 'all' }] } } } })
+
+    // C5: a person's comment on the ticket PR after it merged resumes the same Ticket, across apps and after completion.
+    const one = await host.acceptedTicket(feishu('1', '@bot 改设置页按钮'))
+    host.runtime.engine.bindThread(one.ticket.id, { source: 'github', id: '42' }, true)
+    host.runtime.engine.threadClosed({ source: 'github', id: '42' }, 'merged', new Date().toISOString())
+    expect(host.runtime.store.tickets.get(one.ticket.id)!.ended).toMatchObject({ outcome: 'merged' })
+    const ticketCount = host.runtime.store.tickets.list().length
+    const afterMerge = commentTrigger({ id: 7002, body: '再补一行说明', user: { login: 'alice' },
+      html_url: 'https://github.com/acme/widgets/pull/42#issuecomment-7002', created_at: '2026-09-09T00:20:00Z' },
+    { number: 42, isPr: true, url: 'https://github.com/acme/widgets/pull/42' }, 'conversation', 'agent-bot')
+    await receive(host, afterMerge)
+    const resumed = host.runtime.store.tickets.get(one.ticket.id)!
+    const resumedOk = resumed.ended === undefined && resumed.inputs.some(input => input.kind === 'trigger' && input.triggerId === afterMerge.id)
+      && host.runtime.store.tickets.list().length === ticketCount && resumed.mandate.policyVersion === one.ticket.mandate.policyVersion
+    expect(resumedOk).toBe(true)
+
+    // C5b: CI on the same PR after its Ticket ended does not resume it; only people wake an ended Ticket.
+    const two = await host.acceptedTicket(feishu('5', '@bot 另一个任务'))
+    host.runtime.engine.bindThread(two.ticket.id, { source: 'github', id: '43' }, true)
+    host.runtime.engine.threadClosed({ source: 'github', id: '43' }, 'merged', new Date().toISOString())
+    const botTrigger = ciTrigger({ number: 43, html_url: 'https://github.com/acme/widgets/pull/43', user: { login: 'alice' } }, 1, 'CI failed 1/1 on PR #43 at abc: lint')
+    await receive(host, botTrigger)
+    const afterBot = host.runtime.store.tickets.get(two.ticket.id)!
+    const botNoResume = afterBot.ended !== undefined && !afterBot.inputs.some(input => input.kind === 'trigger' && input.triggerId === botTrigger.id)
+    expect(botNoResume).toBe(true)
+
+    // C7: two live Tasks keep separate continuation streams; one Task's follow-up never enters the other.
+    const three = await host.acceptedTicket(feishu('7', '@bot 任务三'))
+    const four = await host.acceptedTicket(feishu('8', '@bot 任务四'))
+    const followThree = feishu('9', '任务三的补充', { mentions: [], root_id: 'om_7' })
+    const followFour = feishu('10', '任务四的补充', { mentions: [], root_id: 'om_8' })
+    await receive(host, followThree)
+    await receive(host, followFour)
+    const threeAfter = host.runtime.store.tickets.get(three.ticket.id)!
+    const fourAfter = host.runtime.store.tickets.get(four.ticket.id)!
+    const threeIds = threeAfter.inputs.filter(input => input.kind === 'trigger').map(input => input.triggerId)
+    const fourIds = fourAfter.inputs.filter(input => input.kind === 'trigger').map(input => input.triggerId)
+    const crossTaskLeaks = (threeIds.includes(followFour.id) ? 1 : 0) + (fourIds.includes(followThree.id) ? 1 : 0)
+    expect(threeIds).toContain(followThree.id)
+    expect(fourIds).toContain(followFour.id)
+    expect(crossTaskLeaks).toBe(0)
+
+    // C8: when the router supplies the relation, a chat B update can attach to a chat A Ticket; the gap is resolution, not storage.
+    const five = await host.acceptedTicket(feishu('11', '@bot 任务五'))
+    const external = feishu('12', '@bot 任务五也改一下文案', { chat_id: 'oc_team2' })
+    await receive(host, external)
+    const countBeforeAttach = host.runtime.store.tickets.list().length
+    await host.route({ kind: 'attach', ticket_id: five.ticket.id, trigger_id: external.id })
+    const fiveAfter = host.runtime.store.tickets.get(five.ticket.id)!
+    const attachedOk = fiveAfter.inputs.some(input => input.kind === 'trigger' && input.triggerId === external.id)
+      && host.runtime.store.tickets.list().length === countBeforeAttach
+    expect(attachedOk).toBe(true)
+
+    // C6: lose the worker Session entirely, then restart: Ticket, directory and stored report survive; the Session is recreated.
+    const six = await host.acceptedTicket(feishu('13', '@bot 任务六'))
+    const sixDirectory = six.ticket.execution!.directory
+    await host.runTool(six.sessionId, 'orchestrator_report', { state: 'progress', summary: 'halfway through task six' })
+    await host.runtime.stop()
+    host.agents.delete(six.sessionId)
+    const next = await host.restartHost()
+    await next.idle()
+    const sixRecovered = next.store.tickets.get(six.ticket.id)!
+    const freshSession = host.agents.has(six.sessionId)
+    const storedReport = sixRecovered.assignments[0]?.report?.state === 'progress'
+    const directoryKept = existsSync(sixRecovered.execution!.directory) && sixRecovered.execution!.directory === sixDirectory
+    const card = await host.runTool(six.sessionId, 'orchestrator_read', { resource: `ticket/${six.ticket.id}` })
+    const storedReadable = JSON.stringify(card).includes(six.ticket.id)
+    expect(freshSession).toBe(true)
+    expect(storedReport).toBe(true)
+    expect(directoryKept).toBe(true)
+    expect(storedReadable).toBe(true)
+
+    results.continuity = { ...results.continuity, deep: {
+      held_as_entity: resumedOk && botNoResume && crossTaskLeaks === 0 && attachedOk && freshSession && storedReport && directoryKept && storedReadable,
+      cases: [
+        { id: 'C5', kind: 'post-completion cross-app', resumed: resumedOk ? 1 : 0, new_ticket: 0, mandate_preserved: resumedOk ? 1 : 0 },
+        { id: 'C5b', kind: 'bot after end', resumed: botNoResume ? 0 : 1, pass: botNoResume },
+        { id: 'C6', kind: 'fresh Session', session_recreated: freshSession ? 1 : 0, ticket_preserved: 1, directory_preserved: directoryKept ? 1 : 0, stored_report_preserved: storedReport ? 1 : 0 },
+        { id: 'C7', kind: 'multiple Tasks', cross_task_leaks: crossTaskLeaks },
+        { id: 'C8', kind: 'explicit attach from chat B', attached: attachedOk ? 1 : 0, new_ticket: 0 },
+      ],
+      analysis: 'The Ticket is the durable entity: it survives Session loss, completion and later human messages on its Threads. Automatic cross-application/entity resolution is absent: chat B only attaches when the router supplies the relation, and CI cannot wake an ended Ticket.',
+    } }
   })
 
   it('productivity: typical burst and perturbed steering while every worker slot is busy', async () => {

@@ -9,7 +9,7 @@
 | 主动 Proactivity | 成立 | 有规则授权的 CI 失败在无 @ 下建单；中性讨论 0 误触发；CI 成功等扰动事件 0 建单 |
 | 持久 Persistence | 成立 | worker 执行中断、Router 已派工未回收两种中断均可从持久状态恢复；0 人工步骤、0 重复工单 |
 
-> 这是**第二层**（架构承诺）验证，不复制外部 p50/p95 数字，也不替代第三层端到端复合场景。下面分别给出可复现的机制基线和真实运行观测基线。
+> 这是**第二层**（架构承诺）验证，不复制外部 p50/p95 数字，也不替代第三层端到端复合场景。下面分别给出可复现的机制基线和真实运行观测基线。连续性的进一步拆解见 [continuity-deep-dive.md](continuity-deep-dive.md)。
 
 ---
 
@@ -60,6 +60,8 @@ pnpm vitest run tests/four-features.spec.ts
 
 ### 4.1 连续 Continuity
 
+> 深挖：跨会话、跨应用、完成后续接、多任务隔离与显式 attach 的七层分析见 [continuity-deep-dive.md](continuity-deep-dive.md)。
+
 | 用例 | 类型 | 构造 | 期望 | 实测 |
 | --- | --- | --- | --- | --- |
 | C1 | 典型 | 工单已开 PR #42；需求追加在 PR 评论，不引用原飞书消息 | 归到同一工单，不新建 | ✅ 1/1，0 新决策、0 新工单 |
@@ -70,6 +72,8 @@ pnpm vitest run tests/four-features.spec.ts
 同一基础环境：两个飞书群 + 一个 GitHub 仓库，只改变用例输入，不重建系统。
 
 **架构层归因**：实现只用三种结构关系建立归属——发起 Thread、工单跟随的 PR Thread、同一 Trigger 同属多个 Thread（Correlation）。`docs/001-domain.md` 明确“Correlation 只补上下文，从不路由”，`docs/002-authorization.md` 要求主 Session 只在消息**显式指向**工单时 attach。因此 C4 不是模型偶然失败，而是当前架构没有“无显式引用的跨渠道归属”这条路径；要让 C4 成立，需要新增“按语义匹配并 attach”的机制，或要求来源提供可关联的业务键（如 issue/PR 编号）。
+
+**连续性深挖（C5–C8）**：PR 合并、Ticket ended 后，人在 PR 评论追加要求 → 同一 Ticket 恢复（Mandate 不变，0 新工单）；契约相同的 CI 事件不恢复 ended Ticket；完全删除 worker Session 后重启，Ticket/目录/progress 报告保留、Session 重建；两个 Ticket 的跟进 0 串任务；群 B 更新在 router 显式 attach 时才进入群 A 工单。结论：**Ticket 是持久实体，但跨 Thread/跨应用/跨端的自动实体解析不存在**。完整分析见 [continuity-deep-dive.md](continuity-deep-dive.md)。
 
 ### 4.2 高效 Productivity
 
@@ -144,7 +148,7 @@ pnpm vitest run tests/four-features.spec.ts
 | 未 @ 消息新建工单 | 0 | 中性场景误触发率 0.0 |
 | 真实跨渠道追加 | 0 | 本部署未出现“另一渠道追加到既有工单”的人工事件，C1/C4 仍以机制基线为准 |
 
-本工单自身提供了一个**真实同 Thread 连续**样本：初始 trigger `d9d762d6…` 建单后，追加消息 `10d4b1e6…` 在 2 分钟内进入同一工单，未新建、未要求人工转述。
+本工单自身提供了一个**真实同 Thread 连续**样本：初始 trigger `d9d762d6…` 建单后，追加消息 `10d4b1e6…` 在 2 分钟内进入同一工单，未新建、未要求人工转述。PR #9 打开后，reviewer 在 GitHub PR 评论提出连续性深挖要求，该评论经 PR Thread 订阅进入同一工单并由本 worker 继续处理——真实跨应用续接。
 
 ### 5.4 持久观测记录
 
@@ -169,7 +173,7 @@ pnpm vitest run tests/four-features.spec.ts
 | 飞书 @ → Router 1 分钟内建 Ticket 并开始执行 | 观测通过 | 本工单 trigger 15:21:24 → Ticket 15:21:34（10 s）；实际 Ticket/Assignment 时间见状态库 |
 | Worker 在 Ticket 目录完成代码修改并创建 PR | 观测通过 | learning-site 工单 `8f6f1d62…` 的 6 个 WU 各开 PR #3–#8 |
 | PR 创建后飞书群收到含 PR 链接的消息 | 观测通过 | outbox `reply sent` 记录（PR #3–#8 的交付消息） |
-| 群聊追加要求关联到现有 Ticket，而非新建 | **不满足** | 连续 C4：无显式引用的另一群追加，`related_tickets=0`，接受后新建工单 |
+| 群聊追加要求关联到现有 Ticket，而非新建 | **不满足** | 连续 C4：无显式引用的另一群追加，`related_tickets=0`，接受后新建工单；显式 attach 可以做到（C8），但不是自动 |
 | Worker 重启后 Ticket 状态与代码变更不丢 | 机制与观测通过 | D1/D2 目录/Session 保留；真实工单 `58c2af53…` 有 recovery note |
 
 **结论：第三层不应在连续 C4 修复前启动**；其余入口判据已有机制或观测证据。修复方向是给“无显式引用的跨渠道更新”增加可关联业务键（如 issue/PR 编号）或按语义 attach 的显式路径，而不是放宽本层判据。

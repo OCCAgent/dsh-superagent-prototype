@@ -49,7 +49,45 @@
     "new_tickets_from_linked_followups": 0,
     "human_clarifications": 0,
     "failure_layer": "architecture",
-    "failure_reason": "The only structural links are the originating thread, a ticket PR thread and a trigger shared by several threads; Correlation adds context but never routes, so an unlinked channel yields a separate candidate carrying 0 related tickets. Attaching it would need an explicit pointer or the router attaching by meaning, which the assessment prompt does not ask for."
+    "failure_reason": "The only structural links are the originating thread, a ticket PR thread and a trigger shared by several threads; Correlation adds context but never routes, so an unlinked channel yields a separate candidate carrying 0 related tickets. Attaching it would need an explicit pointer or the router attaching by meaning, which the assessment prompt does not ask for.",
+    "deep": {
+      "held_as_entity": true,
+      "cases": [
+        {
+          "id": "C5",
+          "kind": "post-completion cross-app",
+          "resumed": 1,
+          "new_ticket": 0,
+          "mandate_preserved": 1
+        },
+        {
+          "id": "C5b",
+          "kind": "bot after end",
+          "resumed": 0,
+          "pass": true
+        },
+        {
+          "id": "C6",
+          "kind": "fresh Session",
+          "session_recreated": 1,
+          "ticket_preserved": 1,
+          "directory_preserved": 1,
+          "stored_report_preserved": 1
+        },
+        {
+          "id": "C7",
+          "kind": "multiple Tasks",
+          "cross_task_leaks": 0
+        },
+        {
+          "id": "C8",
+          "kind": "explicit attach from chat B",
+          "attached": 1,
+          "new_ticket": 0
+        }
+      ],
+      "analysis": "The Ticket is the durable entity: it survives Session loss, completion and later human messages on its Threads. Automatic cross-application/entity resolution is absent: chat B only attaches when the router supplies the relation, and CI cannot wake an ended Ticket."
+    }
   },
   "productivity": {
     "held": true,
