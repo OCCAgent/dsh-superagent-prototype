@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>进化(B论文) · Super-agent 学习站</title>
+  <meta name="description" content="Super-agent 学习站：概念、进化、费曼拆解与测试日志。">
+  <style>
+:root{
+  --brand:#B8734A; --brand-dark:#8F5232; --gold:#D4A017; --ink:#3A2A1A;
+  --muted:#7C6A56; --paper:#FBF7F0; --card:#FFFDF9; --line:#E7DCCB;
+  --shadow:0 10px 30px rgba(58,42,26,.08);
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Songti SC","Noto Serif CJK SC",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.75 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--brand-dark);text-underline-offset:3px}
+a:hover{color:var(--brand)}
+.skip{position:absolute;left:-999px;top:0;background:var(--ink);color:#fff;padding:.6rem 1rem;z-index:99;border-radius:0 0 8px 0}
+.skip:focus{left:0;top:0}
+.wrap{width:min(1080px,92vw);margin:0 auto}
+.site-head{position:sticky;top:0;z-index:10;background:rgba(251,247,240,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.head-in{display:flex;align-items:center;justify-content:space-between;gap:1rem 1.5rem;min-height:68px;flex-wrap:wrap;padding:.55rem 0}
+.brand{display:inline-flex;align-items:center;gap:.65rem;text-decoration:none;color:var(--ink);font-family:var(--serif);font-weight:700;letter-spacing:.01em}
+.brand-mark{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--brand);color:#fff;font:700 12px/1 var(--sans);letter-spacing:.08em}
+.nav{display:flex;gap:.2rem;flex-wrap:wrap;align-items:center}
+.nav a{padding:.34rem .68rem;border-radius:999px;text-decoration:none;color:var(--muted);font-size:.9rem;white-space:nowrap;border:1px solid transparent}
+.nav a:hover{color:var(--ink);background:#F4EBDD}
+.nav a[aria-current="page"]{background:var(--ink);color:#FFF9EF;border-color:var(--ink)}
+main{padding:0 0 4rem}
+.hero{padding:3.4rem 0 2.6rem}
+.eyebrow{display:inline-flex;align-items:center;gap:.55rem;font:700 .72rem/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--brand);margin:0 0 1rem}
+.eyebrow::before{content:"";width:26px;height:2px;background:var(--gold)}
+h1,h2,h3{font-family:var(--serif);line-height:1.28;margin:0 0 .6rem;font-weight:700}
+h1{font-size:clamp(2rem,4.6vw,3.05rem);letter-spacing:-.01em;margin-bottom:.5rem}
+h2{font-size:clamp(1.3rem,2.5vw,1.75rem);margin-top:3.2rem;padding-top:1.3rem;border-top:1px solid var(--line)}
+h3{font-size:1.06rem;margin-top:0}
+.lede{font-size:1.08rem;color:var(--muted);max-width:64ch;margin:.5rem 0 0}
+.hero .lede{font-size:1.16rem}
+.meta{display:flex;gap:1.2rem;flex-wrap:wrap;margin:1.4rem 0 0;padding:0;list-style:none;color:var(--muted);font-size:.82rem}
+.meta li{display:inline-flex;align-items:center;gap:.42rem}
+.meta li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--gold)}
+.crumbs{font-size:.82rem;color:var(--muted);padding:1.1rem 0 0}
+.crumbs a{text-decoration:none}
+.crumbs span{color:var(--line)}
+.tag{display:inline-block;padding:.14rem .55rem;border-radius:999px;background:#F3E7D6;color:var(--brand-dark);font-size:.72rem;font-weight:700;letter-spacing:.04em;vertical-align:middle}
+.tag.gold{background:#FBF0CF;color:#8A6A0B}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem;margin:1.6rem 0}
+.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.25rem 1.3rem;text-decoration:none;color:inherit;box-shadow:var(--shadow);transition:transform .15s ease,border-color .15s ease}
+.card:hover{transform:translateY(-2px);border-color:var(--brand)}
+.card h3{margin-bottom:.35rem}
+.card p{margin:0;color:var(--muted);font-size:.94rem}
+.card .go{display:inline-block;margin-top:.85rem;color:var(--brand);font-weight:700;font-size:.84rem;letter-spacing:.02em}
+.steps{list-style:none;padding:0;margin:1.5rem 0;counter-reset:step;display:grid;gap:.75rem}
+.steps li{position:relative;padding:1rem 1.1rem 1rem 3.4rem;background:var(--card);border:1px solid var(--line);border-radius:12px;color:var(--muted);font-size:.95rem}
+.steps li::before{counter-increment:step;content:counter(step,decimal-leading-zero);position:absolute;left:1.05rem;top:1.05rem;font:700 .78rem/1 var(--mono);color:var(--brand);letter-spacing:.04em}
+.steps li strong{color:var(--ink);font-family:var(--serif);font-size:1rem;display:block;margin-bottom:.1rem}
+.pending{margin:1.4rem 0;padding:1rem 1.2rem;border:1px dashed var(--line);border-radius:12px;background:#FCF8F1;color:var(--muted);font-size:.94rem}
+.pending b{color:var(--brand-dark)}
+.note{margin:2rem 0;padding:1rem 1.2rem;border-left:4px solid var(--gold);background:#FFF8E8;border-radius:0 10px 10px 0;color:#5A4528;font-size:.94rem}
+.note b{color:var(--ink)}
+.prose{max-width:68ch}
+.prose p{margin:.8rem 0;color:#5C4B38}
+.table-wrap{overflow-x:auto;margin:1.2rem 0;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{padding:.65rem .8rem;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowrap}
+.site-foot{border-top:1px solid var(--line);padding:2rem 0 2.4rem;color:var(--muted);font-size:.85rem}
+.foot-in{display:flex;justify-content:space-between;gap:1rem 2rem;flex-wrap:wrap}
+.foot-in p{margin:0}
+.foot-in a{color:var(--brand-dark)}
+@media (max-width:640px){
+  .hero{padding:2.4rem 0 2rem}
+  .head-in{min-height:0;padding:.7rem 0}
+  .nav{width:100%;gap:.15rem}
+  .nav a{padding:.3rem .55rem;font-size:.84rem}
+  h2{margin-top:2.4rem}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .card{transition:none}
+}
+</style>
+</head>
+<body>
+  <a class="skip" href="#main">跳到正文</a>
+  <header class="site-head">
+    <div class="wrap head-in">
+      <a class="brand" href="index.html"><span class="brand-mark">SA</span><span>Super-agent 学习站</span></a>
+      <nav class="nav" aria-label="主导航">
+                <a href="index.html">首页</a>
+        <a href="concept.html">概念(A论文)</a>
+        <a href="evolution.html" aria-current="page">进化(B论文)</a>
+        <a href="feynman.html">费曼拆解</a>
+        <a href="test-log.html">测试日志</a>
+      </nav>
+    </div>
+  </header>
+  <main id="main">
+    <div class="wrap">
+      <p class="crumbs"><a href="index.html">首页</a> <span>/</span> 进化(B论文)</p>
+      <section class="hero">
+        <p class="eyebrow">进化 · B 论文</p>
+        <h1>Self-Harness: Harnesses That Improve Themselves</h1>
+        <p class="lede">手工调 harness 追不上模型迭代，于是把「改进」本身变成一个可审计的状态转移：失败签名、最小提案，再在没见过的题上回归。</p>
+        <ul class="meta">
+          <li>B 论文精读</li>
+          <li>7 个章节</li>
+          <li>正文待 WU-4 填充</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>章节地图</h2>
+        <ol class="steps">
+          <li><strong>问题：手工调 harness 追不上模型迭代</strong>为什么需要让工装自己进化。</li>
+          <li><strong>把「改进」变成一个可审计的状态转移</strong>谁提出、谁验证、谁记账。</li>
+          <li><strong>Weakness Mining：把失败变成可复用的机制</strong>聚类失败签名，而不是逐条打补丁。</li>
+          <li><strong>Harness Proposal：多样，但每个都最小</strong>提案如何既发散又可评估。</li>
+          <li><strong>Proposal Validation：held-in / held-out 双边回归</strong>用没见过的题防止自欺。</li>
+          <li><strong>证据：三个模型都涨了</strong>提升来自哪里，代价是什么。</li>
+          <li><strong>边界与批判</strong>什么能自动改，什么仍然需要人。</li>
+        </ol>
+        <p class="pending"><b>WU-4 将填充：</b>三步闭环的细节、实验数据、定性差异，以及阶段 0 报告里可复用的关键发现。</p>
+      </section>
+
+      <section>
+        <h2>与概念页的接缝</h2>
+        <div class="prose">
+          <p>同一个「harness」，两篇论文用法不同：A 把 harness 做成组织，B 让 harness 会进化。进化页最后会把两者放进一张 2×2，看看空位在哪里。</p>
+        </div>
+        <div class="grid">
+          <a class="card" href="concept.html">
+            <h3>回看：概念 <span class="tag">A 论文</span></h3>
+            <p>先有组织，再谈进化：Router、Worker 与 Trigger 的基本盘。</p>
+            <span class="go">回到概念页 →</span>
+          </a>
+        </div>
+      </section>
+    </div>
+  </main>
+  <footer class="site-foot">
+    <div class="wrap foot-in">
+      <p>阶段 2 · 学习站 · WU-1 站点骨架</p>
+      <p><a href="index.html">回到首页</a> · 静态 HTML · 无外部依赖</p>
+    </div>
+  </footer>
+</body>
+</html>
