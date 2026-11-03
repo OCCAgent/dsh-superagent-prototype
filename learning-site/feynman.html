@@ -69,6 +69,18 @@ table{width:100%;border-collapse:collapse;font-size:.9rem}
 th,td{padding:.65rem .8rem;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 tbody tr:last-child td{border-bottom:0}
 th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowrap}
+.matrix td,.matrix th{font-size:.9rem}
+.matrix td span{display:block;color:var(--muted);font-size:.8rem;margin-top:.15rem}
+.matrix .empty{background:#FFF8E8;border:1px dashed var(--gold)}
+.compare th:first-child{width:6.5rem}
+.compare td{font-size:.9rem;color:#5C4B38}
+.compare td b{color:var(--ink)}
+.qa{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1rem 1.2rem;margin:.7rem 0}
+.qa summary{cursor:pointer;list-style:none;font-family:var(--serif);font-weight:700;color:var(--ink);display:flex;gap:.6rem;align-items:flex-start}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary::before{content:"+";flex:0 0 auto;color:var(--brand);font-family:var(--sans);font-weight:800;width:1rem;text-align:center}
+.qa[open] summary::before{content:"−"}
+.qa p{margin:.85rem 0 0;padding-top:.75rem;border-top:1px solid var(--line);color:#5C4B38;font-size:.94rem}
 .site-foot{border-top:1px solid var(--line);padding:2rem 0 2.4rem;color:var(--muted);font-size:.85rem}
 .foot-in{display:flex;justify-content:space-between;gap:1rem 2rem;flex-wrap:wrap}
 .foot-in p{margin:0}
@@ -105,47 +117,147 @@ th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowr
       <p class="crumbs"><a href="index.html">首页</a> <span>/</span> 费曼拆解</p>
       <section class="hero">
         <p class="eyebrow">方法 · 费曼拆解</p>
-        <h1>先讲给外行，再被追问，最后回讲</h1>
-        <p class="lede">费曼学习法负责「讲不通就回去补」，苏格拉底式问答负责「逼近定义、前提和边界」。两者合起来，才不是背结论。</p>
+        <h1>一个管组织，一个管进化</h1>
+        <p class="lede">两篇论文不是上下集：A 把 harness 做成组织，B 让 harness 会进化。先看一张 2×2 地图与对照表，再用 10 道苏格拉底式问题自测。</p>
         <ul class="meta">
           <li>两篇论文</li>
-          <li>三步方法</li>
-          <li>正文待 WU-5 填充</li>
+          <li>2×2 对比</li>
+          <li>10 道自测题</li>
         </ul>
       </section>
 
       <section>
-        <h2>三步</h2>
-        <ol class="steps">
-          <li><strong>讲给 12 岁的人听</strong>不用术语，先讲清楚它在解决什么问题；讲不通的地方就是没懂的地方。</li>
-          <li><strong>连续追问</strong>对每个关键词追问定义、前提与边界，直到不能再含糊。</li>
-          <li><strong>费曼回讲</strong>合上资料，用自己的话重新讲一遍，再和原文核对数字与结论。</li>
-        </ol>
-      </section>
-
-      <section>
-        <h2>拆解底稿</h2>
-        <div class="prose">
-          <p>完整底稿《一个管「组织」，一个管「进化」》已经写好：从 A 论文的组织设计，到 B 论文的进化闭环，最后用一张 2×2 收束。本页会按阅读节奏重新编排成可浏览的章节。</p>
+        <h2>先看 2×2 地图</h2>
+        <p class="section-lede">把「单 Agent / 多任务系统」和「固定 harness / 自进化 harness」交叉，地图就很清楚。</p>
+        <div class="table-wrap">
+          <table class="matrix">
+            <thead>
+              <tr><th>系统形态</th><th>harness 人工固定</th><th>harness 自进化</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>单 Agent</th>
+                <td>普通 coding agent<span>Claude Code、Codex 等</span></td>
+                <td><b>Self-Harness</b><span>固定模型，自己改工装</span></td>
+              </tr>
+              <tr>
+                <th>Super-agent</th>
+                <td><b>Exploring Super-agent Design</b><span>把工装做成组织</span></td>
+                <td class="empty"><b>空位</b><span>让整个组织自己进化工装</span></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <p class="pending"><b>WU-5 将填充：</b>分节导读、苏格拉底式自测题、常见误解，以及原文出处与核实说明。</p>
+        <div class="prose">
+          <p>右下角是两篇拼起来最值得想的下一步：把 Self-Harness 的「证据 → 提议 → 回归」循环，从单个模型扩展到整个 Super-agent 系统。难点也很清楚——证据单位从单条轨迹变成跨 Thread/Worker 的事件流，回归集要从基准扩展到历史回放与 held-out 团队，准入要灰度、归因、可回滚，还要决定谁批准。</p>
+        </div>
       </section>
 
       <section>
-        <h2>读法建议</h2>
+        <h2>两篇论文对照表</h2>
+        <p class="section-lede">按设计动机、核心机制、验证方式、局限四个维度并排看。</p>
+        <div class="table-wrap">
+          <table class="compare">
+            <thead>
+              <tr><th>维度</th><th>A · Exploring Super-agent Design</th><th>B · Self-Harness</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>设计动机</th>
+                <td>单会话 ReAct 的瓶颈从模型能力转向人的注意力：Agent 要常在线、能并行、能主动、跨渠道连续。</td>
+                <td>手工为每个模型调 harness 不可扩展；Meta-Harness 贵、未必有更强模型、失败模式还容易错配。</td>
+              </tr>
+              <tr>
+                <th>核心机制</th>
+                <td>双层架构（Router/Worker）、Trigger 四道关、全双工与多通道、计算/状态/环境分离、Watchdog；把计算机系统思想搬进 Agent。</td>
+                <td>失败签名聚类 → 多样最小提案 → held-in/held-out 双边回归；只改声明式可编辑面，留下可审计版本链。</td>
+              </tr>
+              <tr>
+                <th>验证方式</th>
+                <td>合成负载（约 300 条群聊/CI 消息，约 20 个工作请求）、耗时工具模拟编码、每配置 5 次；Router 批处理压测 1→40 条/分钟。</td>
+                <td>单基准 64 题、3 个模型、每候选重复 2 次；用 held-in 看是否解决动机证据，用 held-out 看是否弄坏别的。</td>
+              </tr>
+              <tr>
+                <th>局限</th>
+                <td>合成负载、简化环境、非真实编码；只验证调度与路由，不能推出真实研发效率或代码质量提升。</td>
+                <td>单基准、重复次数少、只能有界修改；依赖评估器质量，跨基准/跨团队泛化未验证。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note"><b>怎么读：</b>A 回答「组织怎么搭」，B 回答「工装怎么改」。两篇共用同一个 harness 概念，但一个把它做成身体，一个给它装上变异与选择机制。</p>
+      </section>
+
+      <section>
+        <h2>十个苏格拉底式自测题</h2>
+        <p class="section-lede">先自己答，再点开对照。答案按底稿整理，不追求标准表述，追求讲得通。</p>
+
+        <details class="qa">
+          <summary>Q1 为什么「每个事件开一个新会话」不是 Super-agent？</summary>
+          <p>它只解决了并发，没有解决连续性。任务相关时会缺全局上下文；多个会话分别回复用户，交互也会混乱。Super-agent 要「连续 + 产出」同时成立，所以需要 Router 维持全局、Worker 隔离执行的两层结构。</p>
+        </details>
+
+        <details class="qa">
+          <summary>Q2 Router 不执行任务，为什么不会成为瓶颈？</summary>
+          <p>它只做轻量交互和派发；一个推理 turn 内到达的 Trigger 排队，下一个 turn 合并成一次调用，prefill 并行，所以请求耗时随批量增长很慢。压测里到达率 1→40 条/分钟，摊销到每个决策的时间反而从 6.4s 降到 1.6s。上限是上下文长度和单 turn 可准确处理的 Trigger 数。</p>
+        </details>
+
+        <details class="qa">
+          <summary>Q3 Fast Path / Slow Path 分别指什么？为什么这样分？</summary>
+          <p>Fast Path 是确定性的程序化策略（来源、群、白名单、三种响应模式），低成本挡掉大多数噪音；Slow Path 是大模型结合上下文和 prompt 策略做语义判断。把稳定的判断下沉成代码、把模糊的判断留给模型，才能同时控成本和延迟。</p>
+        </details>
+
+        <details class="qa">
+          <summary>Q4 订阅透传解决了什么？没解决什么？</summary>
+          <p>解决了「同一 Thread 的后续事件不必每次都经过 Router」，省下 Router 的决策次数和 token（实验里约 −30% 决策、−37% token）。它不解决任务本身的正确性，也不替代跨任务协调——那仍由 Router 负责。</p>
+        </details>
+
+        <details class="qa">
+          <summary>Q5 Inline &amp; Spill 与 Chain of Recall 是什么关系？</summary>
+          <p>Inline &amp; Spill 是「单个对象怎么放进/放出窗口」的微观操作；Chain of Recall 把同一原则应用到对象图上，让模型顺着 ID 引用一跳一跳找回多跳之前的上下文。前者是缓存策略，后者是基于缓存的检索路径。</p>
+        </details>
+
+        <details class="qa">
+          <summary>Q6 计算/状态/环境分离的两级各解决什么？</summary>
+          <p>第一级把无状态计算放进弹性容器、状态放进数据库，解决「设备一睡 Agent 就停」；第二级把执行环境留在本地、只装无状态 daemon，解决「环境搬不动/搬不全」。两级合起来让 Agent 既常在线，又能连到真实机器。</p>
+        </details>
+
+        <details class="qa">
+          <summary>Q7 Watchdog 与普通监控的区别？</summary>
+          <p>普通监控看进程、端口、错误率；Watchdog 还用一个独立的 Agent Session 判断「任务有没有实质进展、有没有跑偏」，并且能用自然语言被询问、能在运行时调整主系统。它监控的是「干活这件事本身」。</p>
+        </details>
+
+        <details class="qa">
+          <summary>Q8 Self-Harness 与 Meta-Harness 的区别？</summary>
+          <p>Meta-Harness 用更强的外部 Agent 去改弱模型的 harness；Self-Harness 让被评估的同一个固定模型，在当前 harness 下提出对自己的有界修改。前者是外部搜索，后者是把改进闭环内化，避免外部模型的成本与失败模式错配。</p>
+        </details>
+
+        <details class="qa">
+          <summary>Q9 为什么接受规则要求 held-in 和 held-out 都不降？</summary>
+          <p>held-in 检验「是否真的解决了 motivating evidence」，held-out 检验「有没有为了修这个而弄坏别的」。只看总分会让「拆东墙补西墙」的过拟合改动混进来；双边不降是一种保守的回归门。</p>
+        </details>
+
+        <details class="qa">
+          <summary>Q10 两篇拼起来，最自然的下一步是什么？</summary>
+          <p>把 Self-Harness 的三步循环用到 Super-agent 的系统 harness 上：用跨任务执行轨迹挖协调、上下文、路由层面的失败模式，提有界改动，在历史回放和 held-out 团队上做回归，再灰度上线。关键难点是证据单位、回归集、准入规则和「谁批准」。</p>
+        </details>
+      </section>
+
+      <section>
+        <h2>接着读</h2>
         <div class="prose">
-          <p>先读概念页建立坐标，再读进化页看闭环；每读完一章，回到这里用「讲给外行」的方式复述一次。能复述，才算读完。</p>
+          <p>拆解到此为止：A 给组织，B 给进化，2×2 的右下角留给下一轮系统实验。接下来去测试日志，看阶段 0/1 的真实记录与阶段 2 的 WU 进度。</p>
         </div>
         <div class="grid">
-          <a class="card" href="concept.html">
-            <h3>从概念开始 <span class="tag">A 论文</span></h3>
-            <p>先搞清楚 Super-agent 的组织结构，再进入拆解。</p>
-            <span class="go">进入概念页 →</span>
-          </a>
           <a class="card" href="evolution.html">
-            <h3>再到进化 <span class="tag">B 论文</span></h3>
-            <p>看清 harness 自我改进的三步闭环。</p>
-            <span class="go">进入进化页 →</span>
+            <h3>回看：进化 <span class="tag">B 论文</span></h3>
+            <p>三步闭环与 held-in/held-out 的细节，在进化页。</p>
+            <span class="go">回到进化页 →</span>
+          </a>
+          <a class="card" href="test-log.html">
+            <h3>接着读：测试日志 <span class="tag gold">记录</span></h3>
+            <p>阶段实测数据、WU 验收与遗留问题。</p>
+            <span class="go">进入测试日志 →</span>
           </a>
         </div>
       </section>
@@ -153,7 +265,7 @@ th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowr
   </main>
   <footer class="site-foot">
     <div class="wrap foot-in">
-      <p>阶段 2 · 学习站 · WU-1 站点骨架</p>
+      <p>阶段 2 · 学习站 · WU-5 费曼拆解</p>
       <p><a href="index.html">回到首页</a> · 静态 HTML · 无外部依赖</p>
     </div>
   </footer>
