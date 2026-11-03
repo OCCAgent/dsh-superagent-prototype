@@ -105,8 +105,9 @@ describe('four features', () => {
       spec_case_met: unlinkedOk,
       cases: [
         { id: 'C1', kind: 'typical', scenario: 'PR comment on the ticket PR, no direct reference', attributed: crossDelivered ? 1 : 0, expected: 1, pass: crossDelivered },
-        { id: 'C2', kind: 'negative', scenario: 'unrelated chatter on another thread must not attach', unrelated_leaked: noiseLeaked ? 1 : 0, expected: 0, pass: !noiseLeaked && sameDelivered },
-        { id: 'C3', kind: 'specified-unlinked', scenario: 'requirement in Feishu chat B, no reference to chat A', auto_attributed: unlinkedDelivered ? 1 : 0, expected: 1, related_tickets_seen: card?.tickets_total ?? 0, pass: unlinkedOk },
+        { id: 'C2', kind: 'perturbed', scenario: 'unrelated chatter in chat B, then the chat A follow-up', followup_attributed: sameDelivered ? 1 : 0, expected: 1, pass: sameDelivered },
+        { id: 'C3', kind: 'negative', scenario: 'unrelated chatter in chat B must not attach to the chat A ticket', unrelated_leaked: noiseLeaked ? 1 : 0, expected: 0, pass: !noiseLeaked },
+        { id: 'C4', kind: 'specified-unlinked', scenario: 'requirement in Feishu chat B, no reference to chat A', auto_attributed: unlinkedDelivered ? 1 : 0, expected: 1, related_tickets_seen: card?.tickets_total ?? 0, pass: unlinkedOk },
       ],
       base_environment: { chats: 2, github_repository: 1 },
       new_tickets_from_linked_followups: host.runtime.store.tickets.list().length - ticketCount - 1,

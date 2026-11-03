@@ -229,8 +229,9 @@ th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowr
             </thead>
             <tbody>
               <tr><td><b>C1 连续</b></td><td>典型</td><td>工单 PR 评论追加需求，不引用原飞书消息</td><td><span class="tag ok">通过</span> 归到同一工单</td></tr>
-              <tr><td><b>C2 连续</b></td><td>负向</td><td>群 B 的无关闲聊</td><td><span class="tag ok">通过</span> 0 泄漏</td></tr>
-              <tr><td><b>C3 连续</b></td><td>规范指定</td><td>群 A 发起；群 B 追加需求、无显式引用</td><td><span class="tag no">不成立</span> 0/1，候选无关联工单</td></tr>
+              <tr><td><b>C2 连续</b></td><td>扰动</td><td>群 B 无关闲聊后，群 A 原 Thread 追加</td><td><span class="tag ok">通过</span> 1/1 归属</td></tr>
+              <tr><td><b>C3 连续</b></td><td>负向</td><td>群 B 的无关闲聊</td><td><span class="tag ok">通过</span> 0 泄漏</td></tr>
+              <tr><td><b>C4 连续</b></td><td>规范指定</td><td>群 A 发起；群 B 追加需求、无显式引用</td><td><span class="tag no">不成立</span> 0/1，候选无关联工单</td></tr>
               <tr><td><b>P1 高效</b></td><td>典型</td><td>1 个 worker 槽位下连发 5 个独立任务</td><td><span class="tag ok">通过</span> 4 排队、1 运行</td></tr>
               <tr><td><b>P2 高效</b></td><td>扰动</td><td>队列满时运行中工单收到人的插话</td><td><span class="tag ok">通过</span> 立即送达</td></tr>
               <tr><td><b>A1 主动</b></td><td>典型 · observe</td><td>CI 失败 + 规则授权，无 @</td><td><span class="tag part">记录</span> 候选 + would-accept，0 工单</td></tr>
@@ -243,7 +244,7 @@ th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowr
             </tbody>
           </table>
         </div>
-        <p class="note"><b>架构层归因（连续 C3）：</b>实现只用三种结构关系建立归属——发起 Thread、工单跟随的 PR Thread、同一 Trigger 同属多个 Thread。Correlation 只补上下文、不路由；attach 要求消息显式指向工单。因此“无显式引用的跨渠道追加”不是模型偶然失败，而是当前架构没有这条路径。按第三层入口判据，“群聊追加要求关联到现有 Ticket”这一条当前不满足，先不应启动第三层端到端测试。</p>
+        <p class="note"><b>架构层归因（连续 C4）：</b>实现只用三种结构关系建立归属——发起 Thread、工单跟随的 PR Thread、同一 Trigger 同属多个 Thread。Correlation 只补上下文、不路由；attach 要求消息显式指向工单。因此 C4“无显式引用的跨渠道追加”不是模型偶然失败，而是当前架构没有这条路径。按第三层入口判据，“群聊追加要求关联到现有 Ticket”这一条当前不满足，先不应启动第三层端到端测试。</p>
         <p class="section-lede"><b>Token 成本（与延迟同等重要）：</b>learning-site 6 个 WU 共 52,284,551 total tokens，其中 cache read 51,922,304（99.3%），约 8.71M / WU。第三层暂定 cap = 3 × 基线 ≈ 26.1M total tokens / 工作单元；未收敛即超预算时转人工复核，不自动重试。</p>
         <p class="pending"><b>数据说明：</b>机制基线是可复现的 Runtime 级实验（fake DSH host、脚本化 Router/worker 步骤），只验证协调机制；真实运行数据为单部署、小样本观测，不足以宣称正式 p50/p95。完整用例、指标、token 表与现场协议见仓库 <code>experiments/four-features/README.md</code>。</p>
       </section>

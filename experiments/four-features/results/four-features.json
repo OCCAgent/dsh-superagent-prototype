@@ -18,14 +18,22 @@
       },
       {
         "id": "C2",
+        "kind": "perturbed",
+        "scenario": "unrelated chatter in chat B, then the chat A follow-up",
+        "followup_attributed": 1,
+        "expected": 1,
+        "pass": true
+      },
+      {
+        "id": "C3",
         "kind": "negative",
-        "scenario": "unrelated chatter on another thread must not attach",
+        "scenario": "unrelated chatter in chat B must not attach to the chat A ticket",
         "unrelated_leaked": 0,
         "expected": 0,
         "pass": true
       },
       {
-        "id": "C3",
+        "id": "C4",
         "kind": "specified-unlinked",
         "scenario": "requirement in Feishu chat B, no reference to chat A",
         "auto_attributed": 0,
