@@ -69,6 +69,15 @@ table{width:100%;border-collapse:collapse;font-size:.9rem}
 th,td{padding:.65rem .8rem;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 tbody tr:last-child td{border-bottom:0}
 th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowrap}
+.log-table th{white-space:nowrap}
+.log-table td{font-size:.88rem;color:#5C4B38}
+.log-table td b{color:var(--ink)}
+.tag.ok{background:#E6F0E2;color:#3E6B34}
+.tag.no{background:#F6E3DE;color:#8A3A2A}
+.tag.part{background:#FBF0CF;color:#8A6A0B}
+.tag{white-space:nowrap}
+.log-table .type{white-space:nowrap}
+.tag.now{background:#3A2A1A;color:#FFF9EF}
 .site-foot{border-top:1px solid var(--line);padding:2rem 0 2.4rem;color:var(--muted);font-size:.85rem}
 .foot-in{display:flex;justify-content:space-between;gap:1rem 2rem;flex-wrap:wrap}
 .foot-in p{margin:0}
@@ -106,42 +115,155 @@ th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowr
       <section class="hero">
         <p class="eyebrow">记录 · 测试日志</p>
         <h1>测试日志</h1>
-        <p class="lede">阶段 0 的通道、模型与会话记录，阶段 2 的 WU 验收与遗留，都记在这里。每个单元一条记录，附自检报告摘要。</p>
+        <p class="lede">阶段 0 的六项判据、阶段 2 的六个 WU、第一层 Harness 自改进的采纳记录，以及如何继续测试，都记在这里。</p>
         <ul class="meta">
-          <li>阶段 0 / 阶段 2</li>
-          <li>按 WU 记录</li>
-          <li>正文待 WU-6 填充</li>
+          <li>6 个 WU</li>
+          <li>阶段 0 六项判据</li>
+          <li>第一层实测</li>
         </ul>
       </section>
 
       <section>
-        <h2>阶段 2 · 单元验收</h2>
+        <h2>阶段 2 · 六个 WU</h2>
+        <p class="section-lede">每个单元一个独立 PR；合并状态以 PR 为准。</p>
         <div class="table-wrap">
-          <table>
+          <table class="log-table">
             <thead>
-              <tr><th>单元</th><th>范围</th><th>状态</th><th>自检</th></tr>
+              <tr><th>单元</th><th>范围</th><th>PR</th><th>状态</th><th>自检</th></tr>
             </thead>
             <tbody>
-              <tr><td>WU-1</td><td>5 页骨架 + README</td><td><span class="tag">已提交</span></td><td>shot.py 通过</td></tr>
-              <tr><td>WU-2 .. WU-6</td><td>按逐条下发的单元消息推进</td><td>待下发</td><td>—</td></tr>
+              <tr>
+                <td><b>WU-1</b></td><td>站点骨架：5 页 + README + 统一导航</td>
+                <td><a href="https://github.com/OCCAgent/dsh-superagent-prototype/pull/3">#3</a></td>
+                <td><span class="tag ok">已合并</span></td><td>shot.py PASS</td>
+              </tr>
+              <tr>
+                <td><b>WU-2</b></td><td>首页：一句话定义、三层测试导航、项目背景</td>
+                <td><a href="https://github.com/OCCAgent/dsh-superagent-prototype/pull/4">#4</a></td>
+                <td><span class="tag ok">已合并</span></td><td>shot.py PASS</td>
+              </tr>
+              <tr>
+                <td><b>WU-3</b></td><td>概念页：四特征、五模块、架构示意</td>
+                <td><a href="https://github.com/OCCAgent/dsh-superagent-prototype/pull/5">#5</a></td>
+                <td><span class="tag ok">已合并</span></td><td>shot.py PASS</td>
+              </tr>
+              <tr>
+                <td><b>WU-4</b></td><td>进化页：三步闭环、held-in/held-out、术语表</td>
+                <td><a href="https://github.com/OCCAgent/dsh-superagent-prototype/pull/6">#6</a></td>
+                <td><span class="tag ok">已合并</span></td><td>shot.py PASS</td>
+              </tr>
+              <tr>
+                <td><b>WU-5</b></td><td>费曼拆解页：2×2 对比、10 道自测题</td>
+                <td><a href="https://github.com/OCCAgent/dsh-superagent-prototype/pull/7">#7</a></td>
+                <td><span class="tag ok">已合并</span></td><td>shot.py PASS</td>
+              </tr>
+              <tr>
+                <td><b>WU-6</b></td><td>测试日志页 + README 打开/继续测试说明</td>
+                <td>本 PR</td>
+                <td><span class="tag now">完成</span></td><td>shot.py PASS</td>
+              </tr>
             </tbody>
           </table>
         </div>
-        <p class="pending"><b>WU-6 将填充：</b>每个 WU 的 PR、验收结论、shot.py 报告摘要与遗留问题。</p>
       </section>
 
       <section>
-        <h2>阶段 0 · 执行记录</h2>
-        <div class="prose">
-          <p>阶段 0 的通道测试、模型切换与会话持久化记录已经整理成执行报告，放在仓库 <code>learning-site/</code> 下，作为本阶段的基线材料。</p>
+        <h2>第一层 · Harness 自改进实测</h2>
+        <p class="section-lede">轨迹来源是阶段 2 的真实运行记录（trigger / PR / worker 状态）。共 5 条行为边界：3 条弱点、2 条优点。</p>
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead>
+              <tr><th>编号</th><th>实测发现</th><th>类型</th><th>提案</th><th>采纳状态</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><b>F1</b></td>
+                <td>判定为「重复/无新工作」的消息不会得到群内回执，用户容易误以为被无视。</td>
+                <td class="type">弱点</td>
+                <td>任务模板加「如判定无需新工作，请回复原因」；dropped 必回执。</td>
+                <td><span class="tag no">未采纳</span></td>
+              </tr>
+              <tr>
+                <td><b>F2</b></td>
+                <td>PR 合并会终止当前 worker assignment，连续派发时后一单元可能被丢弃。</td>
+                <td class="type">弱点</td>
+                <td>PR 合并不立即结束 assignment；丢失单元自动重投。</td>
+                <td><span class="tag no">未采纳</span></td>
+              </tr>
+              <tr>
+                <td><b>F3</b></td>
+                <td>不 @ 的消息也会入库 trigger，过滤实际发生在 disposition/Eval 层，与 A2 判据描述不符。</td>
+                <td class="type">弱点</td>
+                <td>修正 A2 判据；增加 mention-only 过滤。</td>
+                <td><span class="tag part">部分采纳</span></td>
+              </tr>
+              <tr>
+                <td><b>F4</b></td>
+                <td>Worker 能核实 git 历史与 PR 状态，识别重复请求并拒绝无效工作。</td>
+                <td class="type">优点</td>
+                <td>沉淀为使用姿势：任务里写明「已完成的不要重做」。</td>
+                <td><span class="tag ok">已采纳</span></td>
+              </tr>
+              <tr>
+                <td><b>F5</b></td>
+                <td>同一 Thread 的后续消息会追加进同一工单，不碎片化建单，插话能并入当前任务。</td>
+                <td class="type">优点</td>
+                <td>沉淀为使用姿势：同一项目的多个 WU 在同一话题下连续下发。</td>
+                <td><span class="tag ok">已采纳</span></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <p class="note"><b>说明：</b>本页在 WU-1 只保留结构，具体记录由 WU-6 汇总，避免提前写出未经核对的数字。</p>
+        <p class="note"><b>采纳口径：</b>代码级采纳 0 条；判据修正 1 条（F3）；行为规范 2 条（F4/F5）；未落地 2 条（F1/F2）。<b>为什么零代码级采纳：</b>本轮目标是完成学习网站，规则/机制改动属于阶段 3 剧本 B；按方案 E1-6，「无一采纳 + 原因分析」是合法结果，伪造采纳率是红线。</p>
+        <p class="pending"><b>数据说明：</b>阶段 1 Harness 基线没有单独跑脚本实验；本页的可复用轨迹来自阶段 2 的真实运行记录，与仓库中的《阶段2实测发现与学习素材》一致。F1/F2 的修复验证留待阶段 3。</p>
+      </section>
+
+      <section>
+        <h2>阶段 0 · 六项判据</h2>
+        <p class="section-lede">阶段 0 收官时六项全部通过，详细记录见仓库中的阶段 0 执行报告。</p>
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead>
+              <tr><th>判据</th><th>记录</th><th>结果</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>E0-1 服务健康</td><td>所有子系统 ready（13/13）</td><td><span class="tag ok">通过</span></td></tr>
+              <tr><td>E0-2 主会话模型</td><td>deepseek-v4-pro → deepseek-flash（停→备份→删→重启→验证）</td><td><span class="tag ok">通过</span></td></tr>
+              <tr><td>E0-3 状态库</td><td>trigger / decision / ticket / outbox 可读（共 9 表）</td><td><span class="tag ok">通过</span></td></tr>
+              <tr><td>E0-4 飞书通道</td><td>真 @ → 回复「在的」；@ 提问建单</td><td><span class="tag ok">通过</span></td></tr>
+              <tr><td>E0-5 GitHub 通道</td><td>accept(explicitRouted) → 工单 completed；修复两个配置死锁</td><td><span class="tag ok">通过</span></td></tr>
+              <tr><td>E0-6 仓库占位</td><td>learning-site 占位已 push 至 fork 仓库</td><td><span class="tag ok">通过</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>如何继续测试</h2>
+        <ol class="steps">
+          <li><strong>本地打开</strong>双击 <code>index.html</code>，或运行 <code>python3 -m http.server 8000 --directory learning-site</code> 后访问本地地址；全站无外部依赖，<code>file://</code> 可用。</li>
+          <li><strong>改完自检</strong>运行 <code>python3 learning-site/shot.py</code>，必须 0 error / blocker；报告与 1280×800 截图写入 <code>learning-site/.shot/</code>。</li>
+          <li><strong>推进一个 WU</strong>一个单元一个分支 / PR，PR 附 Before/After；同时更新本页进度表与 README 的 WU 表。</li>
+          <li><strong>进入下一层</strong>阶段 2 的四特征矩阵（测试方案 4.3，每特征 2 个场景）全部通过后，才进入阶段 3。</li>
+        </ol>
+        <div class="grid">
+          <a class="card" href="feynman.html">
+            <h3>回看：费曼拆解 <span class="tag gold">方法</span></h3>
+            <p>2×2 地图与 10 道自测题，先把两篇论文讲通。</p>
+            <span class="go">回到拆解页 →</span>
+          </a>
+          <a class="card" href="README.md">
+            <h3>完整说明 <span class="tag">README</span></h3>
+            <p>页面索引、视觉 token、自检方式与继续测试的完整步骤。</p>
+            <span class="go">打开 README →</span>
+          </a>
+        </div>
       </section>
     </div>
   </main>
   <footer class="site-foot">
     <div class="wrap foot-in">
-      <p>阶段 2 · 学习站 · WU-1 站点骨架</p>
+      <p>阶段 2 · 学习站 · WU-6 测试日志</p>
       <p><a href="index.html">回到首页</a> · 静态 HTML · 无外部依赖</p>
     </div>
   </footer>
