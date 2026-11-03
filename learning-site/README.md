@@ -2,7 +2,7 @@
 
 阶段 2 的静态学习站：5 个页面加本 README，按「概念 → 进化 → 费曼拆解 → 测试日志」的路线阅读两篇论文。
 
-**当前进度：WU-1 ~ WU-6 全部完成。** 五个页面正文与测试日志已补齐，站内导航、视觉 token、自检脚本与本地打开说明均已就位。
+**当前进度：WU-1 ~ WU-6 全部完成，第二层四特征逐项验证已写入测试日志。** 五个页面正文与测试日志已补齐，站内导航、视觉 token、自检脚本与本地打开说明均已就位。
 
 ## 页面
 
@@ -12,7 +12,7 @@
 | 概念(A论文) | [concept.html](concept.html) | 四特征、五模块、架构示意与设计动机 |
 | 进化(B论文) | [evolution.html](evolution.html) | Self-Harness 三步闭环、held-in/held-out 规则与术语表 |
 | 费曼拆解 | [feynman.html](feynman.html) | 2×2 地图、两篇论文对照表、10 道苏格拉底式自测题 |
-| 测试日志 | [test-log.html](test-log.html) | 阶段 0 六项判据、阶段 2 六个 WU、第一层采纳记录与继续测试说明 |
+| 测试日志 | [test-log.html](test-log.html) | 阶段 0 六项判据、阶段 2 六个 WU、第一层采纳记录、第二层四特征逐项验证与继续测试说明 |
 
 统一导航：首页｜概念(A论文)｜进化(B论文)｜费曼拆解｜测试日志。
 
@@ -70,14 +70,16 @@ python3 learning-site/shot.py
 1. **新增或修改页面**后运行 `python3 learning-site/shot.py`，必须 0 error / blocker；报告与 1280×800 截图写入 `learning-site/.shot/`。
 2. **推进一个 WU**：一个单元一个分支 / PR，PR 附同视口的 Before/After；同时更新 `test-log.html` 的进度表与本 README 的 WU 表。
 3. **保持规格**：五个页面统一导航、内联 CSS、无外部字体/脚本/图片，`file://` 直接可开；不引入构建步骤。
-4. **进入下一层**：阶段 2 的四特征矩阵（测试方案 4.3，每特征 2 个场景）全部通过后，才进入阶段 3。
+4. **进入下一层**：第二层四特征逐项验证结果为 3/4 成立，连续性失败归因架构层（无显式引用的跨渠道归属未实现）；先按 [实验 README](../experiments/four-features/README.md) 的现场协议补做真实双渠道/重启验证，再进入阶段 3。
 5. **阶段 1 数据**：Harness 基线的实测与采纳/未采纳记录见 [test-log.html](test-log.html)「第一层 · Harness 自改进实测」；本轮未单独跑脚本实验，零代码级采纳已按方案 E1-6 记录原因。
+6. **阶段 2 数据**：四特征逐项用例、指标、token 成本与归因见 [test-log.html](test-log.html)「第二层 · 四特征逐项验证」和 [experiments/four-features/README.md](../experiments/four-features/README.md)。
 
 ## 内容来源
 
 - 阶段 0 执行报告：[SuperAgent三层四阶段测试-阶段0执行报告.md](SuperAgent三层四阶段测试-阶段0执行报告.md)
 - 阶段 2 实测发现：[SuperAgent阶段2-实测发现与学习素材.md](SuperAgent阶段2-实测发现与学习素材.md)
 - 完整案例分析与测试方案：[SuperAgent三层四阶段测试-完整案例分析.md](SuperAgent三层四阶段测试-完整案例分析.md)、[SuperAgent三层四阶段测试方案.md](SuperAgent三层四阶段测试方案.md)
+- 四特征逐项验证（机制基线 + 真实观测 + 现场协议）：[experiments/four-features/README.md](../experiments/four-features/README.md)
 - 费曼拆解底稿：《一个管“组织”，一个管“进化”》（阶段 1 交付物）
 - 论文：*Exploring Super-agent Design: Towards a More Autonomous Agent System*（A）；*Self-Harness: Harnesses That Improve Themselves*（B）
 
