@@ -121,13 +121,13 @@
     "failure_layer": null
   },
   "persistence": {
-    "held": false,
+    "held": true,
     "cases": [
       {
         "id": "D1",
         "kind": "typical",
         "scenario": "host stops while the only worker is busy",
-        "recovered": 0,
+        "recovered": 1,
         "recovery_note": true,
         "assignment_states": [
           "ended",
@@ -151,16 +151,16 @@
     "duplicate_tickets": 0
   },
   "verdict": {
-    "features_held": 2,
+    "features_held": 3,
     "features_total": 4,
-    "exit_criterion_met": false,
+    "exit_criterion_met": true,
     "held": [
       "productivity",
-      "proactivity"
+      "proactivity",
+      "persistence"
     ],
     "failed": [
-      "continuity",
-      "persistence"
+      "continuity"
     ],
     "rule": "at least three of four features hold; a failure names its architecture or implementation layer"
   }

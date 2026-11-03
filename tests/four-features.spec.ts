@@ -296,6 +296,7 @@ describe('four features', () => {
     expect(existsSync(recovered.execution!.directory)).toBe(true)
     expect(recovered.execution!.directory).toBe(directory)
     expect(host.agents.has(`worker-${one.ticket.id}`)).toBe(true)
+    const d1Directory = existsSync(recovered.execution!.directory) && recovered.execution!.directory === directory
     await host.stop()
 
     // Second host: restart after dispatch but before any worker report, with another ticket still queued.
@@ -324,8 +325,7 @@ describe('four features', () => {
     expect(second.store.tickets.list().filter(ticket => ticket.id === first.ticket.id)).toHaveLength(1)
     expect(second.store.tickets.list().filter(ticket => ticket.id === queued.ticket.id)).toHaveLength(1)
 
-    const d1Ok = note && states[0] === 'ended' && states.at(-1) !== 'ended' && existsSync(recovered.execution!.directory)
-      && recovered.execution!.directory === directory
+    const d1Ok = note && states[0] === 'ended' && states.at(-1) !== 'ended' && d1Directory
     const d2Ok = firstNote && firstState !== 'ended' && queuedState !== 'ended' && existsSync(firstRecovered.execution!.directory)
     results.persistence = {
       held: d1Ok && d2Ok,
