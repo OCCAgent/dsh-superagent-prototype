@@ -1,0 +1,98 @@
+{
+  "environment": {
+    "harness": "in-memory Runtime + fake DSH host",
+    "repeats": 1,
+    "maxWorkers": 1
+  },
+  "composite": {
+    "held": true,
+    "stages": [
+      {
+        "stage": "requirement",
+        "held": true,
+        "evidence": {
+          "assignment_running": true,
+          "directory_created": true,
+          "requirement_delivered": true
+        }
+      },
+      {
+        "stage": "decomposition",
+        "held": true,
+        "evidence": {
+          "work_units": 3,
+          "report_retained": true
+        }
+      },
+      {
+        "stage": "execution",
+        "held": true,
+        "evidence": {
+          "max_workers": 1,
+          "second_request": "pending",
+          "distinct_directories": 2,
+          "crosstalk": 0
+        }
+      },
+      {
+        "stage": "change",
+        "held": true,
+        "evidence": {
+          "attached": true,
+          "delivered": true,
+          "new_tickets": 0
+        }
+      },
+      {
+        "stage": "recovery",
+        "held": true,
+        "evidence": {
+          "mode": "restart after a ready report keeps the Session; an interrupted running report gets a restoration note (four-feature D1/D2)",
+          "recovery_note": false,
+          "change_survived": true,
+          "pr_survived": true,
+          "directory_preserved": true,
+          "duplicate_tickets": 0,
+          "assignment_states_before": [
+            "running"
+          ],
+          "assignment_state_after": "ended"
+        }
+      },
+      {
+        "stage": "acceptance",
+        "held": true,
+        "evidence": {
+          "outcome": "merged",
+          "result_replied": true,
+          "merge_notice": "[PR #200](https://github.com/acme/widgets/pull/200) 已合并。"
+        }
+      }
+    ],
+    "human_interventions": {
+      "decision": 2,
+      "corrective": 0,
+      "note": "the request and the same-thread change are decisions; no corrective intervention was needed"
+    },
+    "token_budget": {
+      "cap_total_tokens_per_work_unit": 26100000,
+      "measured_here": false,
+      "note": "the mechanism harness scripts model steps, so token cost is measured from the live session logs instead"
+    }
+  },
+  "readiness_gate": {
+    "met": false,
+    "criterion": "a person's same-task change on an unlinked channel must attach to the existing ticket",
+    "case": "chat A request, chat B change with no explicit reference",
+    "attached": 0,
+    "related_tickets_seen": 0,
+    "blocked_by": "C4/architecture",
+    "reason": "Correlation adds context but never routes; only the originating thread, a ticket PR thread or an explicit pointer attaches. The same-thread form passes (tested above and observed live); the unlinked cross-channel form has no path."
+  },
+  "verdict": {
+    "composite_mechanism_held": true,
+    "live_gate_met": false,
+    "blocked_by": "C4/architecture",
+    "rule": "the composite path may run only when every readiness criterion holds; a failing criterion names the layer."
+  }
+}
