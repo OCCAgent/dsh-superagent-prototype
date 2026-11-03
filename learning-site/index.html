@@ -69,6 +69,21 @@ table{width:100%;border-collapse:collapse;font-size:.9rem}
 th,td{padding:.65rem .8rem;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 tbody tr:last-child td{border-bottom:0}
 th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowrap}
+.definition{margin:2.2rem 0 0;padding:1.4rem 1.6rem;background:linear-gradient(135deg,#FFF8E8,#FFFDF9);border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:0 14px 14px 0}
+.def-kicker{display:inline-block;font:700 .7rem/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--brand);margin-bottom:.5rem}
+.definition p{margin:0;font-family:var(--serif);font-size:1.12rem;line-height:1.75;color:var(--ink)}
+.section-lede{max-width:62ch;color:var(--muted);margin:.2rem 0 0}
+.layer{display:inline-block;font:700 .7rem/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--brand);margin-bottom:.45rem}
+.test-grid .card{border-top:3px solid var(--gold)}
+.page-index{list-style:none;padding:0;margin:1.4rem 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:.6rem 1.4rem}
+.page-index li{display:flex;flex-direction:column;padding:.8rem 0;border-bottom:1px solid var(--line)}
+.page-index a{font-family:var(--serif);font-weight:700;text-decoration:none;color:var(--ink);font-size:1.02rem}
+.page-index a:hover{color:var(--brand)}
+.page-index span{color:var(--muted);font-size:.86rem}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin:1.4rem 0}
+.facts>div{padding:1rem 1.2rem;background:var(--card);border:1px solid var(--line);border-top:2px solid var(--gold);border-radius:0 0 10px 10px}
+.facts span{display:block;font:700 .7rem/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--brand);margin-bottom:.35rem}
+.facts p{margin:0;color:var(--ink);font-size:.95rem}
 .site-foot{border-top:1px solid var(--line);padding:2rem 0 2.4rem;color:var(--muted);font-size:.85rem}
 .foot-in{display:flex;justify-content:space-between;gap:1rem 2rem;flex-wrap:wrap}
 .foot-in p{margin:0}
@@ -92,7 +107,7 @@ th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowr
     <div class="wrap head-in">
       <a class="brand" href="index.html"><span class="brand-mark">SA</span><span>Super-agent 学习站</span></a>
       <nav class="nav" aria-label="主导航">
-                <a href="index.html" aria-current="page">首页</a>
+        <a href="index.html" aria-current="page">首页</a>
         <a href="concept.html">概念(A论文)</a>
         <a href="evolution.html">进化(B论文)</a>
         <a href="feynman.html">费曼拆解</a>
@@ -108,50 +123,68 @@ th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowr
         <p class="lede">先看懂 Super-agent 怎样组织工作，再看 Self-Harness 怎样让这套工装自己进化。中间用费曼拆解把概念讲透，最后用测试日志留下每一步的证据。</p>
         <ul class="meta">
           <li>5 个页面</li>
-          <li>纯静态 · file:// 可打开</li>
-          <li>无外部依赖</li>
+          <li>3 层测试</li>
+          <li>飞书 + GitHub 双通道</li>
+        </ul>
+        <div class="definition">
+          <span class="def-kicker">一句话定义</span>
+          <p>Super-agent 是一个管组织、一个管进化的双层 Agent 系统：Router 负责理解与派活，Worker 在隔离环境里执行，Self-Harness 让这套工装持续变好。</p>
+        </div>
+      </section>
+
+      <section>
+        <h2>三层测试</h2>
+        <p class="section-lede">阶段 2 把验证拆成三层：工装能不能自己变好、四个特征是否成立、整条链路能不能跑通。</p>
+        <div class="grid test-grid">
+          <a class="card" href="evolution.html">
+            <span class="layer">01 · Harness 自改进</span>
+            <h3>让工装自己变好</h3>
+            <p>把失败聚成签名，提出最小改动，再在没见过的题上回归——B 论文的三步闭环。</p>
+            <span class="go">去进化页 →</span>
+          </a>
+          <a class="card" href="concept.html">
+            <span class="layer">02 · 四特征验证</span>
+            <h3>它到底算不算 Super-agent</h3>
+            <p>连续、产出、主动、持久：四个特征逐条对照，看 A 论文的设计能否落地。</p>
+            <span class="go">去概念页 →</span>
+          </a>
+          <a class="card" href="test-log.html">
+            <span class="layer">03 · 端到端复合场景</span>
+            <h3>整条链路跑一遍</h3>
+            <p>从飞书或 GitHub 接活，到隔离执行、开 PR、回到原对话，记录完整验收。</p>
+            <span class="go">去测试日志 →</span>
+          </a>
+        </div>
+      </section>
+
+      <section>
+        <h2>全站导览</h2>
+        <ul class="page-index">
+          <li><a href="concept.html">概念(A论文)</a><span>Router、Worker、Trigger 与四特征</span></li>
+          <li><a href="evolution.html">进化(B论文)</a><span>Self-Harness 的三步闭环与证据</span></li>
+          <li><a href="feynman.html">费曼拆解</a><span>讲给外行、连续追问、再回讲</span></li>
+          <li><a href="test-log.html">测试日志</a><span>阶段 0 记录与 WU 验收</span></li>
         </ul>
       </section>
 
       <section>
-        <h2>从这里开始</h2>
-        <div class="grid">
-          <a class="card" href="concept.html">
-            <h3>概念 <span class="tag">A 论文</span></h3>
-            <p>Router、Worker、Trigger：Super-agent 怎样把「一个会话」变成「一套组织」。</p>
-            <span class="go">进入概念页 →</span>
-          </a>
-          <a class="card" href="evolution.html">
-            <h3>进化 <span class="tag">B 论文</span></h3>
-            <p>失败签名、最小提案、双边回归：harness 怎样在不失控的前提下自己变好。</p>
-            <span class="go">进入进化页 →</span>
-          </a>
-          <a class="card" href="feynman.html">
-            <h3>费曼拆解 <span class="tag gold">方法</span></h3>
-            <p>讲给外行、连续追问、再回讲一遍。把「好像懂了」变成「真的讲得出来」。</p>
-            <span class="go">进入拆解页 →</span>
-          </a>
-          <a class="card" href="test-log.html">
-            <h3>测试日志 <span class="tag gold">记录</span></h3>
-            <p>阶段 0 与阶段 2 的执行记录、WU 验收、遗留问题和下一步。</p>
-            <span class="go">进入日志页 →</span>
-          </a>
+        <h2>项目背景</h2>
+        <div class="facts">
+          <div><span>来源</span><p>fork 自 DeepSeek Harness 的研究原型，仓库为 <code>OCCAgent/dsh-superagent-prototype</code>。</p></div>
+          <div><span>运行时</span><p>DeepSeek Harness <code>0.2.1-rc.3</code>。</p></div>
+          <div><span>通道</span><p>飞书 + GitHub 双通道：任务从任一渠道进入，结果回到原对话。</p></div>
         </div>
-      </section>
-
-      <section>
-        <h2>关于这座站</h2>
         <div class="prose">
-          <p>整站是自包含的静态 HTML：样式内联、无外部字体与脚本，双击 <code>index.html</code> 或用 <code>file://</code> 打开即可阅读。五个页面共用同一套导航与视觉 token（主色 #B8734A、金色 #D4A017、深棕文字 #3A2A1A）。</p>
-          <p>当前是 WU-1 骨架：页面、导航与版式已就位，正文会按后续逐条下发的 WU 依次填充。</p>
+          <p>本站是阶段 2 的静态学习站，也是这套原型的测试工件：一边把两篇论文讲清楚，一边用真实任务验证 Super-agent 的组织、进化与端到端能力。</p>
+          <p>整站自包含：样式内联、无外部字体与脚本，双击 <code>index.html</code> 或用 <code>file://</code> 打开即可阅读。</p>
         </div>
-        <p class="note"><b>进度：</b>WU-1 站点骨架已完成。概念、进化、费曼拆解与测试日志将在后续单元中展开。</p>
+        <p class="note"><b>进度：</b>WU-1 站点骨架与 WU-2 首页正文已完成；概念、进化、费曼拆解与测试日志的正文由后续 WU 展开。</p>
       </section>
     </div>
   </main>
   <footer class="site-foot">
     <div class="wrap foot-in">
-      <p>阶段 2 · 学习站 · WU-1 站点骨架</p>
+      <p>阶段 2 · 学习站 · WU-2 首页</p>
       <p><a href="index.html">回到首页</a> · 静态 HTML · 无外部依赖</p>
     </div>
   </footer>
