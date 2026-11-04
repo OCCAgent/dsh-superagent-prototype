@@ -4,7 +4,7 @@ import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import { agentEvents, installModelSelection, type Agent, type ModelSelection, type ModelSelectionRef } from '@deepseek-ai/dsh-agent'
 import { Session, SessionId } from '@deepseek-ai/dsh-session'
 import { ReasoningEffortId } from '@deepseek-ai/dsh-llm'
-import { initializeRoleModel } from '../src/app/role-models.ts'
+import { initializeRoleModel, currentRoleSelection, retargetRoleModel } from '../src/app/role-models.ts'
 const contexts: Context[] = []
 afterEach(async () => { await Promise.all(contexts.splice(0).map(ctx => ctx.fiber.dispose())); vi.restoreAllMocks() })
 async function fixture() {
@@ -62,4 +62,43 @@ it('inherits the host when unset and fails unavailable routes before recording a
   resolve.mockRejectedValueOnce(new Error('unknown provider'))
   await expect(initializeRoleModel(ctx, agent, { provider: 'unknown', model: 'x' })).rejects.toThrow('unknown provider')
   expect(agent.session.snapshotEvents().some(event => event.type === 'model/selection')).toBe(false)
+})
+it('switches an existing Session that still follows the saved role model', async () => {
+  const { ctx, agent, request, record, flush } = await fixture()
+  await initializeRoleModel(ctx, agent, { provider: 'worker', model: 'one' })
+  await ctx.systemPrompt.assemble()
+  const first = await request()
+  expect(first).toEqual({ provider: 'worker', model: 'one' })
+  record(first)
+  flush.mockClear()
+  const switched = await retargetRoleModel(ctx, agent, { provider: 'worker', model: 'two' }, { provider: 'worker', model: 'one' })
+  expect(switched).toBe(true)
+  expect(flush).toHaveBeenCalledOnce()
+  expect(agent.session.snapshotEvents().filter(event => event.type === 'model/selection').at(-1)?.data)
+    .toEqual({ provider: 'worker', model: 'two' })
+  await ctx.systemPrompt.assemble()
+  expect(await request()).toEqual({ provider: 'worker', model: 'two' })
+})
+it('keeps a model chosen inside the Session when the saved role model changes', async () => {
+  const { ctx, agent } = await fixture()
+  await initializeRoleModel(ctx, agent, { provider: 'worker', model: 'one' })
+  const event = agent.session.append('request/header', { header: { config: { provider: 'manual', model: 'three' } }, reason: 'initial' })
+  ctx.emit('session/event', agent.session, event)
+  expect(currentRoleSelection(agent)).toEqual({ provider: 'manual', model: 'three' })
+  expect(await retargetRoleModel(ctx, agent, { provider: 'worker', model: 'two' }, { provider: 'worker', model: 'one' })).toBe(false)
+  expect(agent.session.snapshotEvents().filter(item => item.type === 'model/selection')).toHaveLength(1)
+})
+it('does not switch a Session already running the saved role model', async () => {
+  const { ctx, agent, flush } = await fixture()
+  await initializeRoleModel(ctx, agent, { provider: 'worker', model: 'one' })
+  flush.mockClear()
+  expect(await retargetRoleModel(ctx, agent, { provider: 'worker', model: 'one' }, { provider: 'worker', model: 'one' })).toBe(false)
+  expect(flush).not.toHaveBeenCalled()
+})
+it('reads a pending selection after an older request header, so a second save can switch it', async () => {
+  const { ctx, agent } = await fixture()
+  agent.session.append('request/header', { header: { config: { provider: 'worker', model: 'old' } }, reason: 'initial' })
+  agent.session.append('model/selection', { provider: 'worker', model: 'pending' })
+  expect(currentRoleSelection(agent)).toEqual({ provider: 'worker', model: 'pending' })
+  expect(await retargetRoleModel(ctx, agent, { provider: 'worker', model: 'next' }, { provider: 'worker', model: 'pending' })).toBe(true)
 })

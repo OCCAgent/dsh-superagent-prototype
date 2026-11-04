@@ -99,3 +99,14 @@ it('records nothing for a pause that changes nothing, refuses a sync while setup
   vi.mocked(Setup.prototype.configured).mockRestore()
   expect(() => settings.block('source:x')).toThrow(new UserError('unknownBlock', { block: 'source:x' }))
 })
+it('switches the live main Session to a saved assessor model instead of requiring its Session file to be deleted', async () => {
+  h = await startRuntime()
+  const master = h.agents.get(h.runtime.masterId) as unknown as { session: { append: ReturnType<typeof vi.fn> } }
+  master.session.append.mockClear()
+  const { settings, store } = h.runtime
+  const model = { provider: 'assessor-provider', model: 'assessor-model' }
+  await settings.save('eval', { ...store.settings().eval, model }, store.blockRevision('eval'), 'panel')
+  expect(master.session.append).toHaveBeenCalledWith('model/selection', model)
+  // The Session stays the same; only its model selection is recorded for the next request.
+  expect(h.agents.get(h.runtime.masterId)).toBe(master)
+})

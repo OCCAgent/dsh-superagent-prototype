@@ -13,7 +13,8 @@ import { AgentDelivery, messageId } from './delivery.ts'
 import type { Effects } from './effects.ts'
 import type { Variable } from './execution-environment.ts'
 import { RetryHealth } from './retry-health.ts'
-import { initializeRoleModel } from './role-models.ts'
+import type { RoleModel } from '../policy.ts'
+import { initializeRoleModel, retargetRoleModel } from './role-models.ts'
 import { bundledSkills } from './skill-files.ts'
 import { SKILL_PREFIX, type PromptVersion, type Prompts } from './prompts.ts'
 import type { Store } from './store.ts'
@@ -152,6 +153,16 @@ export class Sessions {
     ctx.permissionPresets.set(result.agent.session, 'danger-full-access')
     await ctx.sessionController.rename({ sessionId: id as SessionId, title })
     return result.agent
+  }
+  /**
+   * Switch the live main Session to a saved assessor model for its next request while it still follows `previous`, leaving a
+   * different model chosen inside the Session alone. Returns whether the main Session was switched; a not-yet-created main
+   * Session is seeded by `ensure` when it starts.
+   */
+  async retargetMainModel(previous: RoleModel | null, next: RoleModel | null): Promise<boolean> {
+    const result = await this.ctx.sessionController.resolveAgent(this.host.masterId as SessionId)
+    if ('error' in result) return false
+    return retargetRoleModel(this.ctx, result.agent, next, previous)
   }
   /** Returns whether `sessionId` already holds the message delivered under `requestId`, or `false` if the session does not exist. */
   async holds(sessionId: string, requestId: string): Promise<boolean> {
