@@ -63,8 +63,8 @@ export interface SettingsHost {
   /** DSH Cordis context used to validate and resolve role models. */
   readonly context: Context
   readonly lifetime: AbortSignal
-  /** Session manager through which the main Session is notified of saved settings. */
-  readonly sessions: Pick<Sessions, 'notify' | 'delivery'>
+  /** Session manager through which the main Session is notified of saved settings and switched to a saved assessor model. */
+  readonly sessions: Pick<Sessions, 'notify' | 'delivery' | 'retargetMainModel'>
   /** Source host passed to source kinds' policy syncs and label refreshes. */
   readonly sourceHost: SourceHost
   /** Setup state, account/command checks, and restart trigger when setup-read fields change. */
@@ -184,6 +184,11 @@ export class Settings {
       if (origin !== 'tool') sessions.notify(...settingsNotice(block, changedPaths(old, settings)))
       if (before !== after) engine.policyChanged(before, after, effects)
     })
+    // A saved assessor model reaches the live main Session at once, so switching models no longer needs deleting its Session.
+    if (block === 'eval' && JSON.stringify(old.eval.model) !== JSON.stringify(settings.eval.model)) {
+      try { await sessions.retargetMainModel(old.eval.model, settings.eval.model) }
+      catch (error) { this.host.context.logger.warn('settings: the assessor model was saved but the main Session was not switched: %s', String(error)) }
+    }
     // Rewrite worker command shims immediately when `blockedCommands` changes.
     const blocked = settings.executor.blockedCommands
     const changed = blocked.join(' ') !== old.executor.blockedCommands.join(' ')
