@@ -77,6 +77,13 @@ th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowr
 .tag.part{background:#FBF0CF;color:#8A6A0B}
 .tag{white-space:nowrap}
 .log-table .type{white-space:nowrap}
+.problem{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1rem 1.2rem;margin:.8rem 0}
+.problem header{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:.45rem}
+.problem time{font:700 .75rem/1 var(--mono);color:var(--muted)}
+.problem .ph{margin:0 0 .55rem;color:var(--ink);font-weight:600}
+.problem dl{display:grid;grid-template-columns:4rem 1fr;gap:.25rem .8rem;margin:0;font-size:.88rem}
+.problem dt{color:var(--brand-dark);font-weight:700}
+.problem dd{margin:0;color:#5C4B38}
 .tag.now{background:#3A2A1A;color:#FFF9EF}
 .site-foot{border-top:1px solid var(--line);padding:2rem 0 2.4rem;color:var(--muted);font-size:.85rem}
 .foot-in{display:flex;justify-content:space-between;gap:1rem 2rem;flex-wrap:wrap}
@@ -101,11 +108,12 @@ th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowr
     <div class="wrap head-in">
       <a class="brand" href="index.html"><span class="brand-mark">SA</span><span>Super-agent 学习站</span></a>
       <nav class="nav" aria-label="主导航">
-                <a href="index.html">首页</a>
+        <a href="index.html">首页</a>
         <a href="concept.html">概念(A论文)</a>
         <a href="evolution.html">进化(B论文)</a>
         <a href="feynman.html">费曼拆解</a>
         <a href="test-log.html" aria-current="page">测试日志</a>
+        <a href="prototype.html">原型</a>
       </nav>
     </div>
   </header>
@@ -268,6 +276,56 @@ th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowr
             </tbody>
           </table>
         </div>
+      </section>
+
+      <section>
+        <h2>持续问题日志</h2>
+        <p class="section-lede">今日最新 5 条；完整历史与字段说明见 <a href="problems.md">problems.md</a>。</p>
+        <article class="problem">
+          <header><span class="tag ok">已解决</span><time datetime="2026-11-04">2026-11-04</time></header>
+          <p class="ph">PR #9 一直显示「可合并」但合不了</p>
+          <dl>
+            <dt>根因</dt><dd>main 前进到 <code>85bd2e3</code> 后 PR base 仍是 <code>0f9be20</code>，<code>docs/007</code> 两边各加一行形成冲突。</dd>
+            <dt>处置</dt><dd>合入 main、保留两行、跑测试后合并。</dd>
+            <dt>证据</dt><dd>PR #9 / <code>93504d6</code></dd>
+          </dl>
+        </article>
+        <article class="problem">
+          <header><span class="tag part">已绕过</span><time datetime="2026-11-04">2026-11-04</time></header>
+          <p class="ph"><code>git push</code> 报 <code>could not read Username</code>，沙箱内 <code>gh auth status</code> 失效</p>
+          <dl>
+            <dt>根因</dt><dd>沙箱进程读不到 macOS 钥匙串，gh 取不到已有凭据（宿主机上凭据有效）。</dd>
+            <dt>处置</dt><dd>用宿主机权限执行推送/合并。</dd>
+            <dt>证据</dt><dd>本次会话日志</dd>
+          </dl>
+        </article>
+        <article class="problem">
+          <header><span class="tag part">恢复中</span><time datetime="2026-11-04">2026-11-04</time></header>
+          <p class="ph"><code>ab27</code> 工单停在 <code>LlmError: DeepSeek Messages stream ended</code></p>
+          <dl>
+            <dt>根因</dt><dd>DeepSeek 流中断；工单进入 idle，<code>retry</code> 对 idle 不生效。</dd>
+            <dt>处置</dt><dd>服务重启触发恢复注记，新 Assignment 用 DeepSeek 继续。</dd>
+            <dt>证据</dt><dd>工单 <code>ab27e4b5</code></dd>
+          </dl>
+        </article>
+        <article class="problem">
+          <header><span class="tag ok">已解决</span><time datetime="2026-11-04">2026-11-04</time></header>
+          <p class="ph">部署代码落后 main 21 个提交</p>
+          <dl>
+            <dt>根因</dt><dd>服务跑在 <code>Documents/.../dsh-superagent</code>（<code>6337fc8</code>），工作克隆在 <code>~/src/...</code>。</dd>
+            <dt>处置</dt><dd>IPv4 修复走 PR #11；profile 链接切到 fork main；重启生效。</dd>
+            <dt>证据</dt><dd>PR #11 / <code>43c69f4</code></dd>
+          </dl>
+        </article>
+        <article class="problem">
+          <header><span class="tag part">观察中</span><time datetime="2026-11-04">2026-11-04</time></header>
+          <p class="ph">全量 <code>pnpm check</code> 13 个超时</p>
+          <dl>
+            <dt>根因</dt><dd>并行/本机负载，单独复跑均通过。</dd>
+            <dt>处置</dt><dd>记录为 flaky，后续补基线对比。</dd>
+            <dt>证据</dt><dd>four-features worktree</dd>
+          </dl>
+        </article>
       </section>
 
       <section>
