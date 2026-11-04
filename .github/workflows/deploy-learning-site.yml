@@ -1,0 +1,55 @@
+name: Deploy learning-site to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'learning-site/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: learning-site-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Build the Pages tree
+        run: |
+          mkdir -p _site
+          cp -R learning-site _site/learning-site
+          rm -rf _site/learning-site/evidence _site/learning-site/.shot _site/learning-site/shot.py _site/learning-site/.gitignore
+          mkdir -p _site/experiments
+          cp -R experiments/four-features _site/experiments/four-features
+          cat > _site/index.html <<'HTML'
+          <!DOCTYPE html>
+          <html lang="zh-CN">
+          <head>
+            <meta charset="utf-8">
+            <meta http-equiv="refresh" content="0; url=learning-site/">
+            <link rel="canonical" href="learning-site/">
+            <title>Super-agent 学习站</title>
+          </head>
+          <body>
+            <p><a href="learning-site/">进入 Super-agent 学习站</a></p>
+          </body>
+          </html>
+          HTML
+
+      - name: Publish to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_site
+          publish_branch: gh-pages
+          force_orphan: true
+          user_name: OCCAgent
+          user_email: 351394161+OCCAgent@users.noreply.github.com
+          commit_message: "deploy: learning-site ${{ github.sha }}"

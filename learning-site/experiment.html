@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>实验全记录 · Super-agent 学习站</title>
+  <meta name="description" content="三层四阶段的完整测试过程：环境核对、六个 WU、四特征验证、问题日志与 Pages 发布。">
+  <style>
+:root{
+  --brand:#B8734A; --brand-dark:#8F5232; --gold:#D4A017; --ink:#3A2A1A;
+  --muted:#7C6A56; --paper:#FBF7F0; --card:#FFFDF9; --line:#E7DCCB;
+  --shadow:0 10px 30px rgba(58,42,26,.08);
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Songti SC","Noto Serif CJK SC",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.75 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--brand-dark);text-underline-offset:3px}
+a:hover{color:var(--brand)}
+.skip{position:absolute;left:-999px;top:0;background:var(--ink);color:#fff;padding:.6rem 1rem;z-index:99;border-radius:0 0 8px 0}
+.skip:focus{left:0;top:0}
+.wrap{width:min(1080px,92vw);margin:0 auto}
+.site-head{position:sticky;top:0;z-index:10;background:rgba(251,247,240,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.head-in{display:flex;align-items:center;justify-content:space-between;gap:1rem 1.5rem;min-height:68px;flex-wrap:wrap;padding:.55rem 0}
+.brand{display:inline-flex;align-items:center;gap:.65rem;text-decoration:none;color:var(--ink);font-family:var(--serif);font-weight:700;letter-spacing:.01em}
+.brand-mark{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--brand);color:#fff;font:700 12px/1 var(--sans);letter-spacing:.08em}
+.nav{display:flex;gap:.2rem;flex-wrap:wrap;align-items:center}
+.nav a{padding:.34rem .68rem;border-radius:999px;text-decoration:none;color:var(--muted);font-size:.9rem;white-space:nowrap;border:1px solid transparent}
+.nav a:hover{color:var(--ink);background:#F4EBDD}
+.nav a[aria-current="page"]{background:var(--ink);color:#FFF9EF;border-color:var(--ink)}
+main{padding:0 0 4rem}
+.hero{padding:3.4rem 0 2.6rem}
+.eyebrow{display:inline-flex;align-items:center;gap:.55rem;font:700 .72rem/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--brand);margin:0 0 1rem}
+.eyebrow::before{content:"";width:26px;height:2px;background:var(--gold)}
+h1,h2,h3{font-family:var(--serif);line-height:1.28;margin:0 0 .6rem;font-weight:700}
+h1{font-size:clamp(2rem,4.6vw,3.05rem);letter-spacing:-.01em;margin-bottom:.5rem}
+h2{font-size:clamp(1.3rem,2.5vw,1.75rem);margin-top:3.2rem;padding-top:1.3rem;border-top:1px solid var(--line)}
+h3{font-size:1.06rem;margin-top:0}
+.lede{font-size:1.08rem;color:var(--muted);max-width:64ch;margin:.5rem 0 0}
+.hero .lede{font-size:1.16rem}
+.meta{display:flex;gap:1.2rem;flex-wrap:wrap;margin:1.4rem 0 0;padding:0;list-style:none;color:var(--muted);font-size:.82rem}
+.meta li{display:inline-flex;align-items:center;gap:.42rem}
+.meta li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--gold)}
+.crumbs{font-size:.82rem;color:var(--muted);padding:1.1rem 0 0}
+.crumbs a{text-decoration:none}
+.crumbs span{color:var(--line)}
+.tag{display:inline-block;padding:.14rem .55rem;border-radius:999px;background:#F3E7D6;color:var(--brand-dark);font-size:.72rem;font-weight:700;letter-spacing:.04em;vertical-align:middle}
+.tag.gold{background:#FBF0CF;color:#8A6A0B}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem;margin:1.6rem 0}
+.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.25rem 1.3rem;text-decoration:none;color:inherit;box-shadow:var(--shadow);transition:transform .15s ease,border-color .15s ease}
+.card:hover{transform:translateY(-2px);border-color:var(--brand)}
+.card h3{margin-bottom:.35rem}
+.card p{margin:0;color:var(--muted);font-size:.94rem}
+.card .go{display:inline-block;margin-top:.85rem;color:var(--brand);font-weight:700;font-size:.84rem;letter-spacing:.02em}
+.steps{list-style:none;padding:0;margin:1.5rem 0;counter-reset:step;display:grid;gap:.75rem}
+.steps li{position:relative;padding:1rem 1.1rem 1rem 3.4rem;background:var(--card);border:1px solid var(--line);border-radius:12px;color:var(--muted);font-size:.95rem}
+.steps li::before{counter-increment:step;content:counter(step,decimal-leading-zero);position:absolute;left:1.05rem;top:1.05rem;font:700 .78rem/1 var(--mono);color:var(--brand);letter-spacing:.04em}
+.steps li strong{color:var(--ink);font-family:var(--serif);font-size:1rem;display:block;margin-bottom:.1rem}
+.pending{margin:1.4rem 0;padding:1rem 1.2rem;border:1px dashed var(--line);border-radius:12px;background:#FCF8F1;color:var(--muted);font-size:.94rem}
+.pending b{color:var(--brand-dark)}
+.note{margin:2rem 0;padding:1rem 1.2rem;border-left:4px solid var(--gold);background:#FFF8E8;border-radius:0 10px 10px 0;color:#5A4528;font-size:.94rem}
+.note b{color:var(--ink)}
+.prose{max-width:68ch}
+.prose p{margin:.8rem 0;color:#5C4B38}
+.table-wrap{overflow-x:auto;margin:1.2rem 0;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{padding:.65rem .8rem;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowrap}
+.definition{margin:2.2rem 0 0;padding:1.4rem 1.6rem;background:linear-gradient(135deg,#FFF8E8,#FFFDF9);border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:0 14px 14px 0}
+.def-kicker{display:inline-block;font:700 .7rem/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--brand);margin-bottom:.5rem}
+.definition p{margin:0;font-family:var(--serif);font-size:1.12rem;line-height:1.75;color:var(--ink)}
+.section-lede{max-width:62ch;color:var(--muted);margin:.2rem 0 0}
+.layer{display:inline-block;font:700 .7rem/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--brand);margin-bottom:.45rem}
+.test-grid .card{border-top:3px solid var(--gold)}
+.page-index{list-style:none;padding:0;margin:1.4rem 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:.6rem 1.4rem}
+.page-index li{display:flex;flex-direction:column;padding:.8rem 0;border-bottom:1px solid var(--line)}
+.page-index a{font-family:var(--serif);font-weight:700;text-decoration:none;color:var(--ink);font-size:1.02rem}
+.page-index a:hover{color:var(--brand)}
+.page-index span{color:var(--muted);font-size:.86rem}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin:1.4rem 0}
+.facts>div{padding:1rem 1.2rem;background:var(--card);border:1px solid var(--line);border-top:2px solid var(--gold);border-radius:0 0 10px 10px}
+.facts span{display:block;font:700 .7rem/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--brand);margin-bottom:.35rem}
+.facts p{margin:0;color:var(--ink);font-size:.95rem}
+.site-foot{border-top:1px solid var(--line);padding:2rem 0 2.4rem;color:var(--muted);font-size:.85rem}
+.foot-in{display:flex;justify-content:space-between;gap:1rem 2rem;flex-wrap:wrap}
+.foot-in p{margin:0}
+.foot-in a{color:var(--brand-dark)}
+@media (max-width:640px){
+  .hero{padding:2.4rem 0 2rem}
+  .head-in{min-height:0;padding:.7rem 0}
+  .nav{width:100%;gap:.15rem}
+  .nav a{padding:.3rem .55rem;font-size:.84rem}
+  h2{margin-top:2.4rem}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .card{transition:none}
+}
+
+.tag.ok{background:#E6F0E2;color:#3E6B34}
+.tag.no{background:#F6E3DE;color:#8A3A2A}
+.tag.part{background:#FBF0CF;color:#8A6A0B}
+.timeline td:first-child{white-space:nowrap;color:var(--muted);font-size:.84rem}
+.tag{white-space:nowrap}
+.log-table .type{white-space:nowrap}
+.phase-tag{display:inline-block;padding:.12rem .5rem;border-radius:999px;background:#3A2A1A;color:#FFF9EF;font-size:.72rem;font-weight:700;letter-spacing:.04em}
+</style>
+</head>
+<body>
+  <a class="skip" href="#main">跳到正文</a>
+  <header class="site-head">
+    <div class="wrap head-in">
+      <a class="brand" href="index.html"><span class="brand-mark">SA</span><span>Super-agent 学习站</span></a>
+      <nav class="nav" aria-label="主导航">
+        <a href="index.html">首页</a>
+        <a href="concept.html">概念(A论文)</a>
+        <a href="evolution.html">进化(B论文)</a>
+        <a href="feynman.html">费曼拆解</a>
+        <a href="test-log.html">测试日志</a>
+        <a href="prototype.html">原型</a>
+        <a href="experiment.html" aria-current="page">实验</a>
+      </nav>
+    </div>
+  </header>
+  <main id="main">
+    <div class="wrap">
+      <p class="crumbs"><a href="index.html">首页</a> <span>/</span> 实验全记录</p>
+      <section class="hero">
+        <p class="eyebrow">实验 · 全过程</p>
+        <h1>一次真实测试，从环境到发布</h1>
+        <p class="lede">三层递进、四阶段门禁。从 11 月 3 日的环境核对与六个 WU，到 11 月 4 日的四特征验证、问题日志与 Pages 发布，全过程与证据都收在这里。</p>
+        <ul class="meta">
+          <li>3 层测试</li>
+          <li>4 个阶段</li>
+          <li>2026-11-03 ~ 11-04</li>
+        </ul>
+      </section>
+
+      <section>
+        <div class="note"><b>怎么读：</b>本页是「全过程索引」；逐条细节与原始数字在 <a href="test-log.html">测试日志</a>，问题记录在 <a href="problems.md">problems.md</a>，论文到实现的对照在 <a href="prototype.html">原型页</a>。本页不重复所有表格，只把脉络、阶段门禁和结论串起来。</div>
+      </section>
+
+      <section>
+        <h2>三层 × 四阶段</h2>
+        <p class="section-lede">测试不按功能列表平铺，而是按论文的理论层次递进；每阶段有硬性门禁，不通过不进下一阶段。</p>
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead><tr><th>层</th><th>依据</th><th>验证对象</th><th>测试载体</th><th>触发通道</th></tr></thead>
+            <tbody>
+              <tr><td><b>第一层 · Harness 自改进</b></td><td>Self-Harness（B 论文）</td><td>模型 + harness 的三步改进闭环</td><td>固定终端任务集</td><td>本地脚本，不经 Agent</td></tr>
+              <tr><td><b>第二层 · Super-agent 四特征</b></td><td>Exploring Super-agent Design（A 论文）</td><td>Router/Worker、Trigger、存算分离、Watchdog</td><td>学习网站搭建（6 个 WU）</td><td>飞书 @OCCLab + GitHub @OCCAgent</td></tr>
+              <tr><td><b>第三层 · 端到端复合场景</b></td><td>产品化实践 + Acceptance</td><td>入口 → 派活 → 执行 → PR → 汇报 → 人决策</td><td>学习网站整合发布</td><td>飞书为主，GitHub 承载代码与 PR</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead><tr><th>阶段</th><th>内容</th><th>门禁</th></tr></thead>
+            <tbody>
+              <tr><td>阶段 0 · 环境核对</td><td>服务、通道、模型、仓库四样全部就位</td><td>任一红灯 → 先修复</td></tr>
+              <tr><td>阶段 1 · Harness 基线</td><td>第一层自改进闭环跑通</td><td>无被采纳的 harness 改进 → 停（零采纳需按 E1-6 说明）</td></tr>
+              <tr><td>阶段 2 · 四特征验证</td><td>第二层：SuperAgent 搭建学习网站</td><td>任一特征场景不通过 → 停</td></tr>
+              <tr><td>阶段 3 · 复合场景</td><td>第三层端到端全链路 + 发布</td><td>闭环断链或人介入点失控 → 停</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>时间线：两天里发生了什么</h2>
+        <div class="table-wrap">
+          <table class="log-table timeline">
+            <thead><tr><th>时间</th><th>事件</th><th>证据</th></tr></thead>
+            <tbody>
+              <tr><td>11-03 09:50</td><td>飞书通道验证：真 @ → 回复「在的」</td><td>trigger `7a86f32f`；E0-4</td></tr>
+              <tr><td>11-03 ~10:30</td><td>主会话模型切换：deepseek-v4-pro → deepseek-flash（停→备份→删→重启→验证）</td><td>E0-2；阶段 0 报告</td></tr>
+              <tr><td>11-03 10:34–11:33</td><td>GitHub 通道打通，修复两个配置死锁</td><td>E0-5；PR #11 之前的配置问题</td></tr>
+              <tr><td>11-03 11:46</td><td>阶段 2 总纲 @OCCLab → 建工单 → WU-1 开始</td><td>工单 `8f6f1d62f6dc`</td></tr>
+              <tr><td>11-03 12:19–14:42</td><td>WU-1 ~ WU-6 六个单元依次/并行完成，PR #3–#8 全部合并</td><td>GitHub PR；测试日志进度表</td></tr>
+              <tr><td>11-03 23:36</td><td>四特征逐项验证快照：3/4 成立，连续性 C4 失败</td><td>`results/live-baseline.json`</td></tr>
+              <tr><td>11-04 02:52–03:31</td><td>当日更新 WU-7/8/9：原型页、问题日志、费曼页补充；PR #13 合并</td><td>PR #13</td></tr>
+              <tr><td>11-04 03:45+</td><td>建立 gh-pages、启用 Pages、加自动部署 workflow</td><td>PR #14；线上地址</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>阶段 0 · 环境核对</h2>
+        <p class="section-lede">六项判据全绿才进入阶段 1。详细操作见阶段 0 执行报告。</p>
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead><tr><th>判据</th><th>记录</th><th>结果</th></tr></thead>
+            <tbody>
+              <tr><td>E0-1 服务健康</td><td>所有子系统 ready（13/13）</td><td><span class="tag ok">通过</span></td></tr>
+              <tr><td>E0-2 主会话模型</td><td>deepseek-v4-pro → deepseek-flash（停→备份→删→重启→验证）</td><td><span class="tag ok">通过</span></td></tr>
+              <tr><td>E0-3 状态库</td><td>trigger / decision / ticket / outbox 可读（共 9 表）</td><td><span class="tag ok">通过</span></td></tr>
+              <tr><td>E0-4 飞书通道</td><td>真 @ → 回复「在的」；@ 提问建单</td><td><span class="tag ok">通过</span></td></tr>
+              <tr><td>E0-5 GitHub 通道</td><td>accept(explicitRouted) → 工单 completed；修复两个配置死锁</td><td><span class="tag ok">通过</span></td></tr>
+              <tr><td>E0-6 仓库占位</td><td>learning-site 占位已 push 至 fork 仓库</td><td><span class="tag ok">通过</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>阶段 1 · Harness 基线</h2>
+        <p class="section-lede">原计划用固定终端任务集跑「轨迹 → 弱点 → 提案 → 回归采纳」。本轮没有单独跑脚本实验；可复用的轨迹来自阶段 2 的真实运行。</p>
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead><tr><th>发现</th><th>类型</th><th>提案</th><th>采纳状态</th></tr></thead>
+            <tbody>
+              <tr><td>F1 判定重复/无新工作后无群内回执</td><td class="type">弱点</td><td>dropped 必回执；任务模板加说明</td><td><span class="tag no">未采纳</span></td></tr>
+              <tr><td>F2 PR 合并终止 assignment，连续派发有丢单风险</td><td class="type">弱点</td><td>合并不立即结束；丢失单元自动重投</td><td><span class="tag no">未采纳</span></td></tr>
+              <tr><td>F3 不 @ 也入库 trigger，过滤在下一层</td><td class="type">弱点</td><td>修正 A2 判据；mention-only 过滤</td><td><span class="tag part">部分采纳</span></td></tr>
+              <tr><td>F4 Worker 识别重复、拒绝无效工作</td><td class="type">优点</td><td>沉淀为使用姿势</td><td><span class="tag ok">已采纳</span></td></tr>
+              <tr><td>F5 同 Thread 插话直通，不碎片化建单</td><td class="type">优点</td><td>沉淀为使用姿势</td><td><span class="tag ok">已采纳</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note"><b>结论：</b>代码级采纳 0 条；判据修正 1 条、行为规范 2 条。按方案 E1-6，「无一采纳 + 原因分析」是合法结果，伪造采纳率是红线；F1/F2 的修复验证留待阶段 3 剧本 B。</p>
+      </section>
+
+      <section>
+        <h2>阶段 2 · 六个 WU</h2>
+        <p class="section-lede">六个单元分别成 PR，由飞书逐条触发、Worker 在隔离目录执行。</p>
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead><tr><th>单元</th><th>交付</th><th>PR</th><th>状态</th></tr></thead>
+            <tbody>
+              <tr><td><b>WU-1</b></td><td>5 页骨架 + README + 导航 + 视觉 token</td><td>#3</td><td><span class="tag ok">已合并</span></td></tr>
+              <tr><td><b>WU-2</b></td><td>首页：一句话定义、三层测试导航、项目背景</td><td>#4</td><td><span class="tag ok">已合并</span></td></tr>
+              <tr><td><b>WU-3</b></td><td>概念页：四特征、五模块、架构示意</td><td>#5</td><td><span class="tag ok">已合并</span></td></tr>
+              <tr><td><b>WU-4</b></td><td>进化页：三步闭环、held-in/held-out、术语表</td><td>#6</td><td><span class="tag ok">已合并</span></td></tr>
+              <tr><td><b>WU-5</b></td><td>费曼页：2×2 对比、10 道自测题</td><td>#7</td><td><span class="tag ok">已合并</span></td></tr>
+              <tr><td><b>WU-6</b></td><td>测试日志 + README 打开/继续测试说明</td><td>#8</td><td><span class="tag ok">已合并</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>第二层 · 四特征验证</h2>
+        <p class="section-lede">每个特征至少 2 个用例（典型 + 扰动），连续与主动各加 1 个负向用例；退出判据是至少 3/4 成立，失败必须归因。</p>
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead><tr><th>特征</th><th>结果</th><th>关键证据</th></tr></thead>
+            <tbody>
+              <tr><td>连续 Continuity</td><td><span class="tag no">不成立（部分）</span></td><td>同 Thread / PR Thread 追加可归属；无结构关联的跨群追加不会自动归属（C4，架构层：Correlation 只补上下文、不路由）</td></tr>
+              <tr><td>高效 Productivity</td><td><span class="tag ok">成立</span></td><td>1 槽位下 5 个任务立即接单并排队；运行中插话不被阻塞；0 串扰</td></tr>
+              <tr><td>主动 Proactivity</td><td><span class="tag ok">成立</span></td><td>CI 失败在规则授权下无 @ 建单；中性讨论 0 误触发；CI 成功 0 建单</td></tr>
+              <tr><td>持久 Persistence</td><td><span class="tag ok">成立</span></td><td>worker 中断与派工未回收均可恢复；0 人工步骤、0 重复工单</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note"><b>Token 成本：</b>learning-site 6 个 WU 共 52,284,551 total tokens，其中 cache read 51,922,304（99.3%），约 8.71M / WU。这是真实运行的观测值，不是基准；样本小，不能据此宣称 p50/p95。</p>
+      </section>
+
+      <section>
+        <h2>阶段 3 / 第三层 · 发布与复盘</h2>
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead><tr><th>事项</th><th>结果</th><th>证据</th></tr></thead>
+            <tbody>
+              <tr><td>当日更新 WU-7/8/9</td><td>原型页、持续问题日志、费曼补充与首页入口；PR #13 合并</td><td>PR #13</td></tr>
+              <tr><td>问题日志</td><td>今日 5 条：PR 冲突、沙箱凭据、DeepSeek 流中断、部署落后、pnpm 超时</td><td><a href="problems.md">problems.md</a></td></tr>
+              <tr><td>GitHub Pages</td><td>gh-pages + Pages + 自动部署 workflow；线上地址已可用</td><td>PR #14；<a href="https://occagent.github.io/dsh-superagent-prototype/learning-site/">线上站点</a></td></tr>
+              <tr><td>发布验收</td><td>5 页自检 PASS；建议发布</td><td>RELEASE.md</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>证据边界</h2>
+        <div class="prose">
+          <p><b>能证明：</b>这套调度与路由机制能在真实飞书/GitHub 环境里跑通多 WU 交付；四个特征中有三个在本环境成立；发布链路可用。</p>
+          <p><b>不能证明：</b>真实研发效率提升、代码质量提升、跨团队泛化。A 论文的实验是合成负载（约 300 条消息、约 20 个工作请求、耗时工具模拟编码、每配置 5 次）；本轮四特征验证是单部署、小样本观测，不是受控实验。所有数字只作为本环境的第一份可复现基线。</p>
+          <p><b>连续性缺口：</b>3/4 不等于「差不多」；C4 失败有明确架构归因，修复需要新增「按语义匹配并 attach」或要求来源提供业务键，属于后续架构变更，不在本轮发布范围内。</p>
+        </div>
+      </section>
+
+      <section>
+        <h2>记录索引</h2>
+        <div class="grid">
+          <a class="card" href="test-log.html">
+            <h3>测试日志 <span class="tag">细节</span></h3>
+            <p>六个 WU、第一层采纳记录、第二层逐项验证、阶段 0 判据与问题日志。</p>
+            <span class="go">进入测试日志 →</span>
+          </a>
+          <a class="card" href="problems.md">
+            <h3>问题日志 <span class="tag gold">六字段</span></h3>
+            <p>今日五条问题的现象、根因、处置、状态与证据。</p>
+            <span class="go">打开 problems.md →</span>
+          </a>
+          <a class="card" href="prototype.html">
+            <h3>原型页 <span class="tag">论文到实现</span></h3>
+            <p>概念映射、七个阶段、三处偏离、Watchdog 缺口与 L1–L5。</p>
+            <span class="go">进入原型页 →</span>
+          </a>
+        </div>
+      </section>
+    </div>
+  </main>
+  <footer class="site-foot">
+    <div class="wrap foot-in">
+      <p>阶段 2 · 学习站 · 实验全记录</p>
+      <p><a href="index.html">回到首页</a> · 静态 HTML · 无外部依赖</p>
+    </div>
+  </footer>
+</body>
+</html>

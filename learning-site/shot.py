@@ -40,6 +40,7 @@ PAGES = [
     ("feynman.html", "费曼拆解"),
     ("test-log.html", "测试日志"),
     ("prototype.html", "原型"),
+    ("experiment.html", "实验"),
 ]
 NAV_LABELS = [label for _, label in PAGES]
 VIEWPORT = (1280, 800)
