@@ -124,12 +124,13 @@ th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowr
       <section class="hero">
         <p class="eyebrow">记录 · 测试日志</p>
         <h1>测试日志</h1>
-        <p class="lede">阶段 0 的六项判据、阶段 2 的六个 WU、第一层 Harness 自改进与第二层四特征逐项验证，以及如何继续测试，都记在这里。</p>
+        <p class="lede">阶段 0 的六项判据、阶段 2 的六个 WU、第一层 Harness 自改进、第二层四特征逐项验证、实时双群连续性验证，以及如何继续测试，都记在这里。</p>
         <ul class="meta">
           <li>6 个 WU</li>
           <li>阶段 0 六项判据</li>
           <li>第一层实测</li>
           <li>第二层 3/4 成立</li>
+          <li>实时跨群续接已验证</li>
         </ul>
       </section>
 
@@ -253,10 +254,73 @@ th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowr
             </tbody>
           </table>
         </div>
-        <p class="note"><b>架构层归因（连续 C4）：</b>实现只用三种结构关系建立归属——发起 Thread、工单跟随的 PR Thread、同一 Trigger 同属多个 Thread。Correlation 只补上下文、不路由；attach 要求消息显式指向工单。因此 C4“无显式引用的跨渠道追加”不是模型偶然失败，而是当前架构没有这条路径。按第三层入口判据，“群聊追加要求关联到现有 Ticket”当前不满足自动语义归属；操作者已决定先以“同一 Thread 追加”作为判据 4 开跑，跨渠道归属列为后续改进。</p>
-        <p class="note"><b>连续深挖：</b>Ticket 才是持久实体。PR 合并、工单结束后，人在 PR 评论追加要求可恢复同一工单（Mandate 不变）；删掉 worker Session 后重启，Ticket/目录/progress 报告保留、Session 重建；两个工单的跟进 0 串任务。边界：CI 不能唤醒结束工单；群 B 更新只有在 router 显式 attach 时才进入群 A 工单，跨群/跨端自动归属不存在。七层分析见仓库 <code>experiments/four-features/continuity-deep-dive.md</code>。</p>
+        <p class="note"><b>架构层归因（连续 C4）：</b>实现只用三种结构关系建立归属——发起 Thread、工单跟随的 PR Thread、同一 Trigger 同属多个 Thread。Correlation 只补上下文、不路由；attach 要求消息显式指向工单。因此 C4 在确定性基线中不成立：没有 Router 判断或显式指向时，新群消息不会自动归属。实时 Router 的语义 attach 可以补上这条路径（见下节）；按第三层入口判据，操作者已决定先以“同一 Thread 追加”作为判据 4 开跑，跨渠道归属列为后续改进。</p>
+        <p class="note"><b>连续深挖：</b>Ticket 才是持久实体。PR 合并、工单结束后，人在 PR 评论追加要求可恢复同一工单（Mandate 不变）；删掉 worker Session 后重启，Ticket/目录/progress 报告保留、Session 重建；两个工单的跟进 0 串任务。边界：CI 不能唤醒结束工单；群 B 更新可由 Router 语义 attach 进入群 A 工单（实时用例已验证），但跨群/跨端的结构化自动归属不存在，attach 依赖 Router 判断。七层分析见仓库 <code>experiments/four-features/continuity-deep-dive.md</code>。</p>
         <p class="section-lede"><b>Token 成本（与延迟同等重要）：</b>learning-site 6 个 WU 共 52,284,551 total tokens，其中 cache read 51,922,304（99.3%），约 8.71M / WU。第三层暂定 cap = 3 × 基线 ≈ 26.1M total tokens / 工作单元；未收敛即超预算时转人工复核，不自动重试。</p>
         <p class="pending"><b>数据说明：</b>机制基线是可复现的 Runtime 级实验（fake DSH host、脚本化 Router/worker 步骤），只验证协调机制；真实运行数据为单部署、小样本观测，不足以宣称正式 p50/p95。完整用例、指标、token 表与现场协议见仓库 <code>experiments/four-features/README.md</code>。</p>
+      </section>
+
+      <section>
+        <h2>连续性深挖 · 实时双群验证</h2>
+        <p class="section-lede">确定性基线给出“没有 Router 判断就不自动归属”的结论；随后补了一次真实双飞书群实验，检验 Router 语义判断能否把群 B 的追加接到群 A 的同一任务上。</p>
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead>
+              <tr><th>项</th><th>实测</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><b>环境</b></td><td>机器人在两个飞书群；Source 设为接收其他群的 @；本页不记录群名、群 ID、消息原文</td></tr>
+              <tr><td><b>输入</b></td><td>群 B 一条追加要求，未引用群 A 的任务，也未给任务 ID</td></tr>
+              <tr><td><b>归属</b></td><td><span class="tag ok">通过</span> Router 将消息 attach 到同一 Ticket；决策 routed；0 新工单</td></tr>
+              <tr><td><b>后续</b></td><td>群 B 的 Thread 已订阅到该 Ticket；该 Thread 后续消息直接 fan-out，不再经 Router</td></tr>
+              <tr><td><b>投递</b></td><td>Input 已读，已投递给当前 Assignment</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>为什么这次能续上</h3>
+        <p>主 Session 能看到运行中的 Ticket 与测试上下文，把“群 B 的追加”判断为同一任务，走的是 <code>attach</code>：结束候选 Eval、把 Trigger 作为 Input 加入 Ticket、把群 B Thread 订阅到 Ticket。第一次 attach 之后，后续消息由订阅 fan-out 直达，不再需要每次语义判断。</p>
+
+        <h3>为什么 C4 仍然不成立</h3>
+        <p>这次成功是 <b>Router 语义判断</b>，不是结构化的实体解析。确定性基线里，候选只看当前 Thread 的 Ticket（<code>related_tickets=0</code>）；Ticket 身份来自“接受哪条 Trigger”，没有业务键；跨 Source 身份不映射；Correlation 只补上下文、不路由。因此“没有 Router 判断、也没有显式指向”时，新群消息不会自动归属。</p>
+        <p>这也修正了“只给第二个群加机器人就能修好连续性”的直觉：加机器人只解决<b>消息能不能进来</b>；能不能<b>归属到同一件事</b>，取决于 Thread/订阅、显式 attach 或 Router 判断。</p>
+
+        <h3>七层连续性：什么在、什么不在</h3>
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead>
+              <tr><th>层</th><th>机制</th><th>本用例中的表现</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><b>L0 事件</b></td><td>Trigger 幂等入库</td><td>群 B 消息只入库一次</td></tr>
+              <tr><td><b>L1 线程</b></td><td>Thread + 订阅 fan-out</td><td>attach 后群 B Thread 订阅到工单</td></tr>
+              <tr><td><b>L2 工单</b></td><td>Ticket 持久实体</td><td>仍是同一 Ticket，0 新工单</td></tr>
+              <tr><td><b>L3 派工</b></td><td>Assignment 可多次</td><td>Input 投递给当前 Assignment</td></tr>
+              <tr><td><b>L4 会话</b></td><td>DSH Session（可重建）</td><td>本用例未丢 Session；丢 Session 的实验见 C6</td></tr>
+              <tr><td><b>L5 工作区</b></td><td>Ticket 目录 / git</td><td>本轮未改动工作区</td></tr>
+              <tr><td><b>L6 外部产物</b></td><td>PR / Issue 跟随</td><td>PR #9 已合并，工单仍可续接</td></tr>
+              <tr><td><b>L7 身份</b></td><td>各 Source 白名单</td><td>同一个人在飞书/GitHub 仍是两个 actor，不映射</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>对跨会话 / 跨应用 / 跨端 / 多任务的含义</h3>
+        <ul class="steps">
+          <li><strong>跨会话</strong>：Ticket、目录、PR、Report 是持久契约；Session 可重建，旧推理不保证保留。</li>
+          <li><strong>跨应用</strong>：绑定 PR/Issue Thread 可直接续接；新应用/新群需要 Router attach 或业务键。</li>
+          <li><strong>跨端</strong>：系统没有“设备实体”；新群/新端就是新 Thread，靠 attach 后的订阅延续。</li>
+          <li><strong>多任务</strong>：Ticket 默认隔离；attach 错了会串任务，因此需要显式、可审计的关系。</li>
+        </ul>
+
+        <h3>下一步：从“能判断”到“可保证”</h3>
+        <ul class="steps">
+          <li><strong>业务键</strong>：仓库 + issue/PR 编号，或项目/任务 ID；命中即 attach，不靠语义猜。</li>
+          <li><strong>跨 Source 身份映射</strong>：是否把同一个人在飞书与 GitHub 映射为同一 principal，是 Policy 决策。</li>
+          <li><strong>候选相关工单扩展 + attach 护栏</strong>：让 Eval 看到相关工单，但 attach 仍需显式动作，避免误合并。</li>
+          <li><strong>父子/TaskGroup 与工作状态落盘</strong>：支持多 WU 项目，并减少对旧 Session 历史的依赖。</li>
+        </ul>
+
+        <p class="pending"><b>证据边界：</b>这是一条实时用例、单部署；Router 语义判断参与，不能当作“结构化自动归属”已实现。<b>隐私：</b>本页不记录群名、群 ID、消息原文，也不包含该群内容。</p>
       </section>
 
       <section>

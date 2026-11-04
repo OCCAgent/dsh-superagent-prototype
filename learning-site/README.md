@@ -4,7 +4,7 @@
 
 > 在线预览：<https://occagent.github.io/dsh-superagent-prototype/learning-site/>（合并后自动更新）
 
-**当前进度：WU-1 ~ WU-10 全部完成。** 七个页面、问题日志、站内导航、视觉 token、自检脚本与本地打开说明均已就位；第二层四特征逐项验证、持续问题日志与完整实验过程均已上线。
+**当前进度：WU-1 ~ WU-10 全部完成。** 七个页面、问题日志、站内导航、视觉 token、自检脚本与本地打开说明均已就位；第二层四特征逐项验证、实时双群连续性验证、持续问题日志与完整实验过程均已上线。
 
 ## 页面
 
@@ -14,7 +14,7 @@
 | 概念(A论文) | [concept.html](concept.html) | 四特征、五模块、架构示意与设计动机 |
 | 进化(B论文) | [evolution.html](evolution.html) | Self-Harness 三步闭环、held-in/held-out 规则与术语表 |
 | 费曼拆解 | [feynman.html](feynman.html) | 2×2 地图、两篇论文对照表、10 道苏格拉底式自测题 |
-| 测试日志 | [test-log.html](test-log.html) | 阶段 0 六项判据、阶段 2 六个 WU、第一层采纳记录、第二层四特征逐项验证、持续问题日志与继续测试说明 |
+| 测试日志 | [test-log.html](test-log.html) | 阶段 0 六项判据、阶段 2 六个 WU、第一层采纳记录、第二层四特征逐项验证、实时双群连续性验证、持续问题日志与继续测试说明 |
 | 原型 | [prototype.html](prototype.html) | 论文↔原型概念映射、七个阶段、三处偏离、Watchdog 缺口与 L1–L5 掌握路线 |
 | 问题日志 | [problems.md](problems.md) | 持续问题日志的完整版本（固定六字段） |
 | 实验全记录 | [experiment.html](experiment.html) | 三层四阶段、时间线、六个 WU、四特征验证、发布与证据边界 |
