@@ -48,7 +48,9 @@
     "build": "tsdown",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "check": "pnpm typecheck && pnpm test && pnpm build"
+    "check": "pnpm typecheck && pnpm test && pnpm build",
+    "experiment:four-features": "vitest run tests/four-features.spec.ts",
+    "baseline:four-features": "python3 experiments/four-features/live_baseline.py"
   },
   "engines": {
     "node": "^22.19.0 || >=24.0.0",

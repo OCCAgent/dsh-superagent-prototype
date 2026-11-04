@@ -1,0 +1,503 @@
+{
+  "generated_at": "2026-11-03T23:37:17+08:00",
+  "read_only": true,
+  "state_db": "~/.dsh/state/superagent/orchestrator.sqlite",
+  "state_db_mtime": "2026-11-03T22:04:55+08:00",
+  "tables": [
+    "kv",
+    "trigger",
+    "disposition",
+    "thread",
+    "ticket",
+    "decision",
+    "outbox",
+    "trigger_thread",
+    "effect"
+  ],
+  "totals": {
+    "triggers": 40,
+    "human_triggers": 40,
+    "decisions": 26,
+    "tickets": 8,
+    "dispositions": 40,
+    "tickets_with_several_channel_sources": 0,
+    "decision_kinds": {
+      "unavailable": 5,
+      "ignore": 13,
+      "accept": 8
+    },
+    "trigger_sources": {
+      "feishu": 38,
+      "github": 2
+    }
+  },
+  "continuity": {
+    "thread_followups_fanned_out": 20,
+    "triggers_on_several_threads": 0,
+    "unaddressed_human_triggers": 12,
+    "unaddressed_with_new_ticket": 0,
+    "unaddressed_with_no_mention_decision": 4,
+    "unaddressed_new_ticket_rate": 0.0
+  },
+  "proactivity": {
+    "unaddressed_human_triggers": 12,
+    "unaddressed_with_new_ticket": 0,
+    "unaddressed_false_trigger_rate": 0.0,
+    "github_unaddressed_triggers": 1
+  },
+  "productivity": {
+    "task_duration_s": {
+      "n": 5,
+      "min": 154.0,
+      "p50": 1256.4,
+      "p95": 57140.7,
+      "max": 57140.7
+    },
+    "completed_task_duration_s": {
+      "n": 4,
+      "min": 154.0,
+      "p50": 528.4,
+      "p95": 10550.5,
+      "max": 10550.5
+    },
+    "active_assignment_duration_s": {
+      "n": 14,
+      "min": 121.9,
+      "p50": 658.4,
+      "p95": 2072.7,
+      "max": 2072.7
+    },
+    "assignment_duration_s": {
+      "n": 16,
+      "min": 121.9,
+      "p50": 663.2,
+      "p95": 45522.5,
+      "max": 45522.5
+    },
+    "per_ticket_usage": [
+      {
+        "ticket_id": "58c2af537f9fb977ed0d49ff8eda10de",
+        "ended": "stopped",
+        "usage": {
+          "input_tokens": 21848,
+          "output_tokens": 238,
+          "cache_read_tokens": 28610,
+          "cache_write_tokens": 0,
+          "total_tokens": 50696,
+          "messages": 3,
+          "turns": 2
+        }
+      },
+      {
+        "ticket_id": "45102efd163a73c57b8a4a63407adad5",
+        "ended": "completed",
+        "usage": {
+          "input_tokens": 113250,
+          "output_tokens": 84281,
+          "cache_read_tokens": 4774144,
+          "cache_write_tokens": 0,
+          "total_tokens": 4971675,
+          "messages": 48,
+          "turns": 1
+        }
+      },
+      {
+        "ticket_id": "e1e19d43fa3d906e5eaeaf1560b26fc3",
+        "ended": "completed",
+        "usage": {
+          "input_tokens": 84486,
+          "output_tokens": 53078,
+          "cache_read_tokens": 3650944,
+          "cache_write_tokens": 0,
+          "total_tokens": 3788508,
+          "messages": 51,
+          "turns": 1
+        }
+      },
+      {
+        "ticket_id": "ab27e4b5b29c4717ae2a8433291fc780",
+        "ended": null,
+        "usage": {
+          "input_tokens": 57176,
+          "output_tokens": 17161,
+          "cache_read_tokens": 1301504,
+          "cache_write_tokens": 0,
+          "total_tokens": 1375841,
+          "messages": 28,
+          "turns": 2
+        }
+      },
+      {
+        "ticket_id": "e40bc9679e10fb623252042396da65ec",
+        "ended": "completed",
+        "usage": {
+          "input_tokens": 16124,
+          "output_tokens": 10536,
+          "cache_read_tokens": 285952,
+          "cache_write_tokens": 0,
+          "total_tokens": 312612,
+          "messages": 13,
+          "turns": 1
+        }
+      },
+      {
+        "ticket_id": "8f6f1d62f6dce6e742e9d37cf0421ae9",
+        "ended": "merged",
+        "usage": {
+          "input_tokens": 161412,
+          "output_tokens": 200835,
+          "cache_read_tokens": 51922304,
+          "cache_write_tokens": 0,
+          "total_tokens": 52284551,
+          "messages": 288,
+          "turns": 9
+        }
+      },
+      {
+        "ticket_id": "1f3243b472331f5d393a19506b297116",
+        "ended": null,
+        "usage": {
+          "input_tokens": 173311,
+          "output_tokens": 97090,
+          "cache_read_tokens": 19539840,
+          "cache_write_tokens": 0,
+          "total_tokens": 19810241,
+          "messages": 117,
+          "turns": 1
+        }
+      },
+      {
+        "ticket_id": "962cf90238fc83565949bdc83d47f63f",
+        "ended": null,
+        "usage": null
+      }
+    ],
+    "worker_usage": {
+      "input_tokens": 627607,
+      "output_tokens": 463219,
+      "cache_read_tokens": 81503298,
+      "cache_write_tokens": 0,
+      "total_tokens": 82594124,
+      "messages": 548
+    },
+    "router_usage": {
+      "input_tokens": 35501,
+      "output_tokens": 14030,
+      "cache_read_tokens": 2210432,
+      "cache_write_tokens": 0,
+      "total_tokens": 2259963,
+      "messages": 63,
+      "sessions": 1
+    },
+    "cache_read_share_of_total": 0.9868
+  },
+  "persistence": {
+    "recovered_tickets": [
+      {
+        "ticket_id": "58c2af537f9fb977ed0d49ff8eda10de",
+        "assignments": [
+          {
+            "state": "ended",
+            "startedAt": "2026-11-02T14:22:22.791Z",
+            "endedAt": "2026-11-03T03:01:05.310Z",
+            "duration_s": 45522.5,
+            "report": null
+          },
+          {
+            "state": "ended",
+            "startedAt": "2026-11-03T03:01:14.652Z",
+            "endedAt": "2026-11-03T05:06:37.940Z",
+            "duration_s": 7523.3,
+            "report": "failed"
+          },
+          {
+            "state": "ended",
+            "startedAt": "2026-11-03T05:06:37.981Z",
+            "endedAt": "2026-11-03T05:41:10.637Z",
+            "duration_s": 2072.7,
+            "report": "failed"
+          },
+          {
+            "state": "ended",
+            "startedAt": "2026-11-03T05:41:10.716Z",
+            "endedAt": "2026-11-03T06:14:31.479Z",
+            "duration_s": 2000.8,
+            "report": "failed"
+          }
+        ]
+      }
+    ],
+    "recovery_events": 1
+  },
+  "tickets": [
+    {
+      "ticket_id": "58c2af537f9fb977ed0d49ff8eda10de",
+      "createdAt": "2026-11-02T14:22:10.764Z",
+      "ended": "stopped",
+      "assignments": [
+        {
+          "state": "ended",
+          "startedAt": "2026-11-02T14:22:22.791Z",
+          "endedAt": "2026-11-03T03:01:05.310Z",
+          "duration_s": 45522.5,
+          "report": null
+        },
+        {
+          "state": "ended",
+          "startedAt": "2026-11-03T03:01:14.652Z",
+          "endedAt": "2026-11-03T05:06:37.940Z",
+          "duration_s": 7523.3,
+          "report": "failed"
+        },
+        {
+          "state": "ended",
+          "startedAt": "2026-11-03T05:06:37.981Z",
+          "endedAt": "2026-11-03T05:41:10.637Z",
+          "duration_s": 2072.7,
+          "report": "failed"
+        },
+        {
+          "state": "ended",
+          "startedAt": "2026-11-03T05:41:10.716Z",
+          "endedAt": "2026-11-03T06:14:31.479Z",
+          "duration_s": 2000.8,
+          "report": "failed"
+        }
+      ],
+      "inputs": 5,
+      "recovery_note": true,
+      "worker_usage": {
+        "input_tokens": 21848,
+        "output_tokens": 238,
+        "cache_read_tokens": 28610,
+        "cache_write_tokens": 0,
+        "total_tokens": 50696,
+        "messages": 3,
+        "turns": 2
+      }
+    },
+    {
+      "ticket_id": "45102efd163a73c57b8a4a63407adad5",
+      "createdAt": "2026-11-03T05:07:35.177Z",
+      "ended": "completed",
+      "assignments": [
+        {
+          "state": "ended",
+          "startedAt": "2026-11-03T05:07:45.563Z",
+          "endedAt": "2026-11-03T05:18:48.729Z",
+          "duration_s": 663.2,
+          "report": "failed"
+        },
+        {
+          "state": "ended",
+          "startedAt": "2026-11-03T05:18:48.752Z",
+          "endedAt": "2026-11-03T05:28:31.535Z",
+          "duration_s": 582.8,
+          "report": "ready"
+        }
+      ],
+      "inputs": 0,
+      "recovery_note": false,
+      "worker_usage": {
+        "input_tokens": 113250,
+        "output_tokens": 84281,
+        "cache_read_tokens": 4774144,
+        "cache_write_tokens": 0,
+        "total_tokens": 4971675,
+        "messages": 48,
+        "turns": 1
+      }
+    },
+    {
+      "ticket_id": "e1e19d43fa3d906e5eaeaf1560b26fc3",
+      "createdAt": "2026-11-03T07:46:34.563Z",
+      "ended": "completed",
+      "assignments": [
+        {
+          "state": "ended",
+          "startedAt": "2026-11-03T07:46:40.100Z",
+          "endedAt": "2026-11-03T07:55:23.012Z",
+          "duration_s": 522.9,
+          "report": "ready"
+        }
+      ],
+      "inputs": 0,
+      "recovery_note": false,
+      "worker_usage": {
+        "input_tokens": 84486,
+        "output_tokens": 53078,
+        "cache_read_tokens": 3650944,
+        "cache_write_tokens": 0,
+        "total_tokens": 3788508,
+        "messages": 51,
+        "turns": 1
+      }
+    },
+    {
+      "ticket_id": "ab27e4b5b29c4717ae2a8433291fc780",
+      "createdAt": "2026-11-03T09:57:54.691Z",
+      "ended": null,
+      "assignments": [
+        {
+          "state": "ended",
+          "startedAt": "2026-11-03T09:57:58.015Z",
+          "endedAt": "2026-11-03T10:02:20.928Z",
+          "duration_s": 262.9,
+          "report": "failed"
+        },
+        {
+          "state": "running",
+          "startedAt": "2026-11-03T10:02:20.960Z",
+          "endedAt": null,
+          "duration_s": null,
+          "report": "waiting"
+        }
+      ],
+      "inputs": 0,
+      "recovery_note": false,
+      "worker_usage": {
+        "input_tokens": 57176,
+        "output_tokens": 17161,
+        "cache_read_tokens": 1301504,
+        "cache_write_tokens": 0,
+        "total_tokens": 1375841,
+        "messages": 28,
+        "turns": 2
+      }
+    },
+    {
+      "ticket_id": "e40bc9679e10fb623252042396da65ec",
+      "createdAt": "2026-11-03T11:30:28.688Z",
+      "ended": "completed",
+      "assignments": [
+        {
+          "state": "ended",
+          "startedAt": "2026-11-03T11:30:53.169Z",
+          "endedAt": "2026-11-03T11:33:02.729Z",
+          "duration_s": 129.6,
+          "report": "ready"
+        }
+      ],
+      "inputs": 0,
+      "recovery_note": false,
+      "worker_usage": {
+        "input_tokens": 16124,
+        "output_tokens": 10536,
+        "cache_read_tokens": 285952,
+        "cache_write_tokens": 0,
+        "total_tokens": 312612,
+        "messages": 13,
+        "turns": 1
+      }
+    },
+    {
+      "ticket_id": "8f6f1d62f6dce6e742e9d37cf0421ae9",
+      "createdAt": "2026-11-03T11:46:50.515Z",
+      "ended": "merged",
+      "assignments": [
+        {
+          "state": "ended",
+          "startedAt": "2026-11-03T11:47:02.836Z",
+          "endedAt": "2026-11-03T12:19:43.000Z",
+          "duration_s": 1960.2,
+          "report": "ready"
+        },
+        {
+          "state": "ended",
+          "startedAt": "2026-11-03T12:20:49.621Z",
+          "endedAt": "2026-11-03T12:31:35.000Z",
+          "duration_s": 645.4,
+          "report": "ready"
+        },
+        {
+          "state": "ended",
+          "startedAt": "2026-11-03T12:32:25.027Z",
+          "endedAt": "2026-11-03T12:45:15.000Z",
+          "duration_s": 770.0,
+          "report": "waiting"
+        },
+        {
+          "state": "ended",
+          "startedAt": "2026-11-03T12:53:06.249Z",
+          "endedAt": "2026-11-03T12:55:08.110Z",
+          "duration_s": 121.9,
+          "report": "dropped"
+        },
+        {
+          "state": "ended",
+          "startedAt": "2026-11-03T12:55:29.628Z",
+          "endedAt": "2026-11-03T13:24:14.000Z",
+          "duration_s": 1724.4,
+          "report": "ready"
+        },
+        {
+          "state": "ended",
+          "startedAt": "2026-11-03T13:58:14.593Z",
+          "endedAt": "2026-11-03T14:09:13.000Z",
+          "duration_s": 658.4,
+          "report": "ready"
+        },
+        {
+          "state": "ended",
+          "startedAt": "2026-11-03T14:24:16.620Z",
+          "endedAt": "2026-11-03T14:42:41.000Z",
+          "duration_s": 1104.4,
+          "report": "ready"
+        }
+      ],
+      "inputs": 21,
+      "recovery_note": false,
+      "worker_usage": {
+        "input_tokens": 161412,
+        "output_tokens": 200835,
+        "cache_read_tokens": 51922304,
+        "cache_write_tokens": 0,
+        "total_tokens": 52284551,
+        "messages": 288,
+        "turns": 9
+      }
+    },
+    {
+      "ticket_id": "1f3243b472331f5d393a19506b297116",
+      "createdAt": "2026-11-03T15:21:34.831Z",
+      "ended": null,
+      "assignments": [
+        {
+          "state": "running",
+          "startedAt": "2026-11-03T15:21:38.972Z",
+          "endedAt": null,
+          "duration_s": null,
+          "report": null
+        }
+      ],
+      "inputs": 4,
+      "recovery_note": false,
+      "worker_usage": {
+        "input_tokens": 173311,
+        "output_tokens": 97090,
+        "cache_read_tokens": 19539840,
+        "cache_write_tokens": 0,
+        "total_tokens": 19810241,
+        "messages": 117,
+        "turns": 1
+      }
+    },
+    {
+      "ticket_id": "962cf90238fc83565949bdc83d47f63f",
+      "createdAt": "2026-11-03T15:32:14.194Z",
+      "ended": null,
+      "assignments": [
+        {
+          "state": "pending",
+          "startedAt": null,
+          "endedAt": null,
+          "duration_s": null,
+          "report": null
+        }
+      ],
+      "inputs": 0,
+      "recovery_note": false,
+      "worker_usage": null
+    }
+  ]
+}

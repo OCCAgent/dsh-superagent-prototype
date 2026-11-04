@@ -115,11 +115,12 @@ th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowr
       <section class="hero">
         <p class="eyebrow">记录 · 测试日志</p>
         <h1>测试日志</h1>
-        <p class="lede">阶段 0 的六项判据、阶段 2 的六个 WU、第一层 Harness 自改进的采纳记录，以及如何继续测试，都记在这里。</p>
+        <p class="lede">阶段 0 的六项判据、阶段 2 的六个 WU、第一层 Harness 自改进与第二层四特征逐项验证，以及如何继续测试，都记在这里。</p>
         <ul class="meta">
           <li>6 个 WU</li>
           <li>阶段 0 六项判据</li>
           <li>第一层实测</li>
+          <li>第二层 3/4 成立</li>
         </ul>
       </section>
 
@@ -219,6 +220,37 @@ th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowr
       </section>
 
       <section>
+        <h2>第二层 · 四特征逐项验证</h2>
+        <p class="section-lede">每个特征至少 2 个用例（典型 + 扰动）；连续性和主动性各加 1 个“不应发生”的负向用例。退出判据：至少 3/4 成立，失败项必须归因到架构层或实现层。</p>
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead>
+              <tr><th>用例</th><th>类型</th><th>场景</th><th>结果</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><b>C1 连续</b></td><td>典型</td><td>工单 PR 评论追加需求，不引用原飞书消息</td><td><span class="tag ok">通过</span> 归到同一工单</td></tr>
+              <tr><td><b>C2 连续</b></td><td>扰动</td><td>群 B 无关闲聊后，群 A 原 Thread 追加</td><td><span class="tag ok">通过</span> 1/1 归属</td></tr>
+              <tr><td><b>C3 连续</b></td><td>负向</td><td>群 B 的无关闲聊</td><td><span class="tag ok">通过</span> 0 泄漏</td></tr>
+              <tr><td><b>C4 连续</b></td><td>规范指定</td><td>群 A 发起；群 B 追加需求、无显式引用</td><td><span class="tag no">不成立</span> 0/1，候选无关联工单</td></tr>
+              <tr><td><b>P1 高效</b></td><td>典型</td><td>1 个 worker 槽位下连发 5 个独立任务</td><td><span class="tag ok">通过</span> 4 排队、1 运行</td></tr>
+              <tr><td><b>P2 高效</b></td><td>扰动</td><td>队列满时运行中工单收到人的插话</td><td><span class="tag ok">通过</span> 立即送达</td></tr>
+              <tr><td><b>A1 主动</b></td><td>典型 · observe</td><td>CI 失败 + 规则授权，无 @</td><td><span class="tag part">记录</span> 候选 + would-accept，0 工单</td></tr>
+              <tr><td><b>A2 主动</b></td><td>典型 · auto</td><td>同一环境切 auto，重复 CI 失败</td><td><span class="tag ok">通过</span> inferred 建单</td></tr>
+              <tr><td><b>A3 主动</b></td><td>负向 · observe</td><td>中性讨论、未 @、无匹配规则</td><td><span class="tag ok">通过</span> 0 误触发</td></tr>
+              <tr><td><b>A4 主动</b></td><td>负向 · auto</td><td>同上，auto 模式</td><td><span class="tag ok">通过</span> 0 误触发</td></tr>
+              <tr><td><b>A5 主动</b></td><td>扰动</td><td>同一规则下 CI 成功</td><td><span class="tag ok">通过</span> 0 建单</td></tr>
+              <tr><td><b>D1 持久</b></td><td>典型</td><td>worker 执行中宿主停止并重启</td><td><span class="tag ok">通过</span> 目录/Session 保留，recovery note 继续</td></tr>
+              <tr><td><b>D2 持久</b></td><td>扰动</td><td>派工后未回报时重启，另有排队工单</td><td><span class="tag ok">通过</span> 2/2 保留、仅 1 运行</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note"><b>架构层归因（连续 C4）：</b>实现只用三种结构关系建立归属——发起 Thread、工单跟随的 PR Thread、同一 Trigger 同属多个 Thread。Correlation 只补上下文、不路由；attach 要求消息显式指向工单。因此 C4“无显式引用的跨渠道追加”不是模型偶然失败，而是当前架构没有这条路径。按第三层入口判据，“群聊追加要求关联到现有 Ticket”当前不满足自动语义归属；操作者已决定先以“同一 Thread 追加”作为判据 4 开跑，跨渠道归属列为后续改进。</p>
+        <p class="note"><b>连续深挖：</b>Ticket 才是持久实体。PR 合并、工单结束后，人在 PR 评论追加要求可恢复同一工单（Mandate 不变）；删掉 worker Session 后重启，Ticket/目录/progress 报告保留、Session 重建；两个工单的跟进 0 串任务。边界：CI 不能唤醒结束工单；群 B 更新只有在 router 显式 attach 时才进入群 A 工单，跨群/跨端自动归属不存在。七层分析见仓库 <code>experiments/four-features/continuity-deep-dive.md</code>。</p>
+        <p class="section-lede"><b>Token 成本（与延迟同等重要）：</b>learning-site 6 个 WU 共 52,284,551 total tokens，其中 cache read 51,922,304（99.3%），约 8.71M / WU。第三层暂定 cap = 3 × 基线 ≈ 26.1M total tokens / 工作单元；未收敛即超预算时转人工复核，不自动重试。</p>
+        <p class="pending"><b>数据说明：</b>机制基线是可复现的 Runtime 级实验（fake DSH host、脚本化 Router/worker 步骤），只验证协调机制；真实运行数据为单部署、小样本观测，不足以宣称正式 p50/p95。完整用例、指标、token 表与现场协议见仓库 <code>experiments/four-features/README.md</code>。</p>
+      </section>
+
+      <section>
         <h2>阶段 0 · 六项判据</h2>
         <p class="section-lede">阶段 0 收官时六项全部通过，详细记录见仓库中的阶段 0 执行报告。</p>
         <div class="table-wrap">
@@ -244,7 +276,7 @@ th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowr
           <li><strong>本地打开</strong>双击 <code>index.html</code>，或运行 <code>python3 -m http.server 8000 --directory learning-site</code> 后访问本地地址；全站无外部依赖，<code>file://</code> 可用。</li>
           <li><strong>改完自检</strong>运行 <code>python3 learning-site/shot.py</code>，必须 0 error / blocker；报告与 1280×800 截图写入 <code>learning-site/.shot/</code>。</li>
           <li><strong>推进一个 WU</strong>一个单元一个分支 / PR，PR 附 Before/After；同时更新本页进度表与 README 的 WU 表。</li>
-          <li><strong>进入下一层</strong>阶段 2 的四特征矩阵（测试方案 4.3，每特征 2 个场景）全部通过后，才进入阶段 3。</li>
+          <li><strong>进入下一层</strong>第二层已逐项验证：3/4 成立，连续性失败归因架构层（无显式引用的跨渠道归属未实现）；先按实验 README 的现场协议补做真实双渠道/重启验证，再进入阶段 3。</li>
         </ol>
         <div class="grid">
           <a class="card" href="feynman.html">
