@@ -4,7 +4,7 @@
 
 > 在线预览：<https://occagent.github.io/dsh-superagent-prototype/learning-site/>（合并后自动更新）
 
-**当前进度：WU-1 ~ WU-11 全部完成。** 八个页面、问题日志、站内导航、视觉 token、自检脚本与本地打开说明均已就位；第二层四特征逐项验证、实时双群连续性验证、持续问题日志、完整实验过程与学习阶梯均已上线。
+**当前进度：WU-1 ~ WU-11 全部完成。** 八个页面、问题日志、站内导航、视觉 token、自检脚本与本地打开说明均已就位；第二层四特征逐项验证、实时双群连续性验证、持续问题日志、完整实验过程与学习阶梯均已上线。2026-11-05 增补《系统全面诊断》：按完整测试方案做可执行子集体检，并剖析 6 类问题。
 
 ## 页面
 
@@ -63,7 +63,8 @@ learning-site/
 ├── SuperAgent阶段2-实测发现与学习素材.md
 ├── SuperAgent三层四阶段测试-完整案例分析.md
 ├── SuperAgent三层四阶段测试方案.md
-└── SuperAgent三层四阶段测试-阶段0执行报告.md
+├── SuperAgent三层四阶段测试-阶段0执行报告.md
+└── SuperAgent系统全面诊断-2026-11-05.md # 2026-11-05 全面诊断：证据、用例映射与问题剖析
 ```
 
 ## 自检
@@ -88,6 +89,7 @@ python3 learning-site/shot.py
 ## 内容来源
 
 - 阶段 0 执行报告：[SuperAgent三层四阶段测试-阶段0执行报告.md](SuperAgent三层四阶段测试-阶段0执行报告.md)
+- 2026-11-05 全面诊断（证据、用例映射与问题剖析）：[SuperAgent系统全面诊断-2026-11-05.md](SuperAgent系统全面诊断-2026-11-05.md)
 - 阶段 2 实测发现：[SuperAgent阶段2-实测发现与学习素材.md](SuperAgent阶段2-实测发现与学习素材.md)
 - 完整案例分析与测试方案：[SuperAgent三层四阶段测试-完整案例分析.md](SuperAgent三层四阶段测试-完整案例分析.md)、[SuperAgent三层四阶段测试方案.md](SuperAgent三层四阶段测试方案.md)
 - 四特征逐项验证（机制基线 + 真实观测 + 现场协议）：[experiments/four-features/README.md](../experiments/four-features/README.md)

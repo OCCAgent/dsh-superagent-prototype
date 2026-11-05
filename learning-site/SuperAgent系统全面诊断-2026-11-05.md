@@ -1,0 +1,136 @@
+# SuperAgent 系统全面诊断（2026-11-05）
+
+> 依据：2026-11-05 下发的《Super-agent 与 Self-Harness · 深度分析与完整测试方案》v1.0（下称“方案”，用例编号 TC-M/E/SH/X/SEC）
+> 对象：SUT-A `OCCAgent/dsh-superagent-prototype`，HEAD `9420085`，本机单实例（`127.0.0.1:3082`）
+> 快照：2026-11-05 17:47（UTC+8）；状态库只读，Session 日志只取聚合
+> 原则：证据优先；机制测试不等于模型质量；未执行不等于通过
+
+## 0 一页结论
+
+| 问题 | 结论 |
+|---|---|
+| 系统能否运行？ | 能。服务 13/13 ready，主会话与 Worker 均为 `deepseek-flash`；`typecheck`/`build` 通过；`pnpm test` 1209 项中 1206 项通过 |
+| 四特征是否成立？ | 3/4。连续性的“无显式引用跨渠道归属”仍不成立（C4 0/1），其余三项有机制或观测证据 |
+| 方案能否完整执行？ | 不能。29 个用例中 8 个有部分证据、1 个已知失败、0 个按方案阈值完整验收，20 个缺 SUT、工具或指标前提 |
+| 最大风险？ | ① worker 以 OS 用户全权限运行；② 显式请求评估超时后静默；③ Watchdog、Self-Harness 等方案核心增量不存在 |
+| 本次交付 | Phase-0 级 gap 清单 + 可执行子集体检，不是 8–10 周完整测试的替代 |
+
+一句话：**调度层可运行、能追到“做过什么”；进化层与安全层尚未建成，现有绿灯不能证明方案成立。**
+
+## 1 诊断方法（可复用）
+
+1. **冻结对象**：记录 commit、服务地址、settings 版本与主会话模型，避免边测边变。
+2. **环境基线**：读 `/orchestrator/api/state`、`/settings`；查状态库 9 张表；确认飞书/GitHub 通道与仓库。
+3. **机制证据**：跑 `typecheck`、`build`、`test`；把产品回归与环境敏感失败分开。
+4. **轨迹证据**：只读 SQL 追 `trigger → decision → ticket → assignment → outbox`；用 `live_baseline.py` 取耗时与 token 聚合。
+5. **用例映射**：把方案用例逐条标为“有证据/部分/未实现/缺前置”，根因落到文件与配置，而不是“效果不好”。
+
+四个坑：把 fake-host 机制测试当模型质量；把“没跑”写成“通过”；把论文参考值当成本次验收线；用今天的代码解释昨天的报告。
+
+## 2 证据快照
+
+| 维度 | 观测 |
+|---|---|
+| 服务 | 13/13 ready；`eval`/`executor` 均为 `deepseek-flash`（settings rev 8）；主会话日志 442 处 `deepseek-flash` |
+| 工程 | typecheck/build 通过；测试 61 文件 59 通过，1209 项 1206 通过、3 项环境敏感失败（`runtime` 2、`service-script` 1，与 PR #12 记录的宿主机/worker 环境同类），非产品回归 |
+| 轨迹 | 75 triggers（飞书 63/GitHub 12）；44 decisions（accept 12/ignore 27/unavailable 5）；12 tickets（11 ended、1 open）；32 assignments（17 ready/6 failed/6 waiting/1 dropped/2 无报告）；outbox 79 条全部 sent |
+| 成本 | 无运行时 token 计量；事后解析 learning-site 工单 109.5M tokens，cache read 占 99.5%；四特征实验工单 241.9M |
+| 交付 | PR #3–#19 共 17 个，其中 15 个已合并、2 个关闭；方案 29 个用例中仅 9 个有直接证据（8 部分 + 1 失败） |
+
+6 次执行失败：3 次 429（工单 `58c2af53`）、1 次余额不足（`45102efd`）、2 次流中断（`ab27e4b5`、`a387c2e2`）。5 次评估不可用均为 `timeout`，耗时约 365–379 秒，最长 2253 秒。
+
+## 3 逐族诊断
+
+状态：◐ 部分证据；✗ 未实现、不可执行或已知失败。
+
+| 用例组 | 状态 | 本机证据与缺口 |
+|---|---|---|
+| TC-M1 批处理 | ◐ | 仅同 Thread 批量评估（`Evals.due`）；无跨 Thread 压测、批大小分布与分摊推理耗时 |
+| TC-M2 两级过滤 | ◐ | Source scope + Eval 机制有单测；无 1000 条标注集；24 条非 @ 仍入库，但 0 建单 |
+| TC-M3 订阅直通 | ◐ | 45 次同 Thread 跟进扇出；无直通开/关对照，无 Router 决定数与 token 降幅 |
+| TC-M4 链式召回 | ✗ | 只解析 `#12`/URL 一跳引用；无 3 跳（消息→Thread→Session→评审 Thread）召回 |
+| TC-M5 异步循环 | ◐ | background jobs/subagents 有测试；无 10 次插话/stop 的延迟与生效率统计 |
+| TC-M6 多信道输出 | ◐ | IM 回复经 outbox 时 100 词硬限（`checkedImText`）；GitHub 报告“背景/改动/验证”仅靠提示词 |
+| TC-M7 存算分离 | ✗ | 无 BYOM daemon；状态与执行都在本机 |
+| TC-M8 Watchdog | ✗ | 只有 health（存活）与 retry-health（模型预算）；无任务级进展/空转/偏离判断 |
+| TC-E1 三请求并发 | ◐ | `maxWorkers=1` 时立即接单、排队，插话可进运行中工单；无单会话对照与 p50 |
+| TC-E2 变更接力 | ✗ | C4 0/1；跨渠道无显式引用不归属，`Correlation` 只补上下文、不路由 |
+| TC-E3 投机执行 | ✗ | 无后台静默复现、无分支产物隔离 |
+| TC-E4 长程注错 | ✗ | 无注错工具、任务级监控与恢复判据 |
+| TC-E5 跨设备续跑 | ✗ | 无端侧 daemon 与离线挂起/续跑 |
+| TC-E6 LobeHub 全流程 | ◐ | learning-site 11 个 WU、PR #3–#19 证明多轮交付；无 Task 依赖图与 Acceptance 证据链 |
+| TC-SH1–7 | ✗ | 无弱点聚类、held-out 回归门、lineage 与成本曲线 |
+| TC-X1–3 | ✗ | 无进化后 Harness 上岗、Watchdog→进化接口、审计与回滚 |
+| TC-SEC1–5 | ✗ | 无红队语料、金丝雀、egress 扫描、行为审计或爆炸半径报告；边界见 P5 |
+
+没有一条达到方案阈值，原因是“可执行子集”覆盖不足，而非全部失败。
+
+## 4 问题剖析
+
+### P1 方案按产品级 SUT 设计，本机是单实例原型
+- **现象**：方案要求 SUT-C 主线、3 个模型家族、TB-2.0 64 任务、邮件通道、Mock worker、8–10 周；本机只有 SUT-A、单模型、飞书 + GitHub。
+- **根因**：方案 5.1 的 SUT 选型与 Phase 0 gap 清单尚未落地，研究协议与原型范围不同。
+- **影响**：M7/M8、E3–E5、SH、X、SEC 多数无法执行；直接拿现有绿灯汇报会产生假阳性。
+- **下一步**：先出 SUT 选型与逐条 gap 清单；把“可执行子集”和“完整计划”分开管理。
+
+### P2 可观测性不足：看不到进度、token 与批次
+- **现象**：状态库无 usage/batch 表；health 只报存活；retry-health 只看预算重试；token 只能事后扫 Session 日志。
+- **根因**：`HealthBoard` 与 `RetryHealth` 是存活/模型预算视角，没有任务级 Watchdog，成本指标未入库。
+- **影响**：M1/M2/M5/M6/M8、E4、X2 难以完整判定，也分不清“在推进”与“空转”。
+- **下一步**：补只读指标管线（decision latency、batch size、token、step progress）与任务停滞探针。
+
+### P3 连续性的架构缺口：Correlation 只补上下文，不路由
+- **现象**：C4 0/1；45 次同 Thread 跟进可扇出，但 0 个 trigger 共属多 Thread；`referencedTickets` 只认 `#12`/URL。
+- **根因**：归属只靠发起 Thread、PR Thread 与显式引用，没有语义匹配或业务键。
+- **影响**：E2 跨渠道接力不成立，用户必须重述背景。
+- **下一步**：按业务键（issue/PR/工单号）或语义匹配补 attach；否则在方案中降级为已知限制。
+
+### P4 可靠性：5/44 评估超时，6/32 执行失败，且超时静默
+- **现象**：5 条 unavailable/timeout，无群内回执；6 条 assignment failed（429/余额/流中断）。
+- **根因**：120 秒评估 deadline、2 次重排后记 unavailable；该结果只进面板；模型/网络错误没有分类退避。
+- **影响**：显式请求可能“被无视”；M3/M4 指标被污染。
+- **下一步**：超时/不可用至少给一次可见回执；按 429、余额、流错误分类处理；把失败率纳入 health。
+
+### P5 安全边界未达方案红线
+- **现象**：worker 以 `danger-full-access`、操作者 OS 用户运行，可读 home；命令 shim 只是默认值不是边界；`blockedCommands` 为空；worker 可直接调 `lark-cli`/`gh`。
+- **根因**：设计目标是默认安全与工作流约束，不是多租户隔离（`docs/006-deployment.md` 已明说）。
+- **影响**：TC-SEC2/3/5 无法按方案判“通过”；提示词注入虽改不了 allowlist，但可在 Mandate 内诱导越权动作。
+- **下一步**：专用 OS 账号、egress 白名单、金丝雀凭据、直接外发阻断与红队语料；先出爆炸半径报告。
+
+### P6 文档与实现漂移
+- **现象**：方案 0.3 仍写“换模型必须删主会话”，PR #12 已改为热切换评估模型；方案写 eval 用 v4-pro，实配 flash；A2 写“不产生 trigger”，实际 24 条非 @ 仍入库、0 建单。
+- **根因**：快速迭代，文档快照未回写。
+- **影响**：学习站会教过时的排障步骤；测试判据与实现不符。
+- **下一步**：文档加“快照日期 + 版本”，改模型/准入机制时同步更新；A2 判据改为“不产生 decision/工单”。
+
+## 5 下一步（最小可执行）
+
+1. **Phase 0 gap 清单**：逐条标注 29 个用例的 SUT、数据、工具、指标缺口；先决定 SUT-A 还是 SUT-C 为主线。
+2. **M1/M2/M3 小实验**：200 条合成消息（白名单外/闲聊/广告/真任务）+ Mock worker，记录批大小、单决定耗时、Router 决定数、token。
+3. **超时可见化**：unavailable 时给请求方一次短回执；按错误类型记录退避结果，先修“被无视”体感。
+4. **安全基线**：金丝雀凭据 + 外发扫描 + 直接 `lark-cli` 外发阻断；输出爆炸半径清单。
+5. **文档回写**：修正方案 0.3、阶段 0 报告与 A2 判据；在页脚标注快照日期。
+
+每项验收都落到“命令 + 字段 + 数字”，不以“感觉修好了”结束。
+
+## 6 边界与复现
+
+- **未执行**：8–10 周完整计划、3 模型家族、TB-2.0、SUT-B/C、红队、生产安全结论；本文不构成发布许可。
+- **时效**：数字是 2026-11-05 17:47 的本机快照，服务重启、工单新增后需重采。
+- **复现**：
+
+```bash
+pnpm typecheck && pnpm build && pnpm test
+python3 experiments/four-features/live_baseline.py --out /tmp/live-baseline.json
+curl -s http://127.0.0.1:3082/orchestrator/api/state -H 'x-orchestrator-request: 1'
+
+# 状态库只读聚合（不导出正文）
+python3 - <<'PY'
+import sqlite3
+db = sqlite3.connect('file:/Users/opencity/.dsh/state/superagent/orchestrator.sqlite?mode=ro', uri=True)
+for table in ('trigger', 'decision', 'ticket', 'outbox'):
+    print(table, db.execute(f'select count(*) from "{table}"').fetchone()[0])
+PY
+```
+
+**学习要点**：诊断先分层（环境→机制→轨迹→用例→根因）；机制测试与模型质量分开；没有观测就没有诊断；安全边界看代码与配置，不看提示词。
