@@ -5,6 +5,8 @@
 **基准**：DeepSeek V4.1-flash（模型统一固定为 `deepseek-flash`）
 **环境**：OCCAgent/dsh-superagent-prototype fork ｜ DSH 0.2.1-rc.3 ｜ 飞书已连通（DYJ 群 @OCCLab）｜ GitHub 已连通（@OCCAgent，repo OCCAgent/dsh-superagent-prototype）｜ 本机 dsh-superagent 服务
 
+> **文档快照**：2026-11-05 19:15（UTC+8）· DSH 0.2.1-rc.3。2026-11-05 回写的内容见 0.3.1、0.3 的模型说明与文末「文档回写记录」；更早的时间线保留原样。
+
 ---
 
 ## 0 · 方案总览
@@ -36,7 +38,7 @@
 |---|---|---|
 | 服务面板 | `http://127.0.0.1:3082/?token=gfpE_gRPjwz_kMa3RADHFxPBQAXyjGeDOi6JP7lbAus` | 重启后 token 会变，以日志第 3 行为准 |
 | 服务脚本 | `cd "/Users/opencity/Documents/GitHub/DeepSeek Harness/dsh-superagent" && ./scripts/dsh-superagent status\|restart\|start\|stop` | 已注入 `NODE_OPTIONS=--dns-result-order=ipv4first` |
-| 评估模型（Router 判定） | `deepseek-official/deepseek-v4-pro`（rev7，observe/120s） | 决策者层；如需统一 flash 可 PUT settings/eval |
+| 评估模型（Router 判定） | `deepseek-official/deepseek-flash`（rev8，observe/120s） | 决策者层；与执行模型统一为 flash（2026-11-05 回写） |
 | 执行模型（Worker） | `deepseek-official/deepseek-flash`（rev8，maxWorkers=1） | **测试基准模型：flash** |
 | 飞书 Source | bot OCCLab；DYJ 群 `oc_0cdc4d293df9a24813837b35c34111c4` 仅 @ + 私聊开 | 必须成员列表真 @（名字变蓝）才算 mention |
 | GitHub Source | @OCCAgent；repo `OCCAgent/dsh-superagent-prototype`（observe 全关 = auto） | issue/PR 评论中 @OCCAgent 触发 |
@@ -44,7 +46,17 @@
 | 状态库 | `~/.dsh/state/superagent/orchestrator.sqlite`（只读） | trigger/decision/ticket/outbox 四表 = 证据链 |
 | 论文拆解底稿 | `~/.dsh/state/superagent/work/explain-superagent-papers-e1e19d43fa3d/deliverables/Super-agent与Self-Harness-费曼拆解.md`（63.5KB） | 阶段 2 学习网站的内容素材之一 |
 
-> ⚠️ 关键前提（上轮排障结论，勿重犯）：改 settings 的 eval/executor 模型**不会热更新已持久化的主会话**。本方案全程固定 flash，不触发模型切换；若中途确实要换模型，必须走"停 → 备份并删主会话 `session.v4.jsonl.zstd` → 重启"流程。
+> **模型切换（2026-11-05 回写）**：保存新的 eval/executor 模型会热切换主会话的下一次请求（PR #12）；只有主会话内自选过模型时才不跟随。上轮"必须删主会话 `session.v4.jsonl.zstd`"的流程已废弃，仅在排查旧会话自选模型时作为最后手段（先备份）。方案仍全程固定 flash，不为测试切换模型。
+
+#### 0.3.1 三层隔离 Profile（2026-11-05 创建）
+
+| 层 | Profile | 面板端口 | stateDir |
+|---|---|---|---|
+| 第一层 · Harness 自改进 | `selfharness` | 3083 | `~/.dsh/state/selfharness` |
+| 第二层 · Super-agent 四特征 | `superagent-test` | 3084 | `~/.dsh/state/superagent-test` |
+| 第三层 · 飞书 + GitHub 复合场景 | `superagent-e2e` | 3085 | `~/.dsh/state/superagent-e2e` |
+
+本机 DSH 0.2.1-rc.3 没有 `dsh profile create`；实际创建命令为 `dsh <name> --from-default-profile web --dump-config > /dev/null`，再执行 `dsh plugin --profile <name> add "link:<dsh-superagent 仓库>"`，最后在 profile 的 `cordis.patch.yml` 中写入独立的 `port` 与 `stateDir`。三个 profile 均未启动；飞书 Source 默认关闭，第三层接入时使用独立 bot，避免与日常 `superagent` profile（3082）竞争。日常 `superagent` profile 不受影响。
 
 ### 0.4 术语速查
 
@@ -126,7 +138,7 @@ LobeHub 的实践（半年用 LobeHub 开发 LobeHub）：主管 Agent 承接目
    ```
    zstd -dc ~/.dsh/sessions/--Users-opencity-.dsh-state-superagent--/orchestrator-57dc1fd30815e2b701305665ede4d140/session.v4.jsonl.zstd | grep -c 'deepseek'
    ```
-   预期：命中 `deepseek-official`（model/selection = deepseek-v4-pro / reasoningEffort high）。**若命中 google/gemini，说明主会话未重建，按 0.3 的警告流程处理，否则阶段 2 必踩 429。**
+   预期：命中 `deepseek-official`（model/selection = deepseek-flash / reasoningEffort high）。若命中旧模型，先确认主会话没有在会话内自选模型；保存 eval 设置会热切换主会话（PR #12），仅在旧会话自选模型时才需要备份后重建。
 
 3. **查状态库四表可读**
    ```
@@ -230,7 +242,7 @@ LobeHub 的实践（半年用 LobeHub 开发 LobeHub）：主管 Agent 承接目
 | **产出（高效）** | P1：连续派发 WU-2、WU-3 两个单元（不等 WU-2 完成就发 WU-3） | 飞书两条 @，间隔 <1 分钟 | maxWorkers=1 时排队；两个 Worker 独立目录互不污染 | 两任务各自产出独立 PR；无上下文串扰 |
 | 产出 | P2：WU-4 执行中插入新要求（"页面加一节'术语表'"） | WU-4 进行中发飞书 @ | 新消息进入该 Thread 直通/插话 | 原任务按新要求完成，不重启不丢进度 |
 | **主动** | A1：对已合并的 WU-2 首页 PR 评论指出一个错别字并 @OCCAgent | GitHub PR 评论 | GitHub Source 产生 trigger → 判定 → 是否建票修复 | 产生新工单或当场修复，群里有汇报 |
-| 主动 | A2：在 DYJ 群发一条与项目无关的消息（不 @） | 普通群消息 | 两级过滤第一级（程序规则） | 不产生 trigger（trigger 表无记录） |
+| 主动 | A2：在 DYJ 群发一条与项目无关的消息（不 @） | 普通群消息 | 两级过滤第一级（程序规则） | 不产生 decision/工单；trigger 可入库（Source 记录消息，gate 不接单） |
 | **持久** | D1：WU-5 执行期间**不操作** 15 分钟以上，观察是否持续完成并交回 | 时间观测 | Worker 在隔离目录推进，不依赖前台交互 | 任务照常完成、PR 照常开出 |
 | 持久 | D2：阶段 2 中途执行一次 `./scripts/dsh-superagent restart` | 重启服务 | 未完成工单是否自动恢复（带"恢复说明"） | 工单恢复继续，或如实报告"被打断"且不丢已落盘产物 |
 
@@ -290,7 +302,7 @@ LobeHub 的实践（半年用 LobeHub 开发 LobeHub）：主管 Agent 承接目
 
 - **F1**：判定为"重复/无新工作"（dropped）的消息无群内回执，用户误以为被无视；
 - **F2**：PR 合并会终止当前 worker assignment，连续派发时后一单元可能被丢弃（阶段 2 靠 worker 自主补齐才未造成缺失）；
-- **F3**：飞书 Source 无 mention 过滤，不 @ 消息也入库 trigger（A2 判据与实现不符）；
+- **F3（2026-11-05 已回写）**：飞书 Source 无 mention 过滤，不 @ 消息也入库 trigger；这是 Source 的观察行为，A2 判据已改为「不产生 decision/工单」，不再是「trigger 表无记录」；
 - **F6（候选，2026-11-03 登记）**：跨群且无引用的消息无法归属已有 Thread（feishu Source 归属 = chat allowlist + trigger→thread 映射），跨渠道归属需补语义匹配 / 业务键机制（判据 4 已按「同 Thread 追加直通」降级落地，归属改进列为可选提案）。
 
 这些发现（F1/F2/F3 为必提三条，F6 为候选）是 Self-Harness（B 论文）"轨迹采集 → 弱点提案 → 回归采纳"闭环的真实输入。本剧本让 SuperAgent 按 B 论文方法**自我改进**：证明它能"发现问题 → 提改进 → 自改 → 回归验证"。
@@ -339,7 +351,7 @@ LobeHub 的实践（半年用 LobeHub 开发 LobeHub）：主管 Agent 承接目
 
 | 风险 | 现象 | 处置 |
 |---|---|---|
-| 评估超时（Gemini 429 复现） | 消息收到但无回复；decision=timeout | 检查主会话绑定（阶段 0 步骤 2）；若为 google/gemini → 停服务、备份并删主会话 zstd、重启 |
+| 评估超时 | 消息收到后暂无结论；decision=unavailable/timeout | 评估超时会发一次回执；检查 `evals` 与主会话是否繁忙。超时现在从主会话认领候选卡时开始计时，排队不再消耗评估时限；不要为超时删主会话 |
 | 服务重启后 token 失效 | API 401 | 新 token 取新日志第 3 行 `dsh web: http://127.0.0.1:3082/?token=...` |
 | 飞书手打 @ 不被识别 | decision=ignore/no_mention | 必须成员列表真 @（名字变蓝）；私聊算 direct |
 | 已关闭工单无法重开 | retry 返回 notRetryable | 群内发新消息产生新 trigger，不开旧票 |
@@ -364,5 +376,10 @@ LobeHub 的实践（半年用 LobeHub 开发 LobeHub）：主管 Agent 承接目
 | DeepSeek 直连探测 | `curl -s https://api.deepseek.com/chat/completions -H "Authorization: Bearer $DS_KEY" -d '{...}'`（key 在 `~/.dsh/.credentials.yaml` 第 3 行） |
 | HTML 自检 | `python3 "/Users/opencity/Library/Application Support/Doubao/Default/.doubao/agent_mode/workspace/.skills/html/scripts/shot.py" <html_path>` |
 | fork 仓库克隆 | `git clone https://github.com/OCCAgent/dsh-superagent-prototype.git`（学习网站放 `learning-site/`） |
+
+## 8 · 文档回写记录
+
+- **2026-11-05 19:15（UTC+8）**：评估模型由 v4-pro 回写为 flash（rev8）；补充模型热切换（PR #12），废弃「删主会话」常规流程；A2 判据改为「不产生 decision/工单」；评估超时改为从主会话认领候选卡时计时并发送回执；新增三层隔离 Profile（0.3.1）。
+- 更早的 2026-11-03 时间线与阶段 0 证据保留原样；阶段 0 报告顶部与 E0-2 节另有同日回写说明。
 
 **信源**：本方案测试设计依据——Exploring Super-agent Design（DeepSeek Harness 团队，2026-11-01）、Self-Harness（上海AI实验室，arXiv:2606.09498）、阿里云 AgentCore《从长程 Agent 到 Super-agent，解锁更多场景》（mp.weixin.qq.com/s/O6NdGGHP_rKAnH9PKrt6iQ）、有新Newin《DeepSeek 刚提出的 Super-agent 新架构，LobeHub 已经做成了产品》（mp.weixin.qq.com/s/O5Wx5aylW6rHYtpp8hyvhg）；环境事实来自本机 dsh-superagent 状态库、settings 实配与上轮排障结论。

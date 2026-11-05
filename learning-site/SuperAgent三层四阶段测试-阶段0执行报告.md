@@ -3,6 +3,8 @@
 > 环境核对与通道验证（2026-11-03 · macOS / 本地 · DSH superagent 0.2.1-rc.3）
 > 关联文档：《SuperAgent三层四阶段测试方案.md》
 > 用途：作为学习网站「测试日志页 / 进化页」素材，保留全部真实证据（ID、时间戳、命令、判定）
+>
+> **2026-11-05 回写**：本报告是 2026-11-03 的快照，保留原证据；模型热切换、评估超时与 A2 判据已在《方案》回写，E0-2 的「删主会话」仅作历史记录，不再作为常规操作（见 E0-2 与关键发现 #4）。
 
 ---
 
@@ -63,6 +65,8 @@
 ### E0-2 主会话绑定基准模型 —— ✅（deepseek-v4-pro → deepseek-flash）
 
 **背景根因（前一轮排障已确认）**：改 `settings` 的 eval/executor 模型**不会热更新**已持久化的主会话。源码 `src/app/role-models.ts` 的 `initializeRoleModel` 检测到已有 model/selection 即跳过。因此主会话切换必须走「重建」路径。
+
+> **2026-11-05 回写**：上述限制是 PR #12 之前的行为。现在保存新的 eval/executor 模型会热切换主会话的下一次请求；只有主会话内自选过模型时才不跟随。下面的「停 → 备份 → 删 → 启」步骤仅保留为当时的历史证据；日常不再执行，只有在旧会话自选模型、热切换不生效时才先备份再重建。
 
 **执行序列**：
 ```bash
@@ -164,7 +168,7 @@ git add / commit / push   # 6337fc8..1e6d54f HEAD -> main
 | 1 | GitHub observe 全关 = 三个事件流全部不轮询 | 通道静默失效，看似配置好实则死 | 开 observe 流；用 `/orchestrator/api/state` 看 health |
 | 2 | 同账号消息被防自触发忽略 | OCCAgent 自己发任何 issue/评论都不触发 | 测试必须用外部账号 |
 | 3 | allowed 名单过滤 explicit 请求 | 外部账号 @ 也会 `not_a_member` | allowed 要包含实际使用账号 |
-| 4 | settings 改模型不热更新主会话 | 面板改了模型，评估仍走旧模型 | 必须重建主会话（停→备份→删→启） |
+| 4 | settings 改模型会热切换主会话（PR #12 起） | 面板改模型后，下一次请求即用新模型；仅主会话内自选模型时不跟随 | 不需重建；若旧会话自选模型，先备份再重建 |
 | 5 | 重建主会话不丢进行中工单 | 重启风险被框架消化（自动恢复） | 可放心重建，无需等任务完成 |
 | 6 | GitHub 游标重启后从启动时刻起 | 重启前创建的事件不重放 | 验证时发新事件 |
 | 7 | 管理 API 路径是 `/orchestrator/api/...`（不是 `/api/...`） | 路径错误返回 401 误导排查 | 认证只看 host + `x-orchestrator-request: 1`，token 仅面板用 |
@@ -206,5 +210,6 @@ gh api repos/OCCAgent/dsh-superagent-prototype/issues/2/comments --jq '.[]|{user
 ## 六、遗留与下一步
 
 - **阶段 1（Harness 基线）**：前置条件已全部满足，题目集（T 组轨迹 / H 组 held-in / O 组 held-out）待定稿，可参考测试方案第 3 章结构。
+- **三层隔离 Profile（2026-11-05 创建）**：`selfharness`（3083）、`superagent-test`（3084）、`superagent-e2e`（3085），stateDir 各自独立；创建方法与本机端口见《方案》0.3.1。均未启动，飞书 Source 默认关闭。
 - 学习网站制作时：本报告的「关键发现」进进化页（WU-4），「执行记录」进测试日志页（WU-6），trigger/decision 语义可复用于概念页 A（WU-3）。
 - 飞书侧无需配置变更；GitHub 侧两个修复已持久化（rev 2/3），重启后保留。
