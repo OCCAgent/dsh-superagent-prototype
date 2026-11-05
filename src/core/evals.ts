@@ -7,6 +7,7 @@ import type { AssessmentOutcome, Candidate, Policy } from './ports.ts'
 import { said, type Reason } from './reasons.ts'
 import { EnginePart, type EngineOptions } from './part.ts'
 import type { Tickets } from './tickets.ts'
+import type { Replies } from './replies.ts'
 
 /** An outcome for the Eval that holds a Trigger; `evalId` names the Eval it was judged for, so a later Eval refuses it. */
 export type Outcome = AssessmentOutcome & { evalId?: string }
@@ -21,11 +22,12 @@ const REQUEUES = 2
 /**
  * Evals runs the Evals of Threads: it batches a Thread's queued Triggers into one Eval, takes its strength, actor, and basis
  * from the gate, asks the assessor, keeps its deadline through a pause, and records the Decision it ends with: accept, stop,
- * ignore, or unavailable. It depends on Tickets to create the ticket an accept decides and to end the one a stop names; the
- * Engine routes the main Session's decisions, people's replays, worker handbacks, and the pass's Eval work here.
+ * ignore, or unavailable. It depends on Tickets to create the ticket an accept decides and to end the one a stop names, and
+ * on Replies for the one timeout receipt an explicit request gets when its Eval ends unavailable; the Engine routes the main
+ * Session's decisions, people's replays, worker handbacks, and the pass's Eval work here.
  */
 export class Evals extends EnginePart {
-  constructor(options: EngineOptions, private readonly tickets: Tickets) { super(options) }
+  constructor(options: EngineOptions, private readonly tickets: Tickets, private readonly replies: Replies) { super(options) }
 
   /**
    * Expire a Thread's Eval past its deadline (see `expire`), unless processing is paused: then the Eval notes when the
@@ -317,6 +319,8 @@ export class Evals extends EnginePart {
   /** Record an Eval's Decision; the Thread's own Eval ends with it, while a gate-only one leaves the Thread's Eval going. */
   private finish(thread: Thread, evaluation: Evaluation, outcome: Finished): Decision {
     const decision = this.record(thread, evaluation, outcome)
+    const primary = evaluation.primary ?? evaluation.triggerIds[0]
+    this.replies.timeoutReceipt(decision, primary ? this.repo.triggers.get(primary) : undefined)
     // Direct (gate-only) evaluations do not clear the thread's active evaluation.
     if (thread.evaluating?.id !== evaluation.id) return decision
     delete thread.evaluating; delete thread.expired

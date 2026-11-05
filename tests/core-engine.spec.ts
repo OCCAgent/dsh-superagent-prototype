@@ -150,6 +150,8 @@ describe('eval', () => {
     const decision = h.decide(h.requests[0]!, { kind: 'accept', title: 'x', scope: 'x', reason: 'x' })
     expect(decision.kind).toBe('unavailable')
     expect(h.repo.tickets.list()).toEqual([])
+    // A policy-change requeue is not a lost request, so it sends no receipt.
+    expect(h.outbox).toEqual([])
   })
   it('starts every pending eval in one step, so a second pump starts none of them again', () => {
     const h = harness()
@@ -181,6 +183,19 @@ describe('eval', () => {
     expect(h.repo.threads.get('chat:t1')).toMatchObject({ pending: [] })
     expect(h.repo.threads.get('chat:t1')).not.toHaveProperty('evaluating')
     expect(h.repo.threads.get('chat:t1')).not.toHaveProperty('expired')
+    expect(h.outbox).toEqual([expect.objectContaining({ kind: 'notice', channel: trigger('1').channel,
+      text: expect.stringContaining('assessment timed out') })])
+  })
+  it('sends the timeout receipt once, in the language of the explicit request', () => {
+    const h = harness()
+    h.engine.receive(trigger('1', { text: '请修复页面上的错字' })); h.pump()
+    for (let attempt = 0; attempt < 3; attempt++) {
+      h.engine.candidateDelivered(h.requests.at(-1)!.evalId)
+      h.tick(61); h.pump()
+    }
+    expect(h.repo.decisions.byThread('chat:t1')).toEqual([expect.objectContaining({ kind: 'unavailable', reason: [{ code: 'timeout' }] })])
+    expect(h.outbox).toEqual([{ id: expect.any(String), channel: trigger('1').channel, kind: 'notice',
+      text: '评估超时，本次请求没有得出结论。可以稍后重发，或在面板中重新评估。' }])
   })
 })
 describe('subscription fan-out', () => {
@@ -1155,6 +1170,8 @@ describe('problems', () => {
     expect(() => h.engine.dismiss(decision.id)).toThrow(new UserError('unknownProblem'))
     h.engine.receive(trigger('2', { threads: [{ source: 'chat', id: 't2' }] })); h.pump()
     const unavailable = h.decide(h.requests.at(-1)!, { kind: 'unavailable', reason: 'model down' })
+    // Only a timeout sends the requester a receipt; an assessor's own unavailable decision does not.
+    expect(h.outbox.filter(item => item.kind === 'notice')).toEqual([])
     expect(h.engine.dismiss(unavailable.id)).toMatchObject({ kind: 'unavailable', dismissed: true })
     expect(h.repo.decisions.get(unavailable.id)).toMatchObject({ dismissed: true })
   })
