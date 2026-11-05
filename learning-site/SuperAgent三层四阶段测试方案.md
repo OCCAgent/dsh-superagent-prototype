@@ -62,7 +62,13 @@
 
 - **代码版本**：三个 profile 已改链到专用测试 checkout `/Users/opencity/src/dsh-superagent-test`（2026-11-05 从 `origin/main` 90fb8ba 建立，含 PR #21；PR #22 合并后在该 checkout 执行 `git fetch && git checkout --detach origin/main && pnpm install && pnpm build`）。日常 3082 仍用原 checkout，测试不影响它。
 - **模型**：每个 profile 的 `cordis.patch.yml` 已写 `agent-default-model = deepseek-official/deepseek-flash`（reasoningEffort high）。Eval/Executor 的模型默认跟随它；改这一项，或启动后在面板的 Eval/Execution 模型字段覆盖。需要 Gemini 等 provider 时，先在该 profile 加 provider 配置与对应 API key。
-- **e2e 飞书机器人**：新建独立飞书应用（开启 bot；授予接收消息、读写群消息、读取群成员权限并发布），用独立 `lark-cli` 配置目录与 wrapper（步骤见 `docs/006-deployment.md` 的 Feishu bot 节）；在 `superagent-e2e` 的 `cordis.patch.yml` 启用 `dsh-superagent-feishu`；启动 3085 后在 Source 设置里填 wrapper、测试群和 allowed 用户。e2e 测试群为 `oc_9d5195712a27b205b37e03dd19b1f488`；群内目前是日常 OCCLab bot（3082 在消费），同一 bot 不能由两个 profile 同时消费，测试前需换成专用 bot 或临时停 3082。
+- **e2e 飞书机器人**：在 open.feishu.cn 开发者后台创建企业自建应用 → 添加“机器人”能力 → 权限加消息收发、群信息/成员读取 → 事件订阅 `im.message.receive_v1`（长连接）→ 发布版本并由管理员审核；把新机器人拉进 e2e 测试群，移除日常 OCCLab。本机已建独立 wrapper `~/.local/bin/lark-bot-e2e`（配置目录 `~/.lark-cli-superagent-e2e`），拿到 App ID 后执行：
+  ```sh
+  ~/.local/bin/lark-bot-e2e config init --app-id <cli_…> --app-secret-stdin
+  ~/.local/bin/lark-bot-e2e config strict-mode bot --global
+  ~/.local/bin/lark-bot-e2e api GET /open-apis/bot/v3/info --as bot --format ndjson
+  ```
+  然后在 `superagent-e2e` 的 `cordis.patch.yml` 启用 `dsh-superagent-feishu`；启动 3085 后在 Source 设置里填 wrapper、测试群和 allowed 用户。e2e 测试群为 `oc_9d5195712a27b205b37e03dd19b1f488`；同一 bot 不能由两个 profile 同时消费，测试前需换成专用 bot 或临时停 3082。
 - **GitHub**：e2e 建议用独立测试仓库/账号，避免测试 PR 污染 `OCCAgent/dsh-superagent-prototype`。
 
 ### 0.4 术语速查
