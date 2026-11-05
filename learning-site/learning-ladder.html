@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>学习阶梯 · Super-agent 学习站</title>
+  <meta name="description" content="按《How To Learn Anything 10x Faster Using Claude》的五级结构，搭建 Super-agent 的学习阶梯：八项、里程碑、练习与自检。">
+  <style>
+:root{
+  --brand:#B8734A; --brand-dark:#8F5232; --gold:#D4A017; --ink:#3A2A1A;
+  --muted:#7C6A56; --paper:#FBF7F0; --card:#FFFDF9; --line:#E7DCCB;
+  --shadow:0 10px 30px rgba(58,42,26,.08);
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Songti SC","Noto Serif CJK SC",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.75 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--brand-dark);text-underline-offset:3px}
+a:hover{color:var(--brand)}
+.skip{position:absolute;left:-999px;top:0;background:var(--ink);color:#fff;padding:.6rem 1rem;z-index:99;border-radius:0 0 8px 0}
+.skip:focus{left:0;top:0}
+.wrap{width:min(1080px,92vw);margin:0 auto}
+.site-head{position:sticky;top:0;z-index:10;background:rgba(251,247,240,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.head-in{display:flex;align-items:center;justify-content:space-between;gap:1rem 1.5rem;min-height:68px;flex-wrap:wrap;padding:.55rem 0}
+.brand{display:inline-flex;align-items:center;gap:.65rem;text-decoration:none;color:var(--ink);font-family:var(--serif);font-weight:700;letter-spacing:.01em}
+.brand-mark{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--brand);color:#fff;font:700 12px/1 var(--sans);letter-spacing:.08em}
+.nav{display:flex;gap:.2rem;flex-wrap:wrap;align-items:center}
+.nav a{padding:.34rem .68rem;border-radius:999px;text-decoration:none;color:var(--muted);font-size:.9rem;white-space:nowrap;border:1px solid transparent}
+.nav a:hover{color:var(--ink);background:#F4EBDD}
+.nav a[aria-current="page"]{background:var(--ink);color:#FFF9EF;border-color:var(--ink)}
+main{padding:0 0 4rem}
+.hero{padding:3.4rem 0 2.6rem}
+.eyebrow{display:inline-flex;align-items:center;gap:.55rem;font:700 .72rem/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--brand);margin:0 0 1rem}
+.eyebrow::before{content:"";width:26px;height:2px;background:var(--gold)}
+h1,h2,h3{font-family:var(--serif);line-height:1.28;margin:0 0 .6rem;font-weight:700}
+h1{font-size:clamp(2rem,4.6vw,3.05rem);letter-spacing:-.01em;margin-bottom:.5rem}
+h2{font-size:clamp(1.3rem,2.5vw,1.75rem);margin-top:3.2rem;padding-top:1.3rem;border-top:1px solid var(--line)}
+h3{font-size:1.06rem;margin-top:0}
+.lede{font-size:1.08rem;color:var(--muted);max-width:64ch;margin:.5rem 0 0}
+.hero .lede{font-size:1.16rem}
+.meta{display:flex;gap:1.2rem;flex-wrap:wrap;margin:1.4rem 0 0;padding:0;list-style:none;color:var(--muted);font-size:.82rem}
+.meta li{display:inline-flex;align-items:center;gap:.42rem}
+.meta li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--gold)}
+.crumbs{font-size:.82rem;color:var(--muted);padding:1.1rem 0 0}
+.crumbs a{text-decoration:none}
+.crumbs span{color:var(--line)}
+.tag{display:inline-block;padding:.14rem .55rem;border-radius:999px;background:#F3E7D6;color:var(--brand-dark);font-size:.72rem;font-weight:700;letter-spacing:.04em;vertical-align:middle}
+.tag.gold{background:#FBF0CF;color:#8A6A0B}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem;margin:1.6rem 0}
+.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.25rem 1.3rem;text-decoration:none;color:inherit;box-shadow:var(--shadow);transition:transform .15s ease,border-color .15s ease}
+.card:hover{transform:translateY(-2px);border-color:var(--brand)}
+.card h3{margin-bottom:.35rem}
+.card p{margin:0;color:var(--muted);font-size:.94rem}
+.card .go{display:inline-block;margin-top:.85rem;color:var(--brand);font-weight:700;font-size:.84rem;letter-spacing:.02em}
+.steps{list-style:none;padding:0;margin:1.5rem 0;counter-reset:step;display:grid;gap:.75rem}
+.steps li{position:relative;padding:1rem 1.1rem 1rem 3.4rem;background:var(--card);border:1px solid var(--line);border-radius:12px;color:var(--muted);font-size:.95rem}
+.steps li::before{counter-increment:step;content:counter(step,decimal-leading-zero);position:absolute;left:1.05rem;top:1.05rem;font:700 .78rem/1 var(--mono);color:var(--brand);letter-spacing:.04em}
+.steps li strong{color:var(--ink);font-family:var(--serif);font-size:1rem;display:block;margin-bottom:.1rem}
+.pending{margin:1.4rem 0;padding:1rem 1.2rem;border:1px dashed var(--line);border-radius:12px;background:#FCF8F1;color:var(--muted);font-size:.94rem}
+.pending b{color:var(--brand-dark)}
+.note{margin:2rem 0;padding:1rem 1.2rem;border-left:4px solid var(--gold);background:#FFF8E8;border-radius:0 10px 10px 0;color:#5A4528;font-size:.94rem}
+.note b{color:var(--ink)}
+.prose{max-width:68ch}
+.prose p{margin:.8rem 0;color:#5C4B38}
+.table-wrap{overflow-x:auto;margin:1.2rem 0;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{padding:.65rem .8rem;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowrap}
+.definition{margin:2.2rem 0 0;padding:1.4rem 1.6rem;background:linear-gradient(135deg,#FFF8E8,#FFFDF9);border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:0 14px 14px 0}
+.def-kicker{display:inline-block;font:700 .7rem/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--brand);margin-bottom:.5rem}
+.definition p{margin:0;font-family:var(--serif);font-size:1.12rem;line-height:1.75;color:var(--ink)}
+.section-lede{max-width:62ch;color:var(--muted);margin:.2rem 0 0}
+.layer{display:inline-block;font:700 .7rem/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--brand);margin-bottom:.45rem}
+.test-grid .card{border-top:3px solid var(--gold)}
+.page-index{list-style:none;padding:0;margin:1.4rem 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:.6rem 1.4rem}
+.page-index li{display:flex;flex-direction:column;padding:.8rem 0;border-bottom:1px solid var(--line)}
+.page-index a{font-family:var(--serif);font-weight:700;text-decoration:none;color:var(--ink);font-size:1.02rem}
+.page-index a:hover{color:var(--brand)}
+.page-index span{color:var(--muted);font-size:.86rem}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin:1.4rem 0}
+.facts>div{padding:1rem 1.2rem;background:var(--card);border:1px solid var(--line);border-top:2px solid var(--gold);border-radius:0 0 10px 10px}
+.facts span{display:block;font:700 .7rem/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--brand);margin-bottom:.35rem}
+.facts p{margin:0;color:var(--ink);font-size:.95rem}
+.site-foot{border-top:1px solid var(--line);padding:2rem 0 2.4rem;color:var(--muted);font-size:.85rem}
+.foot-in{display:flex;justify-content:space-between;gap:1rem 2rem;flex-wrap:wrap}
+.foot-in p{margin:0}
+.foot-in a{color:var(--brand-dark)}
+@media (max-width:640px){
+  .hero{padding:2.4rem 0 2rem}
+  .head-in{min-height:0;padding:.7rem 0}
+  .nav{width:100%;gap:.15rem}
+  .nav a{padding:.3rem .55rem;font-size:.84rem}
+  h2{margin-top:2.4rem}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .card{transition:none}
+}
+
+.four{list-style:none;padding:0;margin:1rem 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.7rem}
+.four li{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:0 10px 10px 0;padding:.8rem 1rem;font-size:.94rem;color:var(--muted)}
+.four b{display:block;color:var(--ink);font-family:var(--serif);margin-bottom:.12rem}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin:1.4rem 0}
+.rules>div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1rem 1.2rem}
+.rules span{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--brand);color:#fff;font:700 .74rem/1 var(--mono);margin-bottom:.5rem}
+.rules b{display:block;font-family:var(--serif);color:var(--ink);font-size:1rem;margin-bottom:.2rem}
+.rules p{margin:0;color:var(--muted);font-size:.92rem}
+.ladder{display:grid;gap:1.4rem;margin:1.4rem 0}
+.level{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow);scroll-margin-top:84px}
+.level-head{display:flex;gap:1rem;align-items:flex-start;padding:1.2rem 1.4rem;background:linear-gradient(135deg,#FFF8E8,#FFFDF9);border-bottom:1px solid var(--line)}
+.lv-no{flex:0 0 auto;font:700 1.2rem/1 var(--mono);color:var(--brand);background:#F3E7D6;border-radius:10px;padding:.6rem .65rem}
+.lv-kicker{font:700 .68rem/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--brand);margin:0 0 .32rem}
+.level-head h3{margin:0;font-size:1.34rem}
+.lv-en{font:600 .76rem/1 var(--sans);color:var(--muted);letter-spacing:.04em;margin-left:.35rem}
+.lv-goal{margin:.45rem 0 0;color:var(--muted);font-size:.94rem}
+.lv-time{margin-left:auto;flex:0 0 auto;font:700 .7rem/1 var(--mono);color:var(--brand-dark);background:#FBF0CF;border-radius:999px;padding:.38rem .62rem;white-space:nowrap}
+.lv-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)}
+.lv-field{background:var(--card);padding:1rem 1.3rem;min-width:0}
+.lv-field.wide{grid-column:1/-1}
+.lv-label{display:block;font:700 .68rem/1 var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--brand);margin-bottom:.45rem}
+.lv-field p{margin:.2rem 0;font-size:.94rem;color:#5C4B38}
+.lv-field ul{margin:.2rem 0 0;padding-left:1.15rem;font-size:.93rem;color:#5C4B38}
+.lv-field li{margin:.25rem 0}
+.lv-field code{font-family:var(--mono);font-size:.85em;background:#F6EEE2;border:1px solid #EADCC7;border-radius:5px;padding:.05rem .3rem}
+.lv-field .q-text{font-family:var(--serif);font-size:1rem;color:var(--ink)}
+.lv-field details{margin-top:.8rem;border-top:1px dashed var(--line);padding-top:.6rem}
+.lv-field summary{cursor:pointer;color:var(--brand-dark);font-size:.85rem;font-weight:700}
+.lv-field details p{margin:.55rem 0 0;font-size:.9rem;color:var(--muted)}
+.lv-proof{margin:.7rem 0 0;font-size:.8rem;color:var(--muted)}
+.cheat{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:.9rem;margin:1.2rem 0}
+.cheat-card{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--gold);border-radius:0 0 12px 12px;padding:1rem 1.1rem}
+.cheat-card h3{font-size:.98rem;margin-bottom:.4rem}
+.cheat-card p,.cheat-card ul{margin:0;font-size:.86rem;color:var(--muted)}
+.cheat-card ul{padding-left:1.05rem}
+.cheat-card li{margin:.18rem 0}
+.cheat-card code{font-family:var(--mono);font-size:.92em}
+.mono{font-family:var(--mono);font-size:.82rem;line-height:1.7;color:var(--brand-dark);word-break:break-word}
+.box{font-family:var(--mono);color:var(--brand);font-size:1.05rem}
+.signals{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.8rem;margin:1.2rem 0}
+.signal{background:#FCF8F1;border:1px dashed var(--line);border-radius:10px;padding:.9rem 1rem;color:#5C4B38;font-size:.9rem}
+.signal b{color:var(--brand-dark)}
+.resources td:nth-child(3){white-space:nowrap}
+@media (max-width:640px){
+  .lv-grid{grid-template-columns:1fr}
+  .lv-field.wide{grid-column:auto}
+  .lv-time{display:none}
+  .level-head{padding:1rem 1.1rem}
+  .lv-field{padding:.9rem 1.1rem}
+}
+</style>
+</head>
+
+<body>
+  <a class="skip" href="#main">跳到正文</a>
+  <header class="site-head">
+    <div class="wrap head-in">
+      <a class="brand" href="index.html"><span class="brand-mark">SA</span><span>Super-agent 学习站</span></a>
+      <nav class="nav" aria-label="主导航">
+        <a href="index.html">首页</a>
+        <a href="concept.html">概念(A论文)</a>
+        <a href="evolution.html">进化(B论文)</a>
+        <a href="feynman.html">费曼拆解</a>
+        <a href="learning-ladder.html" aria-current="page">学习阶梯</a>
+        <a href="test-log.html">测试日志</a>
+        <a href="prototype.html">原型</a>
+        <a href="experiment.html">实验</a>
+      </nav>
+    </div>
+  </header>
+  <main id="main">
+    <div class="wrap">
+      <p class="crumbs"><a href="index.html">首页</a> <span>/</span> 学习阶梯</p>
+      <section class="hero">
+        <p class="eyebrow">学习阶梯 · 5 级</p>
+        <h1>五级台阶，把 Super-agent 学到能改</h1>
+        <p class="lede">把「学 Super-agent」拆成五级：完全新手、基础理解、实际使用者、问题解决者、自信实践者。每级八项、一个里程碑、一个自检问题；过不了就停在原地补，不靠「看过」升级。</p>
+        <ul class="meta">
+          <li>5 级 × 8 项</li>
+          <li>5 个里程碑</li>
+          <li>方法来自 Rahul (@sairahul1)</li>
+        </ul>
+      </section>
+
+      <section>
+        <div class="note"><b>方法来源：</b>五级与八项的结构来自 Rahul（<a href="https://x.com/sairahul1">@sairahul1</a>）的文章 <a href="https://x.com/sairahul1/article/2068250224532050089">How To Learn Anything 10x Faster Using Claude</a>（2026-06-20）。原文用这套结构向 Claude 学任何主题；本页把「主题」换成 dsh-superagent，把每级的事实锚定到本仓库的文档、源码与实验记录。这是一条学习路线，不是学习者实验：没有测过它能把学习速度提高多少。</div>
+      </section>
+
+      <section>
+        <h2>为什么收藏不等于学会</h2>
+        <p class="section-lede">原文的判断很直接：随机提问会得到随机答案，当时觉得懂了，一周后什么都不剩。真正的学习需要四样东西，而普通 AI 对话常常四样都缺。</p>
+        <ul class="four">
+          <li><b>路径</b>先学什么、后学什么，不跳地基。</li>
+          <li><b>测试</b>在付出代价之前，先知道自己哪里不会。</li>
+          <li><b>压缩</b>把知识压到能在 5 分钟内复习。</li>
+          <li><b>反馈</b>缺口马上被发现并补上，而不是悄悄堆积。</li>
+        </ul>
+        <p class="section-lede">这条阶梯负责「路径」和「测试」：每级的八项里已经埋了练习、里程碑和自检。压缩与反馈放在后面：<a href="#cheat">一页速查</a>和<a href="#feynman">费曼回路</a>。</p>
+      </section>
+
+      <section>
+        <h2>三条使用规则</h2>
+        <div class="rules">
+          <div><span>1</span><b>先定位，再开走</b><p>用下面的总览表自评。不确定自己在哪级，就从 L1 的自检题开始；答得顺，再往上试。</p></div>
+          <div><span>2</span><b>通关 = 里程碑 + 自检 + 一个失败路径</b><p>里程碑要拿得出东西；自检要答得上；还要能说清「这一步失败会怎样」。三样缺一，留在本级。</p></div>
+          <div><span>3</span><b>不按时间升级</b><p>每级标的时间只是投入参考，不是资格。卡住时把问题按 <a href="problems.md">problems.md</a> 的六字段写下来，再回上一级找缺口。</p></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>五级总览</h2>
+        <p class="section-lede">左边是级，右边是原文的难度名。最后一列是升级的凭据：一个交得出来的里程碑；再配合每级第 8 项的自检。</p>
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead><tr><th>级</th><th>原文对应</th><th>一句话</th><th>过关里程碑</th></tr></thead>
+            <tbody>
+              <tr><td><b><a href="#l1">L1</a></b></td><td>Complete Beginner</td><td>能判断「该不该交给它」</td><td>150 字外行版 + 答住 3 个追问</td></tr>
+              <tr><td><b><a href="#l2">L2</a></b></td><td>Basic Understanding</td><td>能把系统当状态机读</td><td>白纸画出主链路、两条旁路与三个失败点</td></tr>
+              <tr><td><b><a href="#l3">L3</a></b></td><td>Practical User</td><td>能独立走完一次真实闭环</td><td>一次小改动从触发到 PR，并逐阶段对上面板</td></tr>
+              <tr><td><b><a href="#l4">L4</a></b></td><td>Problem Solver</td><td>能从症状定位到记录</td><td>一份可被他人复现的故障记录</td></tr>
+              <tr><td><b><a href="#l5">L5</a></b></td><td>Confident Practitioner</td><td>能改一层并证明没弄坏</td><td>一页 RFC 过评审十问，或一个小实现 + 回归</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="ladder">
+        <h2>五级台阶</h2>
+        <p class="section-lede">每级按原文的八项展开：01 级别名、02 要理解什么、03 掌握的表现、04 重点概念、05 过关里程碑、06 动手练习、07 常见错误、08 自检问题。先读 02–05，再去做 06；08 的答案折叠在下面，先自己答。</p>
+
+        <div class="ladder">
+          <article class="level" id="l1" aria-labelledby="l1-title">
+            <header class="level-head">
+              <span class="lv-no">L1</span>
+              <div>
+                <p class="lv-kicker">01 · 级别名</p>
+                <h3 id="l1-title">完全新手 <span class="lv-en">Complete Beginner</span></h3>
+                <p class="lv-goal">你不需要会写代码，只要能判断「这件事该不该交给它」。</p>
+              </div>
+              <span class="lv-time">约 2–4 小时</span>
+            </header>
+            <div class="lv-grid">
+              <div class="lv-field wide">
+                <span class="lv-label">02 · 这一级要理解什么</span>
+                <p>它不是模型，也不是「多 Agent 框架」。它是一个对一个 GitHub 仓库干活的主动 Agent：在飞书或 GitHub 收到请求，判断是否被授权，再把工作放进独立工单执行。</p>
+                <p>一条请求的旅程：消息先成为 Trigger；Eval 判断要不要接；接了才建 Ticket 和不可变的 Mandate；Assignment 把工单交给 Executor；做完用 Report 和原渠道回复。</p>
+                <p>两层分工是结构约束，不是提示词：Main Session（Router）只判断和派活，不干具体活；Executor（Worker）在自己的 Session 和目录里干活，只向工单汇报。</p>
+                <p>四个特征——连续、产出、主动、持久——不是口号，分别对应「跨渠道同一身份」「并行不堵」「环境事件能触发」「重启能恢复」。</p>
+              </div>
+              <div class="lv-field">
+                <span class="lv-label">03 · 掌握的表现</span>
+                <ul>
+                  <li>用 3 分钟讲给不写代码的人，不用 Router/Worker 也能讲清谁在什么时候做什么。</li>
+                  <li>能说出它和「给聊天机器人接一堆工具」的区别：先授权、有工单、有审计、有回滚边界。</li>
+                  <li>能举出一个「它不该做」的例子，并说明该由谁做，例如没人授权、超出范围、合并 PR。</li>
+                </ul>
+              </div>
+              <div class="lv-field">
+                <span class="lv-label">04 · 最重要的概念与技能</span>
+                <ul>
+                  <li>Source / Trigger / Ticket / Executor / Mandate：先要直觉，不背定义</li>
+                  <li>四个特征：连续、产出、主动、持久</li>
+                  <li>两条边界：PR 出现 ≠ 可合并；工单结束 ≠ 授权被撤回</li>
+                </ul>
+              </div>
+              <div class="lv-field">
+                <span class="lv-label">05 · 过关里程碑</span>
+                <p>写一段 150 字以内的大白话说明，并让一个不熟悉这套系统的人追问 3 个问题；你能当场答上。说明和问题记进自己的笔记，不需要公开。</p>
+                <p class="lv-proof"><b>证据：</b>150 字说明 + 3 个追问的答案。</p>
+              </div>
+              <div class="lv-field">
+                <span class="lv-label">06 · 动手练习</span>
+                <p>打开面板 Overview 和仓库 README，找一张真实工单（例如本页所在工单），写下四个答案：谁提的？授权范围是什么？谁在执行？结果回到哪里？</p>
+                <p>再去<a href="concept.html">概念页</a>对照四特征，各写一句「它在这张工单里体现在哪」。</p>
+              </div>
+              <div class="lv-field wide">
+                <span class="lv-label">07 · 常见错误</span>
+                <ul>
+                  <li>当成「更聪明的聊天窗口」：忽略授权、工单和审计。</li>
+                  <li>以为 Agent 越多越好：这里的关键恰恰是 Router 不执行、Worker 隔离。</li>
+                  <li>一上来读源码：L1 读源码只会记住名词，画不出流程。</li>
+                </ul>
+              </div>
+              <div class="lv-field wide">
+                <span class="lv-label">08 · 自检问题</span>
+                <p class="q-text">同一个人在同一个 Thread 里把同一句话发两遍，会不会建两个工单？为什么？</p>
+                <details><summary>参考答案</summary><p>不会。Trigger 是幂等单位：同一个 Trigger 被 accept 两次也只建一个 Ticket。新消息若落在已订阅的 Thread 上，会作为上下文扇出给工单，由它的 Worker 判断是否属于本工单；只有超出工单范围、被 handback 的消息才重新进入 Eval。判据不是「发了几次」，而是同一条 Trigger 和同一个 Thread 的归属。</p></details>
+              </div>
+            </div>
+          </article>
+
+          <article class="level" id="l2" aria-labelledby="l2-title">
+            <header class="level-head">
+              <span class="lv-no">L2</span>
+              <div>
+                <p class="lv-kicker">01 · 级别名</p>
+                <h3 id="l2-title">基础理解 <span class="lv-en">Basic Understanding</span></h3>
+                <p class="lv-goal">把系统当成状态机读，而不是一串功能名。</p>
+              </div>
+              <span class="lv-time">约 6–8 小时</span>
+            </header>
+            <div class="lv-grid">
+              <div class="lv-field wide">
+                <span class="lv-label">02 · 这一级要理解什么</span>
+                <p>主链路：Source → Trigger → Thread → Eval（Gate + Assessment）→ Decision → Ticket（带 Mandate）→ Assignment → Executor → Report → Channel。</p>
+                <p>两条旁路：Subscription fan-out 只把 Thread 上的新消息送进工单当上下文，不授予权限；Correlation 只补上下文，从不路由。</p>
+                <p>Ticket 的七个阶段按「在等谁」定义：person/delivery、person/answer、person/review、person/blocked 或 failed、working/queued、idle、working。读表从上到下，第一条命中就是当前阶段。</p>
+                <p>恢复不是「重启一下」：delivery 有退避重试，blocked/failed 由人的消息释放，Assignment 中断带恢复注记，prepare 失败要重试或人的新消息才会再准备。</p>
+              </div>
+              <div class="lv-field">
+                <span class="lv-label">03 · 掌握的表现</span>
+                <ul>
+                  <li>白纸画出主链路，任指一个节点，能说出输入、输出和失败后的去向。</li>
+                  <li>能解释 accept、stop、ignore、unavailable 四种 Decision 分别意味着什么。</li>
+                  <li>能解释为什么工单结束不等于授权撤回，以及什么情况下授权才失效。</li>
+                  <li>能区分「进了工单上下文」和「创造了新工作」。</li>
+                </ul>
+              </div>
+              <div class="lv-field">
+                <span class="lv-label">04 · 最重要的概念与技能</span>
+                <ul>
+                  <li>Gate（确定性准入）vs Assessment（模型研判）</li>
+                  <li>Mandate（不可变授权）与 Policy version</li>
+                  <li>Subscription、fan-out 与 Correlation</li>
+                  <li>Disposition、Decision、Report</li>
+                  <li>Ticket 的七个阶段</li>
+                </ul>
+              </div>
+              <div class="lv-field">
+                <span class="lv-label">05 · 过关里程碑</span>
+                <p>用一张 A4 画出主链路、两条旁路和三个失败点；用 5 分钟讲给一个同伴。对方随机指一个节点，你能说出它失败后去哪、由谁推进。</p>
+                <p class="lv-proof"><b>证据：</b>手绘图（照片或文字版）+ 一次讲解。图中的节点必须来自面板里的真实记录。</p>
+              </div>
+              <div class="lv-field">
+                <span class="lv-label">06 · 动手练习</span>
+                <p>在面板的 Trigger、Eval、Execution 各找一条记录，按「Disposition → Decision → Ticket → Assignment → Report」抄成一条链，并标注每一步是代码还是模型做的。</p>
+                <p>再回到 <code>docs/001-domain.md</code> 和 <code>docs/005-panel.md</code> 核对术语，把叫错的词改过来。</p>
+              </div>
+              <div class="lv-field wide">
+                <span class="lv-label">07 · 常见错误</span>
+                <ul>
+                  <li>把 Eval 当执行器：Eval 只判断，不干活。</li>
+                  <li>把订阅当授权：扇出只加 context，Mandate 才能授权。</li>
+                  <li>以为 Ticket 跟着 Session 走：Ticket 有自己的 open/ended，可以换 Executor。</li>
+                  <li>以为工单结束就收回授权：只有人 stop 或 Policy 不再持有才撤回。</li>
+                </ul>
+              </div>
+              <div class="lv-field wide">
+                <span class="lv-label">08 · 自检问题</span>
+                <p class="q-text">一条群里的普通讨论，为什么可能进入某个工单的上下文，却不能自己变成新任务？</p>
+                <details><summary>参考答案</summary><p>因为它所在的 Thread 可能被工单订阅，消息会被扇出成 Input；但没有经过 Eval 的 accept，就不产生 Mandate，也不会建 Ticket。上下文和授权是两条线。</p></details>
+                <p class="q-text" style="margin-top:1rem">工单从 blocked 回到 working，通常需要什么？</p>
+                <details><summary>参考答案</summary><p>人在它的 Thread 上发消息，或者重试 delivery。blocked/failed 时系统不自动投递 CI 和机器人消息；人的消息会解除这个 hold。</p></details>
+              </div>
+            </div>
+          </article>
+
+          <article class="level" id="l3" aria-labelledby="l3-title">
+            <header class="level-head">
+              <span class="lv-no">L3</span>
+              <div>
+                <p class="lv-kicker">01 · 级别名</p>
+                <h3 id="l3-title">实际使用者 <span class="lv-en">Practical User</span></h3>
+                <p class="lv-goal">能把它当工具用，独立走完一次真实闭环。</p>
+              </div>
+              <span class="lv-time">约 8–12 小时</span>
+            </header>
+            <div class="lv-grid">
+              <div class="lv-field wide">
+                <span class="lv-label">02 · 这一级要理解什么</span>
+                <p>起服务：一个独立的 DSH profile、面板、Source（GitHub，可选飞书）、Policy 允许名单、Executor 目录与 prepare 命令。</p>
+                <p>提请求：在原渠道写清目标、范围、验收；explicit 是明确请求，inferred 只能走已匹配的规则，范围更窄。</p>
+                <p>看状态：Overview 先看「需要我」，再看工单阶段；Trigger 页看 Disposition 与 Decision；Execution 页看 Assignment 与 Report。</p>
+                <p>交付边界：ready 的 PR 只是「等人看」；默认由人合并，Agent 不代替评审，也不把「PR 已开」当成完成。</p>
+              </div>
+              <div class="lv-field">
+                <span class="lv-label">03 · 掌握的表现</span>
+                <ul>
+                  <li>独立完成一次小改动闭环（文档、测试或单函数），并能对照面板说出每个阶段为什么停。</li>
+                  <li>能判断一条请求该走 explicit 还是 proactive 规则；能写出 100 字以内的验收标准。</li>
+                  <li>能读懂 ready、blocked、waiting 三种 Report 的差别，并知道下一步该谁动。</li>
+                  <li>知道什么时候该在同一 Thread 追问，什么时候该另开一条消息。</li>
+                </ul>
+              </div>
+              <div class="lv-field">
+                <span class="lv-label">04 · 最重要的概念与技能</span>
+                <ul>
+                  <li>部署与配置：profile、Source、Policy、Executor、prepare</li>
+                  <li>请求写法：目标、范围、验收</li>
+                  <li>面板：Overview、Trigger、Eval、Execution、Settings</li>
+                  <li>Report 语义：progress、waiting、ready、blocked、failed、dropped</li>
+                </ul>
+              </div>
+              <div class="lv-field">
+                <span class="lv-label">05 · 过关里程碑</span>
+                <p>一次真实小改动从触发走到 PR，且你能对照面板复述每个阶段；PR 由人 review/合并，或在记录里明确写出「尚未合并、原因是什么」。</p>
+                <p class="lv-proof"><b>证据：</b>脱敏后的 Trigger id、Ticket id、Report 阶段和 PR 链接。</p>
+              </div>
+              <div class="lv-field">
+                <span class="lv-label">06 · 动手练习</span>
+                <p>在一个测试仓库提一个「只改一个文件」的请求。记录 Trigger id、Decision、Ticket id、Assignment、Report 和 PR 链接。</p>
+                <p>然后故意在同一 Thread 追问一句，观察它是继续同一工单还是新建。把两次路径画出来，和 L2 的图对照。</p>
+              </div>
+              <div class="lv-field wide">
+                <span class="lv-label">07 · 常见错误</span>
+                <ul>
+                  <li>需求太宽（「重构一下」）：范围失控，或者被暂停。</li>
+                  <li>没写验收：PR 开了但不可用。</li>
+                  <li>把 PR 出现当成完成：ready 只是等人 review。</li>
+                  <li>替 Agent 批准或合并：越过评审边界。</li>
+                </ul>
+              </div>
+              <div class="lv-field wide">
+                <span class="lv-label">08 · 自检问题</span>
+                <p class="q-text">一个 ready 的 PR 出现后，工单处于哪个阶段？下一步谁做什么？</p>
+                <details><summary>参考答案</summary><p>通常是 person/review（面板显示「等待审阅」）。下一步是人 review 并决定合并；默认没有配置合并 CLI 时由人合并，Agent 不会代人批准，也不会直接合并。只有交付要求明确指定合并 CLI 且条件满足时，它才会启用 auto-merge。合并或关闭后，工单才按 PR 结果结束。</p></details>
+                <p class="q-text" style="margin-top:1rem">同一 Thread 的追问，和另开一条新消息，路径差在哪？</p>
+                <details><summary>参考答案</summary><p>同一 Thread 若已被工单订阅，追问直接扇出成 Input，不进 Eval；另一条新 Thread 没有订阅，要走 Source → Eval 才会成为新工作。</p></details>
+              </div>
+            </div>
+          </article>
+
+          <article class="level" id="l4" aria-labelledby="l4-title">
+            <header class="level-head">
+              <span class="lv-no">L4</span>
+              <div>
+                <p class="lv-kicker">01 · 级别名</p>
+                <h3 id="l4-title">问题解决者 <span class="lv-en">Problem Solver</span></h3>
+                <p class="lv-goal">从「它怎么不动了」走到「证据在哪、下一步验证什么」。</p>
+              </div>
+              <span class="lv-time">约 10–15 小时</span>
+            </header>
+            <div class="lv-grid">
+              <div class="lv-field wide">
+                <span class="lv-label">02 · 这一级要理解什么</span>
+                <p>先分层再查记录：没收到（Source 没监听、被 Source 层过滤）→ 收到没建单（允许名单与 Gate、Assessment、Decision）→ 建单没跑（Assignment、prepare、槽位）→ 跑了没回（delivery、Channel、outbox）→ 回了但不对（scope、prompt、model）。</p>
+                <p>四类记录：Disposition（去哪了）、Decision（为什么）、Assignment（谁在跑）、Report（跑到哪）。再加系统问题、outbox 失败和恢复注记。</p>
+                <p>恢复机制要背下来：delivery 从 2 秒起、指数退避到 1 分钟；Channel 从 5 秒起、退避到 300 秒；worker 的 turn 结束后后台工作最多 30 分钟；prepare 失败不会自动重试；restart 用恢复注记让 worker 先核对目录、git 和 GitHub。</p>
+                <p>「先取证，后重启」：restart 会结束运行中的 Assignment，现场可能就没了。</p>
+              </div>
+              <div class="lv-field">
+                <span class="lv-label">03 · 掌握的表现</span>
+                <ul>
+                  <li>给定「没回复、没建单、卡住、结果不对」四类症状，先给假设，再查对应记录，不先重启。</li>
+                  <li>能区分 Policy 过滤、模型 ignore、执行失败、投递失败，而不是统称「Agent 坏了」。</li>
+                  <li>能用测试或最小案例复现，而不是只读日志。</li>
+                  <li>修复后能写出「改了什么、没改什么、为什么」，并留下可复查的证据。</li>
+                </ul>
+              </div>
+              <div class="lv-field">
+                <span class="lv-label">04 · 最重要的概念与技能</span>
+                <ul>
+                  <li>症状到层的映射</li>
+                  <li>Disposition、Decision、Assignment、Report</li>
+                  <li>retry、restart、hold、recovery note</li>
+                  <li>并发与槽位、后台工作 30 分钟上限</li>
+                  <li>关键源码：<code>src/policy.ts</code>、<code>src/app/assessment.ts</code>、<code>src/core/stage.ts</code>、<code>src/core/tickets.ts</code>、<code>src/core/intake.ts</code>、<code>src/executor/dsh.ts</code></li>
+                </ul>
+              </div>
+              <div class="lv-field">
+                <span class="lv-label">05 · 过关里程碑</span>
+                <p>选一个真实或构造的故障，写下「症状 → 假设 → 检查 → 结论 → 修复或不修的理由」，并让另一个人只按这份记录复现一次。复现成功，才算过关。</p>
+                <p class="lv-proof"><b>证据：</b>故障记录 + 复现命令或报告。</p>
+              </div>
+              <div class="lv-field">
+                <span class="lv-label">06 · 动手练习</span>
+                <p>从 <a href="problems.md">problems.md</a> 选一条（PR base 冲突、沙箱凭据、流中断、部署落后、pnpm 超时），复现或构造最小案例。</p>
+                <p>或者跑一次 <code>pnpm test</code> 或 <code>python3 learning-site/shot.py</code>，人为制造一个失败，按报告定位到具体检查项，记录命令、输出和结论。</p>
+              </div>
+              <div class="lv-field wide">
+                <span class="lv-label">07 · 常见错误</span>
+                <ul>
+                  <li>先重启后取证：现场没了。</li>
+                  <li>把 Policy 过滤当 bug：允许名单与准入本来就会挡。</li>
+                  <li>看日志没有假设：越看越乱。</li>
+                  <li>用 Policy 修执行层的 bug：授权层不该背执行层的锅。</li>
+                  <li>把「PR 已开」当「工单完成」。</li>
+                </ul>
+              </div>
+              <div class="lv-field wide">
+                <span class="lv-label">08 · 自检问题</span>
+                <p class="q-text">一条飞书消息既没有回复，也没有工单记录，你先看哪三处？</p>
+                <details><summary>参考答案</summary><p>① Source 是否在监听、是否被 Source 层过滤（Disposition）；② 是否入库并进入 Eval，Decision 是 ignore 还是 unavailable；③ 是否有 Ticket/Assignment，以及 delivery 是否失败。三处分别对应「没收到」「收到没接」「接了没送达」。</p></details>
+                <p class="q-text" style="margin-top:1rem">working/queued 与 idle 的区别？</p>
+                <details><summary>参考答案</summary><p>queued 是还没有 Assignment 或 Assignment 仍是 pending，或者在等空闲槽位；idle 是这一轮已经结束（Report waiting 或 Assignment ended），在等下一个 Trigger。前者等资源，后者等输入。</p></details>
+              </div>
+            </div>
+          </article>
+
+          <article class="level" id="l5" aria-labelledby="l5-title">
+            <header class="level-head">
+              <span class="lv-no">L5</span>
+              <div>
+                <p class="lv-kicker">01 · 级别名</p>
+                <h3 id="l5-title">自信实践者 <span class="lv-en">Confident Practitioner</span></h3>
+                <p class="lv-goal">能判断该改哪一层，并证明改动没有把系统弄坏。</p>
+              </div>
+              <span class="lv-time">约 15–20 小时</span>
+            </header>
+            <div class="lv-grid">
+              <div class="lv-field wide">
+                <span class="lv-label">02 · 这一级要理解什么</span>
+                <p>四种改动面：Prompt/Policy（团队可编辑）、Source/Channel（部署实现）、Executor/domain（代码）、架构（跨模块）。改错层，越努力越糟。</p>
+                <p>每个改动都要过六问：失败场景是什么？权限怎么变？怎么回滚？怎么观测？成本多少？对已有调用方和数据怎么兼容？</p>
+                <p>已知的架构缺口：没有显式引用的跨 Thread 归属（实验里的 C4），以及没有独立控制环的 Watchdog。这两件事都不是 prompt 能修的。</p>
+                <p>验证要分 held-in 与 held-out：先证明它解决了 motivating evidence，再证明没把没见过的场景弄坏。</p>
+              </div>
+              <div class="lv-field">
+                <span class="lv-label">03 · 掌握的表现</span>
+                <ul>
+                  <li>能写一页 RFC：问题证据、候选方案、权限影响、失败模式、回滚、观测指标、验证计划。</li>
+                  <li>能指出一个改动会破坏哪条现有保证，例如「Router 不执行」「订阅不授权」。</li>
+                  <li>能设计 held-out 用例，而不是只跑自己调参用的那几条。</li>
+                  <li>能在改 prompt、改配置、改代码、改架构之间做出有理由的选择。</li>
+                </ul>
+              </div>
+              <div class="lv-field">
+                <span class="lv-label">04 · 最重要的概念与技能</span>
+                <ul>
+                  <li>Source/Channel 的接口、幂等键、读位置</li>
+                  <li>Policy 版本、Mandate 重校验、准入表</li>
+                  <li>held-in / held-out 回归</li>
+                  <li>迁移、兼容、灰度、回滚</li>
+                  <li>评审十问与失败注入</li>
+                </ul>
+              </div>
+              <div class="lv-field">
+                <span class="lv-label">05 · 过关里程碑</span>
+                <p>写一页 RFC，或实现一个小 Source/Channel。RFC 要能通过<a href="#review">评审十问</a>，至少三个失败场景有明确处置，含回滚与观测；实现要有测试、迁移说明和一次失败注入的结果。</p>
+                <p class="lv-proof"><b>证据：</b>RFC 链接或 PR + 评审记录 + 验证结果。</p>
+              </div>
+              <div class="lv-field">
+                <span class="lv-label">06 · 动手练习</span>
+                <p>给「跨 Thread 自动归属」写一页 RFC：先用 C4 的证据说明问题，再比较「语义匹配」与「来源业务键」两条路，写清权限影响、误归属的代价、回滚和指标，最后用<a href="#review">评审十问</a>自检。</p>
+                <p>或者设计一个只读 Source，定义事件、幂等键、读位置、身份和失败处理，并补一组测试。</p>
+              </div>
+              <div class="lv-field wide">
+                <span class="lv-label">07 · 常见错误</span>
+                <ul>
+                  <li>用 prompt 修结构缺口：改的是话术，不是机制。</li>
+                  <li>新 Source 没有幂等键或读位置：重启就重放。</li>
+                  <li>给自动合并权却没有 held-out 回归：把评审风险自动化了。</li>
+                  <li>只在调参用例上验证：过拟合。</li>
+                  <li>没有回滚和观测就上线：出事只能猜。</li>
+                </ul>
+              </div>
+              <div class="lv-field wide">
+                <span class="lv-label">08 · 自检问题</span>
+                <p class="q-text">给系统加一个新 Source，至少要在哪三处定义身份、幂等和读位置？</p>
+                <details><summary>参考答案</summary><p>① Source 实现：什么算一个事件，actor、thread、channel 怎么翻译；② Policy：这个 Source 的允许名单、同步与准入；③ 领域层：Trigger 的幂等键、Source 的读位置。缺一处就会重复、越权或重放。</p></details>
+                <p class="q-text" style="margin-top:1rem">为什么 Watchdog 不能只是主 Session 里的一段 prompt？</p>
+                <details><summary>参考答案</summary><p>因为主 Session 就是被监控对象；它卡死时，同一循环里的 prompt 也停了。独立控制环需要独立进程、预算、凭据和审计，才能在主系统失效时仍然工作。</p></details>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="review">
+        <h2>L5 的评审十问</h2>
+        <p class="section-lede">L5 的里程碑要求「通过评审十问」。这十问不是形式，而是把 RFC 从「想法」变成「可评审的改动」的最低标准。</p>
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead><tr><th>#</th><th>问题</th><th>它在防什么</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>问题证据是什么？不改会怎样？</td><td>为想象中的问题写代码</td></tr>
+              <tr><td>2</td><td>改的是哪一层：prompt、配置、代码还是架构？</td><td>用最贵或最错的一层解决问题</td></tr>
+              <tr><td>3</td><td>最坏的失败场景是什么？影响多大？</td><td>只写 happy path</td></tr>
+              <tr><td>4</td><td>权限边界变了吗？谁能触发、范围多大？</td><td>悄悄扩大授权面</td></tr>
+              <tr><td>5</td><td>误判或误归属的代价是什么？怎么发现和纠正？</td><td>把错误自动化</td></tr>
+              <tr><td>6</td><td>怎么回滚？回滚会丢什么？</td><td>做出一张单程票</td></tr>
+              <tr><td>7</td><td>怎么观测成功和失败？指标、日志、告警在哪？</td><td>上线后只能靠猜</td></tr>
+              <tr><td>8</td><td>成本增加多少：token、延迟、槽位、人工？</td><td>用无限预算换一点收益</td></tr>
+              <tr><td>9</td><td>对已有 Source、Ticket、数据怎么兼容或迁移？</td><td>破坏现有调用方</td></tr>
+              <tr><td>10</td><td>held-out 用例是什么？怎么证明没把别处弄坏？</td><td>只在调参用例上过拟合</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>五个「假掌握」信号</h2>
+        <p class="section-lede">以下任何一条成立，说明还停在前一级，不是「学得差不多了」。</p>
+        <div class="signals">
+          <div class="signal"><b>能背四特征，说不出一次失败的恢复路径。</b>记住的是词，不是状态机。</div>
+          <div class="signal"><b>能画正常流程，说不清 blocked → working。</b>没理解谁有权推进它。</div>
+          <div class="signal"><b>能读源码，给一个负载说不出先崩哪。</b>还没有量级感。</div>
+          <div class="signal"><b>能开 PR，写不出验收标准。</b>还没到 L3。</div>
+          <div class="signal"><b>能改 prompt，分不清授权层和执行层。</b>还没到 L5。</div>
+        </div>
+      </section>
+
+      <section>
+        <h2>把台阶连成系统</h2>
+        <p class="section-lede">原文的六个提示不是六招散手，而是一条链：先看地图，再抓核心，然后测试、压缩、筛资源，最后用费曼回路补洞。这里按同样的顺序落到本站。</p>
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead><tr><th>原文环节</th><th>在这里怎么用</th><th>入口</th></tr></thead>
+            <tbody>
+              <tr><td><b>Learning Ladder</b> · 路径</td><td>五级八项 + 里程碑，先定位再走</td><td>本页</td></tr>
+              <tr><td><b>20 Hours</b> · 80/20</td><td>10 次 × 2 小时的第一遍计划</td><td><a href="#hours">下方计划</a></td></tr>
+              <tr><td><b>Quiz Me Until I Break</b> · 测试</td><td>每级第 8 项 + 费曼页的 10 道自测</td><td><a href="feynman.html">费曼拆解</a></td></tr>
+              <tr><td><b>One-Page Cheat Sheet</b> · 压缩</td><td>一页速查：链路、阶段、命令、文件、边界</td><td><a href="#cheat">一页速查</a></td></tr>
+              <tr><td><b>Signal in the Noise</b> · 资源</td><td>只留 5 个高杠杆材料，按顺序用</td><td><a href="#resources">五个资源</a></td></tr>
+              <tr><td><b>Feynman Loop</b> · 反馈</td><td>讲回去、找缺口、只补缺口</td><td><a href="#feynman">费曼回路</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="hours">
+        <h2>20 小时第一遍</h2>
+        <p class="section-lede">不是把五级一次学完，而是先用 10 次、每次 2 小时走一遍主线。每一格都写「出门时应有」，没有产出就不算完成。</p>
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead><tr><th>次</th><th>2 小时里做什么</th><th>出门时应有</th></tr></thead>
+            <tbody>
+              <tr><td><b>1</b></td><td>L1：README、<code>docs/000</code>、本页 L1</td><td>150 字说明 + 3 个追问答案</td></tr>
+              <tr><td><b>2</b></td><td>L2：<code>docs/001</code> 前半 + 概念页</td><td>默画主链路</td></tr>
+              <tr><td><b>3</b></td><td>L2：<code>docs/001</code> 后半 + 面板 Trigger/Eval</td><td>一条 Disposition → Decision → Ticket 链</td></tr>
+              <tr><td><b>4</b></td><td>L2：<code>docs/003</code> + 面板 Execution</td><td>七阶段 + 两条恢复路径</td></tr>
+              <tr><td><b>5</b></td><td>L3：SETUP、<code>docs/006</code> 只读部分、<code>status</code></td><td>能解释一次启动或诊断输出</td></tr>
+              <tr><td><b>6</b></td><td>L3：提一个最小请求并记录</td><td>一条完整 Trigger → PR 记录</td></tr>
+              <tr><td><b>7</b></td><td>L3/L4：测试日志 + <code>problems.md</code></td><td>复现一条已记录问题</td></tr>
+              <tr><td><b>8</b></td><td>L4：读 policy、assessment、stage、tickets、executor</td><td>症状到层的映射</td></tr>
+              <tr><td><b>9</b></td><td>L4：人为制造一次失败并定位</td><td>一份可复现的故障记录</td></tr>
+              <tr><td><b>10</b></td><td>L5：选一个缺口写 RFC + 评审十问</td><td>一页 RFC 或一个最小实现</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="cheat">
+        <h2>一页速查</h2>
+        <p class="section-lede">见人前、动手前看这一页。它压缩的是结构，不是细节；细节回到对应文档。</p>
+        <div class="cheat">
+          <div class="cheat-card">
+            <h3>主链路</h3>
+            <p class="mono">Source → Trigger → Thread → Eval → Decision → Ticket → Assignment → Executor → Report → Channel</p>
+            <p style="margin-top:.5rem">Eval 内部：Gate（代码）→ Assessment（模型）。</p>
+          </div>
+          <div class="cheat-card">
+            <h3>七个阶段</h3>
+            <ul>
+              <li><code>person/delivery</code> 输入没送达</li>
+              <li><code>person/answer</code> 等人回答问题</li>
+              <li><code>person/review</code> ready，等人 review</li>
+              <li><code>person/blocked | failed</code> 等人处理</li>
+              <li><code>working/queued</code> 等槽位</li>
+              <li><code>idle</code> 等下一个 Trigger</li>
+              <li><code>working</code> 正在跑</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h3>四类记录</h3>
+            <ul>
+              <li><b>Disposition</b> Trigger 去哪了</li>
+              <li><b>Decision</b> Eval 为什么这么判</li>
+              <li><b>Assignment</b> 谁在跑</li>
+              <li><b>Report</b> 跑到哪、在等谁</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h3>五条命令</h3>
+            <ul>
+              <li><code>pnpm check</code></li>
+              <li><code>pnpm experiment:four-features</code></li>
+              <li><code>python3 learning-site/shot.py</code></li>
+              <li><code>scripts/dsh-superagent status</code></li>
+              <li><code>gh pr view &lt;n&gt; --json state,mergeable</code></li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h3>五个文件</h3>
+            <ul>
+              <li><code>src/policy.ts</code> Gate</li>
+              <li><code>src/app/assessment.ts</code> Assessment</li>
+              <li><code>src/core/stage.ts</code> 阶段</li>
+              <li><code>src/core/tickets.ts</code> / <code>intake.ts</code> 生命周期与扇出</li>
+              <li><code>src/executor/dsh.ts</code> Executor 与槽位</li>
+            </ul>
+          </div>
+          <div class="cheat-card">
+            <h3>五条边界</h3>
+            <ul>
+              <li>PR 已开 ≠ ready ≠ 可合并</li>
+              <li>Subscription ≠ Mandate</li>
+              <li>工单结束 ≠ 授权撤回</li>
+              <li>Prompt ≠ 强制；Gate、工具与账号在代码里</li>
+              <li>上下文隔离 ≠ OS 用户隔离</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="resources">
+        <h2>五个资源，不是五百个</h2>
+        <p class="section-lede">原文说资源多不等于学得快。这里只留五个最高杠杆的材料，按顺序用；每个都写了一个「别浪费时间」的警告。</p>
+        <div class="table-wrap">
+          <table class="log-table resources">
+            <thead><tr><th>资源</th><th>为什么值得</th><th>难度</th><th>怎么用 / 警告</th></tr></thead>
+            <tbody>
+              <tr><td><b>README + <code>docs/000</code></b></td><td>一句话定义与「少占人注意力」的设计哲学</td><td>入门</td><td>先读，建立全貌。警告：这是研究原型，不是产品承诺。</td></tr>
+              <tr><td><b><code>docs/001-domain.md</code></b></td><td>术语与规则的地基，后面的文档都建立在这上面</td><td>初–中</td><td>配合面板读，把每个词指到一条记录。警告：这是部署模型，不是论文逐条实现。</td></tr>
+              <tr><td><b><code>docs/003-execution.md</code></b></td><td>阶段、Executor、失败与恢复的真实行为</td><td>中</td><td>带着一个症状读，别通读。警告：细节会随实现变，冲突时以代码为准。</td></tr>
+              <tr><td><b>关键源码路径</b></td><td>最终事实：Gate、Assessment、阶段、工单、槽位到底怎么跑</td><td>高</td><td>只追一条链，从一个问题出发。警告：不要从入口通读，会淹没在细节里。</td></tr>
+              <tr><td><b>面板 + 四特征实验 + 测试日志</b></td><td>真实记录与证据边界，能验证你的理解</td><td>中–高</td><td>复现一次，再下结论。警告：3/4 是小样本观测，不是性能基准。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="feynman">
+        <h2>费曼回路：把「懂了」变成「讲得清」</h2>
+        <div class="prose">
+          <p>原文的费曼回路只有三步：先讲给一个 12 岁的人听，再让对方复述或追问，最后只补他卡住的地方。它专门抓「假掌握」：你以为自己懂了，一开口就露出缺口。</p>
+          <p>在这套主题上，最好的人选是一个不写代码但会用 GitHub 的同事。你讲 L1 的定义，他问「那它和 Copilot 有什么区别」；你讲 L3 的 ready，他问「那谁点合并」。每个问题都指向一级的具体缺口。</p>
+        </div>
+        <div class="rules">
+          <div><span>1</span><b>讲一遍</b><p>不用术语，3 分钟内讲清「它是什么、一次工作怎么走完」。</p></div>
+          <div><span>2</span><b>让对方复述</b><p>他讲错的地方，就是你的缺口；不要替他补。</p></div>
+          <div><span>3</span><b>只补缺口</b><p>回到对应页或源码，补完再讲一遍，直到他能转述。</p></div>
+        </div>
+        <p class="note"><b>卡住时：</b>概念缺口回<a href="concept.html">概念页</a>，进化缺口回<a href="evolution.html">进化页</a>，实现缺口回<a href="prototype.html">原型页</a>，证据缺口回<a href="test-log.html">测试日志</a>和<a href="experiment.html">实验全记录</a>。问题本身按 <a href="problems.md">problems.md</a> 的六字段记下来。</p>
+        <p>费曼页还有 10 道苏格拉底式自测题，可以当 L2 的加练：<a href="feynman.html">去做那 10 道题 →</a></p>
+      </section>
+
+      <section>
+        <h2>记录你的进度</h2>
+        <p class="section-lede">把这张表复制到笔记里，每过一级填一行。没有证据就不打勾，这是这条阶梯唯一的纪律。</p>
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead><tr><th>级</th><th>里程碑</th><th>自检</th><th>证据</th><th>完成</th></tr></thead>
+            <tbody>
+              <tr><td><b>L1</b></td><td>150 字说明 + 3 个追问</td><td>幂等与建单</td><td>笔记链接</td><td><span class="box">☐</span></td></tr>
+              <tr><td><b>L2</b></td><td>手绘主链路 + 两条旁路</td><td>订阅与授权</td><td>图 + 讲解记录</td><td><span class="box">☐</span></td></tr>
+              <tr><td><b>L3</b></td><td>一次真实闭环到 PR</td><td>ready 后谁合并</td><td>脱敏记录 + PR</td><td><span class="box">☐</span></td></tr>
+              <tr><td><b>L4</b></td><td>一份可复现的故障记录</td><td>三处检查</td><td>命令 + 报告</td><td><span class="box">☐</span></td></tr>
+              <tr><td><b>L5</b></td><td>一页 RFC 过评审十问</td><td>新 Source 的三处定义</td><td>RFC / PR + 评审</td><td><span class="box">☐</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note"><b>最后一条：</b>这条阶梯本身也是原型。它的事实来自 2026-11-05 的仓库状态；代码、阶段和面板变了，就以新的事实为准，改这一页，而不是硬记旧结论。</p>
+      </section>
+
+      <section>
+        <h2>接着读</h2>
+        <div class="grid">
+          <a class="card" href="concept.html">
+            <h3>概念 <span class="tag">A 论文</span></h3>
+            <p>四特征、五模块与架构示意，补 L1/L2 的理论骨架。</p>
+            <span class="go">进入概念页 →</span>
+          </a>
+          <a class="card" href="feynman.html">
+            <h3>费曼拆解 <span class="tag gold">10 题</span></h3>
+            <p>用苏格拉底式问题找 L2 的缺口。</p>
+            <span class="go">进入费曼页 →</span>
+          </a>
+          <a class="card" href="test-log.html">
+            <h3>测试日志 <span class="tag">记录</span></h3>
+            <p>阶段实测、WU 进度与问题日志，L3/L4 的证据库。</p>
+            <span class="go">进入测试日志 →</span>
+          </a>
+          <a class="card" href="prototype.html">
+            <h3>原型 <span class="tag">实现</span></h3>
+            <p>论文到实现的映射、七阶段、两处缺口。</p>
+            <span class="go">进入原型页 →</span>
+          </a>
+          <a class="card" href="experiment.html">
+            <h3>实验全记录 <span class="tag gold">全过程</span></h3>
+            <p>从环境核对到发布，L4/L5 的证据边界。</p>
+            <span class="go">进入实验页 →</span>
+          </a>
+        </div>
+      </section>
+    </div>
+  </main>
+  <footer class="site-foot">
+    <div class="wrap foot-in">
+      <p>阶段 2 · 学习站 · 学习阶梯</p>
+      <p><a href="index.html">回到首页</a> · 静态 HTML · 无外部依赖</p>
+    </div>
+  </footer>
+</body>
+</html>
