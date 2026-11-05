@@ -5,7 +5,7 @@
 **基准**：DeepSeek V4.1-flash（模型统一固定为 `deepseek-flash`）
 **环境**：OCCAgent/dsh-superagent-prototype fork ｜ DSH 0.2.1-rc.3 ｜ 飞书已连通（DYJ 群 @OCCLab）｜ GitHub 已连通（@OCCAgent，repo OCCAgent/dsh-superagent-prototype）｜ 本机 dsh-superagent 服务
 
-> **文档快照**：2026-11-05 19:15（UTC+8）· DSH 0.2.1-rc.3。2026-11-05 回写的内容见 0.3.1、0.3 的模型说明与文末「文档回写记录」；更早的时间线保留原样。
+> **文档快照**：2026-11-05 19:15（UTC+8）· DSH 0.2.1-rc.3。2026-11-05 回写的内容见 0.3.1、0.3.2、0.3 的模型说明与文末「文档回写记录」；更早的时间线保留原样。
 
 ---
 
@@ -57,6 +57,13 @@
 | 第三层 · 飞书 + GitHub 复合场景 | `superagent-e2e` | 3085 | `~/.dsh/state/superagent-e2e` |
 
 本机 DSH 0.2.1-rc.3 没有 `dsh profile create`；实际创建命令为 `dsh <name> --from-default-profile web --dump-config > /dev/null`，再执行 `dsh plugin --profile <name> add "link:<dsh-superagent 仓库>"`，最后在 profile 的 `cordis.patch.yml` 中写入独立的 `port` 与 `stateDir`。三个 profile 均未启动；飞书 Source 默认关闭，第三层接入时使用独立 bot，避免与日常 `superagent` profile（3082）竞争。日常 `superagent` profile 不受影响。
+
+#### 0.3.2 各层模型与 e2e 飞书机器人（配置指引）
+
+- **代码版本**：三个 profile 已改链到专用测试 checkout `/Users/opencity/src/dsh-superagent-test`（2026-11-05 从 `origin/main` 90fb8ba 建立，含 PR #21；PR #22 合并后在该 checkout 执行 `git fetch && git checkout --detach origin/main && pnpm install && pnpm build`）。日常 3082 仍用原 checkout，测试不影响它。
+- **模型**：每个 profile 的 `cordis.patch.yml` 已写 `agent-default-model = deepseek-official/deepseek-flash`（reasoningEffort high）。Eval/Executor 的模型默认跟随它；改这一项，或启动后在面板的 Eval/Execution 模型字段覆盖。需要 Gemini 等 provider 时，先在该 profile 加 provider 配置与对应 API key。
+- **e2e 飞书机器人**：新建独立飞书应用（开启 bot；授予接收消息、读写群消息、读取群成员权限并发布），用独立 `lark-cli` 配置目录与 wrapper（步骤见 `docs/006-deployment.md` 的 Feishu bot 节）；在 `superagent-e2e` 的 `cordis.patch.yml` 启用 `dsh-superagent-feishu`；启动 3085 后在 Source 设置里填 wrapper、测试群和 allowed 用户。使用独立测试群，不要把日常 OCCLab bot 加进去，否则两个 profile 会竞争同一批消息。
+- **GitHub**：e2e 建议用独立测试仓库/账号，避免测试 PR 污染 `OCCAgent/dsh-superagent-prototype`。
 
 ### 0.4 术语速查
 
@@ -379,7 +386,7 @@ LobeHub 的实践（半年用 LobeHub 开发 LobeHub）：主管 Agent 承接目
 
 ## 8 · 文档回写记录
 
-- **2026-11-05 19:15（UTC+8）**：评估模型由 v4-pro 回写为 flash（rev8）；补充模型热切换（PR #12），废弃「删主会话」常规流程；A2 判据改为「不产生 decision/工单」；评估超时改为从主会话认领候选卡时计时并发送回执；新增三层隔离 Profile（0.3.1）。
+- **2026-11-05 19:15（UTC+8）**：评估模型由 v4-pro 回写为 flash（rev8）；补充模型热切换（PR #12），废弃「删主会话」常规流程；A2 判据改为「不产生 decision/工单」；评估超时改为从主会话认领候选卡时计时并发送回执；新增三层隔离 Profile（0.3.1）与专用测试 checkout、模型/e2e 飞书机器人配置指引（0.3.2）。
 - 更早的 2026-11-03 时间线与阶段 0 证据保留原样；阶段 0 报告顶部与 E0-2 节另有同日回写说明。
 
 **信源**：本方案测试设计依据——Exploring Super-agent Design（DeepSeek Harness 团队，2026-11-01）、Self-Harness（上海AI实验室，arXiv:2606.09498）、阿里云 AgentCore《从长程 Agent 到 Super-agent，解锁更多场景》（mp.weixin.qq.com/s/O6NdGGHP_rKAnH9PKrt6iQ）、有新Newin《DeepSeek 刚提出的 Super-agent 新架构，LobeHub 已经做成了产品》（mp.weixin.qq.com/s/O5Wx5aylW6rHYtpp8hyvhg）；环境事实来自本机 dsh-superagent 状态库、settings 实配与上轮排障结论。
