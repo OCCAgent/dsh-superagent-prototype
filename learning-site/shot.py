@@ -38,6 +38,7 @@ PAGES = [
     ("concept.html", "概念(A论文)"),
     ("evolution.html", "进化(B论文)"),
     ("feynman.html", "费曼拆解"),
+    ("learning-ladder.html", "学习阶梯"),
     ("test-log.html", "测试日志"),
     ("prototype.html", "原型"),
     ("experiment.html", "实验"),

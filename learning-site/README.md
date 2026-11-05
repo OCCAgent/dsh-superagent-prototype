@@ -1,10 +1,10 @@
 # Super-agent 学习站（learning-site）
 
-阶段 2 的静态学习站：7 个页面加本 README 与持续问题日志，按「概念 → 进化 → 费曼拆解 → 测试日志 → 原型 → 实验全记录」的路线阅读两篇论文、实现与完整测试过程。
+阶段 2 的静态学习站：8 个页面加本 README 与持续问题日志，按「概念 → 进化 → 费曼拆解 → 学习阶梯 → 测试日志 → 原型 → 实验全记录」的路线阅读两篇论文、实现与完整测试过程。
 
 > 在线预览：<https://occagent.github.io/dsh-superagent-prototype/learning-site/>（合并后自动更新）
 
-**当前进度：WU-1 ~ WU-10 全部完成。** 七个页面、问题日志、站内导航、视觉 token、自检脚本与本地打开说明均已就位；第二层四特征逐项验证、实时双群连续性验证、持续问题日志与完整实验过程均已上线。
+**当前进度：WU-1 ~ WU-11 全部完成。** 八个页面、问题日志、站内导航、视觉 token、自检脚本与本地打开说明均已就位；第二层四特征逐项验证、实时双群连续性验证、持续问题日志、完整实验过程与学习阶梯均已上线。
 
 ## 页面
 
@@ -14,12 +14,13 @@
 | 概念(A论文) | [concept.html](concept.html) | 四特征、五模块、架构示意与设计动机 |
 | 进化(B论文) | [evolution.html](evolution.html) | Self-Harness 三步闭环、held-in/held-out 规则与术语表 |
 | 费曼拆解 | [feynman.html](feynman.html) | 2×2 地图、两篇论文对照表、10 道苏格拉底式自测题 |
+| 学习阶梯 | [learning-ladder.html](learning-ladder.html) | 五级八项、里程碑、练习与自检；20 小时计划、一页速查、五个资源与费曼回路 |
 | 测试日志 | [test-log.html](test-log.html) | 阶段 0 六项判据、阶段 2 六个 WU、第一层采纳记录、第二层四特征逐项验证、实时双群连续性验证、持续问题日志与继续测试说明 |
 | 原型 | [prototype.html](prototype.html) | 论文↔原型概念映射、七个阶段、三处偏离、Watchdog 缺口与 L1–L5 掌握路线 |
 | 问题日志 | [problems.md](problems.md) | 持续问题日志的完整版本（固定六字段） |
 | 实验全记录 | [experiment.html](experiment.html) | 三层四阶段、时间线、六个 WU、四特征验证、发布与证据边界 |
 
-统一导航：首页｜概念(A论文)｜进化(B论文)｜费曼拆解｜测试日志｜原型｜实验。
+统一导航：首页｜概念(A论文)｜进化(B论文)｜费曼拆解｜学习阶梯｜测试日志｜原型｜实验。
 
 ## 打开方式
 
@@ -50,6 +51,7 @@ learning-site/
 ├── concept.html      # 概念(A论文)
 ├── evolution.html    # 进化(B论文)
 ├── feynman.html      # 费曼拆解
+├── learning-ladder.html # 学习阶梯：五级八项、里程碑与自检
 ├── test-log.html     # 测试日志
 ├── prototype.html    # 原型：论文到实现
 ├── experiment.html   # 实验全记录
@@ -78,7 +80,7 @@ python3 learning-site/shot.py
 
 1. **新增或修改页面**后运行 `python3 learning-site/shot.py`，必须 0 error / blocker；报告与 1280×800 截图写入 `learning-site/.shot/`。
 2. **推进一个 WU**：一个单元一个分支 / PR，PR 附同视口的 Before/After；同时更新 `test-log.html` 的进度表与本 README 的 WU 表。
-3. **保持规格**：七个页面统一导航、内联 CSS、无外部字体/脚本/图片，`file://` 直接可开；不引入构建步骤。新增问题先写 [problems.md](problems.md)，再同步 test-log.html 的最近 5 条。
+3. **保持规格**：八个页面统一导航、内联 CSS、无外部字体/脚本/图片，`file://` 直接可开；不引入构建步骤。新增问题先写 [problems.md](problems.md)，再同步 test-log.html 的最近 5 条。
 4. **进入下一层**：第二层四特征逐项验证结果为 3/4 成立，连续性失败归因架构层（无显式引用的跨渠道归属未实现）；先按 [实验 README](../experiments/four-features/README.md) 的现场协议补做真实双渠道/重启验证，再进入阶段 3。
 5. **阶段 1 数据**：Harness 基线的实测与采纳/未采纳记录见 [test-log.html](test-log.html)「第一层 · Harness 自改进实测」；本轮未单独跑脚本实验，零代码级采纳已按方案 E1-6 记录原因。
 6. **阶段 2 数据**：四特征逐项用例、指标、token 成本与归因见 [test-log.html](test-log.html)「第二层 · 四特征逐项验证」和 [experiments/four-features/README.md](../experiments/four-features/README.md)。
@@ -90,6 +92,7 @@ python3 learning-site/shot.py
 - 完整案例分析与测试方案：[SuperAgent三层四阶段测试-完整案例分析.md](SuperAgent三层四阶段测试-完整案例分析.md)、[SuperAgent三层四阶段测试方案.md](SuperAgent三层四阶段测试方案.md)
 - 四特征逐项验证（机制基线 + 真实观测 + 现场协议）：[experiments/four-features/README.md](../experiments/four-features/README.md)
 - 费曼拆解底稿：《一个管“组织”，一个管“进化”》（阶段 1 交付物）
+- 学习阶梯方法：Rahul（@sairahul1），[How To Learn Anything 10x Faster Using Claude](https://x.com/sairahul1/article/2068250224532050089)（五级八项结构；内容事实来自本仓库文档、源码与实验记录）
 - 论文：*Exploring Super-agent Design: Towards a More Autonomous Agent System*（A）；*Self-Harness: Harnesses That Improve Themselves*（B）
 
 ## 工作单元
@@ -106,5 +109,6 @@ python3 learning-site/shot.py
 | WU-8 | problems.md + 测试日志「持续问题日志」区块 | 完成（本 PR） |
 | WU-9 | 费曼页「交叉验证而非自然选择」+ 首页原型入口 | 完成（本 PR） |
 | WU-10 | 实验全记录页：三层四阶段、时间线、四特征、发布与证据边界 | 完成（本 PR） |
+| WU-11 | 学习阶梯页：五级八项、里程碑与自检；20 小时计划、一页速查、五个资源、费曼回路；全站导航与索引同步 | 完成（本 PR） |
 
 常规单元各自独立成一个 PR；2026-11-04 的 WU-7/8/9 按交接单合并为一个 PR，WU-10 单独一个 PR。未下发的单元不提前开工。
