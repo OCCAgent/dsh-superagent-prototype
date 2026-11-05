@@ -48,7 +48,7 @@ const NO_CONTEXT = 'This Source gives no Thread context; assess the Trigger\'s o
 /** Host dependencies used by `MasterAssessor`. */
 export interface AssessorHost {
   /** Active evaluations in `Engine` that the assessor reads and decides. */
-  readonly engine: Pick<EngineForMainSession, 'candidate' | 'candidateDelivered' | 'decide'>
+  readonly engine: Pick<EngineForMainSession, 'candidate' | 'candidatePlanned' | 'candidateDelivered' | 'decide'>
   readonly commands: Commands
   readonly deployment: Deployment
   /** Durable effect queue through which candidate assessments are delivered. */
@@ -60,6 +60,8 @@ export interface AssessorHost {
   threadContext(trigger: Trigger): TriggerContext | undefined
   /** Delivers a candidate card to the main Session once per request ID, resolving after the Session receives it. */
   deliver(requestId: string, text: string): Promise<void>
+  /** The message id the main Session receives `requestId` under, which its history names when a step claims the card. */
+  messageId(requestId: string): string
   candidateCard(candidate: Candidate): Promise<Record<string, unknown>>
 }
 
@@ -92,11 +94,14 @@ export class MasterAssessor implements Assessor {
   private readonly controller = new AbortController()
   /** Registers the handler that relays each Eval's candidate card, which a link lookup may delay for seconds. */
   constructor(private readonly host: AssessorHost) {
-    // Start the evaluation deadline only after the main Session receives the candidate card, so a busy Session does not consume evaluation time.
+    // Start the assessment deadline only once the main Session takes the candidate card into a step, so a busy Session
+    // does not consume evaluation time; a card left unclaimed in its inbox expires after the queue cap.
     host.effects.handle('assessment', async ({ triggerId }, evalId) => {
       const candidate = this.host.engine.candidate(triggerId)
       if (candidate?.evalId !== evalId) return
-      await this.host.deliver(`candidate:${evalId}`, JSON.stringify({ kind: 'candidate', ...await this.host.candidateCard(candidate) }))
+      const requestId = `candidate:${evalId}`
+      this.host.engine.candidatePlanned(evalId, this.host.messageId(requestId))
+      await this.host.deliver(requestId, JSON.stringify({ kind: 'candidate', ...await this.host.candidateCard(candidate) }))
       this.host.engine.candidateDelivered(evalId)
     }, { limit: () => host.paused() ? 0 : 4 })
   }

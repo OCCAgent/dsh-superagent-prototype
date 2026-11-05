@@ -18,6 +18,8 @@ const reasonOf = (reason: string | Reason): Reason[] => [typeof reason === 'stri
 const stronger = (a: Strength, b: Strength): Strength => a === 'explicit' || b === 'explicit' ? 'explicit' : 'inferred'
 /** How many times in a row an expired Eval queues its Triggers again before it is recorded unavailable. */
 const REQUEUES = 2
+/** How long a candidate card may wait in the assessor's inbox before the Eval expires even if no step claimed it. */
+const QUEUE_TIMEOUT_MS = 5 * 60_000
 
 /**
  * Evals runs the Evals of Threads: it batches a Thread's queued Triggers into one Eval, takes its strength, actor, and basis
@@ -32,7 +34,8 @@ export class Evals extends EnginePart {
   /**
    * Expire a Thread's Eval past its deadline (see `expire`), unless processing is paused: then the Eval notes when the
    * processing pause began, and once processing resumes its deadline moves forward by the pause's length. An Eval whose
-   * candidate has not reached the assessor's Session does not expire.
+   * candidate has not reached the assessor's Session does not expire; one that reached it but no step claimed it expires
+   * after the queue cap.
    */
   due(thread: Thread, policy: Policy): void {
     const evaluation = thread.evaluating
@@ -46,14 +49,40 @@ export class Evals extends EnginePart {
     else return
     this.repo.threads.save(thread)
   }
-  /** An Eval's candidate reached the assessor's Session: its deadline counts from now. */
+  /** An Eval's candidate card is about to reach the assessor's Session under `messageId`, so a later claim can name it. */
+  planned(evalId: string, messageId: string): void {
+    const thread = this.repo.threads.active().find(item => item.evaluating?.id === evalId)
+    if (!thread?.evaluating) return
+    thread.evaluating.messageId = messageId
+    this.repo.threads.save(thread)
+  }
+  /**
+   * An Eval's candidate reached the assessor's inbox: it may wait there for a step to claim it, up to the queue cap; without
+   * a message id it counts the assessment timeout instead, as a caller that only reports delivery has no claim to await.
+   */
   delivered(evalId: string, policy: Policy): void {
     const thread = this.repo.threads.active().find(item => item.evaluating?.id === evalId)
-    if (!thread?.evaluating || thread.evaluating.delivered) return
+    const evaluation = thread?.evaluating
+    if (!evaluation || evaluation.delivered) return
     const now = this.now()
-    thread.evaluating.delivered = now
-    thread.evaluating.deadline = new Date(Date.parse(now) + policy.evalTimeoutMs).toISOString()
+    evaluation.delivered = now
+    if (evaluation.claimed) { this.repo.threads.save(thread); return }
+    const wait = evaluation.messageId ? QUEUE_TIMEOUT_MS : policy.evalTimeoutMs
+    evaluation.deadline = new Date(Date.parse(now) + wait).toISOString()
     this.repo.threads.save(thread)
+  }
+  /** A step of the assessor's Session claimed the candidate card `messageId`: the assessment timeout counts from now. */
+  claimed(messageId: string, policy: Policy): void {
+    for (const thread of this.repo.threads.active()) {
+      const evaluation = thread.evaluating
+      if (!evaluation || evaluation.messageId !== messageId || evaluation.claimed) continue
+      const now = this.now()
+      evaluation.claimed = now
+      evaluation.delivered ??= now
+      evaluation.deadline = new Date(Date.parse(now) + policy.evalTimeoutMs).toISOString()
+      this.repo.threads.save(thread)
+      return
+    }
   }
   /**
    * An Eval past its deadline queues its Triggers again for a fresh Eval, up to `REQUEUES` times in a row, so a busy
