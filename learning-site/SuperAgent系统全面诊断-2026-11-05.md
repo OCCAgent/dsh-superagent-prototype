@@ -1,0 +1,201 @@
+# SuperAgent 系统全面诊断（2026-11-05）
+
+> 依据：2026-11-05 下发的《Super-agent 与 Self-Harness · 深度分析与完整测试方案》v1.0（下称“方案”，用例编号 TC-M/E/SH/X/SEC）
+> 对象：SUT-A `OCCAgent/dsh-superagent-prototype`，HEAD `9420085`，本机单实例（`127.0.0.1:3082`）
+> 快照：2026-11-05 19:15（UTC+8）；初检 17:47，PR #21 合并后刷新；状态库只读，Session 日志只取聚合
+> 原则：证据优先；机制测试不等于模型质量；未执行不等于通过
+
+## 0 一页结论
+
+| 问题 | 结论 |
+|---|---|
+| 系统能否运行？ | 能。服务 13/13 ready，主会话与 Worker 均为 `deepseek-flash`；`typecheck`/`build` 通过；`pnpm test` 1209 项中 1206 项通过 |
+| 四特征是否成立？ | 3/4。连续性的“无显式引用跨渠道归属”仍不成立（C4 0/1），其余三项有机制或观测证据 |
+| 方案能否完整执行？ | 不能。附件 v1.0 的 29 个用例中 8 个部分、1 个已知失败、20 个缺前置；10:50 三阶段版中阶段 2 达 3/4，阶段 1/3 未达 |
+| 最大风险？ | ① worker 以 OS 用户全权限运行；② 评估超时率 5/46、执行失败率 6/34，PR #21 只补了超时回执；③ Watchdog、Self-Harness 等方案核心增量不存在 |
+| 本次交付 | Phase-0 级 gap 清单 + 可执行子集体检（含 10:50 版三阶段映射），不是完整测试的替代 |
+
+一句话：**调度层可运行、能追到“做过什么”；进化层与安全层尚未建成，现有绿灯不能证明方案成立。**
+
+2026-11-05 19:15 补记：PR #21 已合并（显式请求超时回执）；10:50 下发的三阶段方案与附件 v1.0 不是同一版，见 §3.1。
+
+## 1 诊断方法（可复用）
+
+1. **冻结对象**：记录 commit、服务地址、settings 版本与主会话模型，避免边测边变。
+2. **环境基线**：读 `/orchestrator/api/state`、`/settings`；查状态库 9 张表；确认飞书/GitHub 通道与仓库。
+3. **机制证据**：跑 `typecheck`、`build`、`test`；把产品回归与环境敏感失败分开。
+4. **轨迹证据**：只读 SQL 追 `trigger → decision → ticket → assignment → outbox`；用 `live_baseline.py` 取耗时与 token 聚合。
+5. **用例映射**：把方案用例逐条标为“有证据/部分/未实现/缺前置”，根因落到文件与配置，而不是“效果不好”。
+
+四个坑：把 fake-host 机制测试当模型质量；把“没跑”写成“通过”；把论文参考值当成本次验收线；用今天的代码解释昨天的报告。
+
+## 2 证据快照
+
+| 维度 | 观测 |
+|---|---|
+| 服务 | 13/13 ready；`eval`/`executor` 均为 `deepseek-flash`（settings rev 8）；主会话日志 442 处 `deepseek-flash` |
+| 工程 | typecheck/build 通过；测试 61 文件 59 通过，1209 项 1206 通过、3 项环境敏感失败（`runtime` 2、`service-script` 1，与 PR #12 记录的宿主机/worker 环境同类），非产品回归 |
+| 轨迹 | 82 triggers（飞书 69/GitHub 13）；46 decisions（accept 13/ignore 28/unavailable 5）；13 tickets（11 ended、2 open）；34 assignments（18 ready/6 failed/8 waiting/1 dropped/1 无报告）；outbox 88 条全部 sent |
+| 成本 | 无运行时 token 计量；事后解析 learning-site 工单 109.5M tokens，cache read 占 99.5%；四特征实验工单 241.9M |
+| 交付 | PR #3–#19：15 合并/2 关闭；PR #20 本诊断待合并；PR #21 超时回执已合并；29 个用例中 9 个有直接证据（8 部分 + 1 失败） |
+
+6 次执行失败：3 次 429（工单 `58c2af53`）、1 次余额不足（`45102efd`）、2 次流中断（`ab27e4b5`、`a387c2e2`）。5 次评估不可用均为 `timeout`，耗时约 365–379 秒，最长 2253 秒。
+
+## 3 逐族诊断
+
+### 3.1 两版方案的对齐（2026-11-05 19:15）
+
+| 版本 | 结构 | 退出/判据 | 本机状态 |
+|---|---|---|---|
+| 附件 v1.0（2026-11-02） | 29 个 TC-M/E/SH/X/SEC 用例；SUT-C、3 模型、TB-2.0、邮件、8–10 周 | 逐用例阈值 | 9 个有直接证据；0 个完整达阈值；20 个缺前置 |
+| 10:50 三阶段版 | 阶段 1 Harness（30–40 题、至少 2 代）；阶段 2 四特征（每特征 2 用例 + 负向）；阶段 3 复合（群聊 + GitHub + 外部编码工具，3–5 天） | 阶段 1 正向差异；阶段 2 ≥3/4 且失败有归因；阶段 3 可交付 + 纠错干预少于决策干预 + 成本在预算内 | 阶段 1 未跑；阶段 2 达 3/4（C4 架构失败）；阶段 3 有 learning-site 多轮交付，但无外部编码工具/变更注入，未达退出判据 |
+
+结论：两版不能混用。附件版用来做覆盖清单，10:50 版用来做执行路线；当前按 10:50 版只走完阶段 2 的门槛，阶段 1/3 仍未完成。
+
+以下按附件 v1.0 的 29 个用例逐族列出（10:50 版的阶段映射见上表）。
+
+状态：◐ 部分证据；✗ 未实现、不可执行或已知失败。
+
+| 用例组 | 状态 | 本机证据与缺口 |
+|---|---|---|
+| TC-M1 批处理 | ◐ | 仅同 Thread 批量评估（`Evals.due`）；无跨 Thread 压测、批大小分布与分摊推理耗时 |
+| TC-M2 两级过滤 | ◐ | Source scope + Eval 机制有单测；无 1000 条标注集；24 条非 @ 仍入库，但 0 建单 |
+| TC-M3 订阅直通 | ◐ | 45 次同 Thread 跟进扇出；无直通开/关对照，无 Router 决定数与 token 降幅 |
+| TC-M4 链式召回 | ✗ | 只解析 `#12`/URL 一跳引用；无 3 跳（消息→Thread→Session→评审 Thread）召回 |
+| TC-M5 异步循环 | ◐ | background jobs/subagents 有测试；无 10 次插话/stop 的延迟与生效率统计 |
+| TC-M6 多信道输出 | ◐ | IM 回复经 outbox 时 100 词硬限（`checkedImText`）；GitHub 报告“背景/改动/验证”仅靠提示词 |
+| TC-M7 存算分离 | ✗ | 无 BYOM daemon；状态与执行都在本机 |
+| TC-M8 Watchdog | ✗ | 只有 health（存活）与 retry-health（模型预算）；无任务级进展/空转/偏离判断 |
+| TC-E1 三请求并发 | ◐ | `maxWorkers=1` 时立即接单、排队，插话可进运行中工单；无单会话对照与 p50 |
+| TC-E2 变更接力 | ✗ | C4 0/1；跨渠道无显式引用不归属，`Correlation` 只补上下文、不路由 |
+| TC-E3 投机执行 | ✗ | 无后台静默复现、无分支产物隔离 |
+| TC-E4 长程注错 | ✗ | 无注错工具、任务级监控与恢复判据 |
+| TC-E5 跨设备续跑 | ✗ | 无端侧 daemon 与离线挂起/续跑 |
+| TC-E6 LobeHub 全流程 | ◐ | learning-site 11 个 WU、PR #3–#19 证明多轮交付；无 Task 依赖图与 Acceptance 证据链 |
+| TC-SH1–7 | ✗ | 无弱点聚类、held-out 回归门、lineage 与成本曲线 |
+| TC-X1–3 | ✗ | 无进化后 Harness 上岗、Watchdog→进化接口、审计与回滚 |
+| TC-SEC1–5 | ✗ | 无红队语料、金丝雀、egress 扫描、行为审计或爆炸半径报告；边界见 P5 |
+
+没有一条达到方案阈值，原因是“可执行子集”覆盖不足，而非全部失败。
+
+## 4 问题剖析
+
+### P1 两版方案的范围不同，不能混用
+- **现象**：附件 v1.0 是 29 用例、SUT-C/3 模型/TB-2.0/邮件/8–10 周；10:50 下发的三阶段版是 30–40 题、2 代、6–10 天，并明确承认原型缺 Watchdog、投机执行与端侧 daemon。本机只有 SUT-A、单模型、飞书 + GitHub。
+- **根因**：方案版本与 SUT 选型未锁定，Phase 0 gap 清单未落地。
+- **影响**：用附件版判“全失败”会低估；用三阶段版判“阶段 2 过”会高估整体。
+- **下一步**：锁定一版为准；按选定版本出 gap 清单；阶段 1/3 未跑前不宣称整体通过。
+
+### P2 可观测性不足：看不到进度、token 与批次
+- **现象**：状态库无 usage/batch 表；health 只报存活；retry-health 只看预算重试；token 只能事后扫 Session 日志。
+- **根因**：`HealthBoard` 与 `RetryHealth` 是存活/模型预算视角，没有任务级 Watchdog，成本指标未入库。
+- **影响**：M1/M2/M5/M6/M8、E4、X2 难以完整判定，也分不清“在推进”与“空转”。
+- **下一步**：补只读指标管线（decision latency、batch size、token、step progress）与任务停滞探针。
+
+### P3 连续性的架构缺口：Correlation 只补上下文，不路由
+- **现象**：C4 0/1；45 次同 Thread 跟进可扇出，但 0 个 trigger 共属多 Thread；`referencedTickets` 只认 `#12`/URL。
+- **根因**：归属只靠发起 Thread、PR Thread 与显式引用，没有语义匹配或业务键。
+- **影响**：E2 跨渠道接力不成立，用户必须重述背景。
+- **下一步**：按业务键（issue/PR/工单号）或语义匹配补 attach；否则在方案中降级为已知限制。
+
+### P4 可靠性：5/46 评估超时，6/34 执行失败；PR #21 只补了回执
+- **现象**：5 条 unavailable/timeout，原先无回执；6 条 assignment failed（429/余额/流中断）。PR #21 已合并（2026-11-05 10:39），对显式请求的超时补一次回执。
+- **根因**：120 秒评估 deadline、2 次重排后记 unavailable；该结果原先只进面板；模型/网络错误没有分类退避。PR #21 没有改变超时率本身。
+- **影响**：显式请求不再完全静默，但仍会丢失；只覆盖主触发、中英双语，未做真实飞书超时联调；M3/M4 指标仍被污染。
+- **下一步**：按 429、余额、流错误分类退避；监控超时率；把失败率纳入 health；补真实超时联调。
+
+### P5 安全边界未达方案红线
+- **现象**：worker 以 `danger-full-access`、操作者 OS 用户运行，可读 home；命令 shim 只是默认值不是边界；`blockedCommands` 为空；worker 可直接调 `lark-cli`/`gh`。
+- **根因**：设计目标是默认安全与工作流约束，不是多租户隔离（`docs/006-deployment.md` 已明说）。
+- **影响**：TC-SEC2/3/5 无法按方案判“通过”；提示词注入虽改不了 allowlist，但可在 Mandate 内诱导越权动作。
+- **下一步**：专用 OS 账号、egress 白名单、金丝雀凭据、直接外发阻断与红队语料；先出爆炸半径报告。
+
+### P6 文档与实现漂移（已开始回写）
+- **现象**：方案 0.3 仍写“换模型必须删主会话”，PR #12 已改为热切换评估模型；方案写 eval 用 v4-pro，实配 flash；A2 写“不产生 trigger”，实际约 24 条非 @ 仍入库、0 建单。
+- **根因**：快速迭代，文档快照未回写。
+- **影响**：学习站会教过时的排障步骤；测试判据与实现不符。
+- **处置**：本次已给方案 0.3、阶段 0 报告、完整案例加 2026-11-05 勘误，并把 A2 判据改为“不产生 decision/工单”；后续把“快照日期 + 版本”作为惯例。
+
+## 5 下一步（最小可执行）
+
+1. **锁定方案并出 gap 清单**：先决定以附件 v1.0 还是 10:50 三阶段版为准；逐条标注 29 个 TC 或三个阶段缺的 SUT、数据、工具、指标。
+2. **阶段 1 Harness 基线**：30–40 题、至少 2 代、冻结 Harness 与通用提示对照组；当前完全未跑，这是 10:50 版的硬前置。
+3. **阶段 2 收尾**：补 C4 的真实双渠道验证与负向用例；用 200 条合成消息 + Mock worker 跑 M1/M2/M3，记录批大小、单决定耗时、Router 决定数、token。
+4. **阶段 3 复合**：在 learning-site 现有多轮交付上补“外部编码工具 + 变更注入 + 成本上限”，按 3–5 天路线执行。
+5. **安全与运维**：金丝雀凭据、外发扫描、直接 `lark-cli` 外发阻断；PR #21 之后补真实超时联调、429/余额/流错误分类与失败率监控；三个隔离 Profile 就位后重采阶段 1/2 数据。
+6. **文档回写**：本次已加三处 2026-11-05 勘误并修正 A2 判据；剩余是把“快照日期 + 版本”做成惯例。
+
+每项验收都落到“命令 + 字段 + 数字”，不以“感觉修好了”结束。
+
+## 6 边界与复现
+
+- **未执行**：附件 v1.0 的 8–10 周完整计划；10:50 版的阶段 1/3；3 模型家族、TB-2.0、SUT-B/C、红队、生产安全结论；本文不构成发布许可。
+- **时效**：数字是 2026-11-05 19:15 的本机快照（初检 17:47）；PR #21 已合并但未做真实超时联调，服务重启或工单新增后需重采。
+- **复现**：
+
+```bash
+pnpm typecheck && pnpm build && pnpm test
+python3 experiments/four-features/live_baseline.py --out /tmp/live-baseline.json
+curl -s http://127.0.0.1:3082/orchestrator/api/state -H 'x-orchestrator-request: 1'
+
+# 状态库只读聚合（不导出正文）
+python3 - <<'PY'
+import sqlite3
+db = sqlite3.connect('file:/Users/opencity/.dsh/state/superagent/orchestrator.sqlite?mode=ro', uri=True)
+for table in ('trigger', 'decision', 'ticket', 'outbox'):
+    print(table, db.execute(f'select count(*) from "{table}"').fetchone()[0])
+PY
+```
+
+## 7 测试环境：三个隔离 Profile 的现状与配置
+
+截至 2026-11-05 19:20，三个 Profile 已创建，`dsh --profile <name> --dump-config` 均通过：
+
+| Profile | 面板端口 | stateDir | Feishu 插件 |
+|---|---|---|---|
+| `selfharness` | 3083 | `~/.dsh/state/selfharness` | 关闭 |
+| `superagent-test` | 3084 | `~/.dsh/state/superagent-test` | 关闭 |
+| `superagent-e2e` | 3085 | `~/.dsh/state/superagent-e2e` | 关闭，待专用 bot 后开启 |
+
+结论：**环境骨架已更新，但尚未就绪**——三个 stateDir 都还没创建（服务未启动），没有模型配置，e2e 也没有接飞书机器人。代码层仍未隔离：三个 Profile 都 `link` 到同一工作树 `~/src/dsh-superagent-prototype`；要测不同 Harness 版本，应各自指向独立 worktree，否则改代码会同时影响三层。
+
+### 7.1 启动与模型
+
+```bash
+cd "/Users/opencity/Documents/GitHub/DeepSeek Harness/dsh-superagent"
+./scripts/dsh-superagent start --profile superagent-test --url http://127.0.0.1:3084
+./scripts/dsh-superagent status --profile superagent-test --url http://127.0.0.1:3084
+# 面板 token 在 .artifacts/dsh-superagent-superagent-test-*.log 的 "dsh web:" 行
+```
+
+每个 Profile 的 stateDir 独立，模型配置也各自落在自己的状态库。首次启动后，在面板设置或 `PUT /orchestrator/api/settings/eval|executor`（带当前 revision）设置：
+
+| 层 | eval | executor | 备注 |
+|---|---|---|---|
+| `selfharness` | 不适用 | 不适用 | 阶段 1 走本地脚本 + 固定 flash；Profile 只负责隔离 |
+| `superagent-test` | flash | flash | `maxWorkers=1`；保持 observe，避免自动接单改变四特征判据 |
+| `superagent-e2e` | flash | flash | `maxWorkers=1`；e2e 再按需加并行 |
+
+### 7.2 e2e 专用飞书机器人
+
+1. 在飞书开放平台新建独立应用（机器人能力），开通接收消息与发消息权限，发布后把机器人拉进 e2e 专用群；拿到 App ID/Secret。
+2. 新建独立 lark-cli 配置目录与 wrapper（不要复用 live 的 `~/.lark-cli-dsh-superagent`）：
+
+```sh
+#!/bin/sh
+export LARKSUITE_CLI_CONFIG_DIR="$HOME/.lark-cli-dsh-superagent-e2e"
+exec "$HOME/.local/bin/lark-cli" "$@"
+```
+
+3. 在终端（不要在 Agent 内）初始化：`LARKSUITE_CLI_CONFIG_DIR=... lark-cli config init --app-id cli_xxx --app-secret-stdin --brand feishu`，并按用户确认设置 `strict-mode bot`。
+4. 在 `~/.dsh/profiles/superagent-e2e/cordis.patch.yml` 打开插件：
+
+```yaml
+- id: dsh-superagent-feishu
+  disabled: false
+```
+
+5. 启动 e2e 后，在面板把 `source:feishu` 的 `cli` 指向该 wrapper，`chats` 填 e2e 群、`listen: mentions`，`allowed` 填测试人；保存并重启，发一条真 @ 验证。
+6. **不要让 live（3082）与 e2e（3085）共用同一个飞书 bot**；否则同一事件会被两个服务消费，产生重复工单/竞争。测试层如需飞书，也应另配 bot 或只走 GitHub。
+
+**学习要点**：诊断先分层（环境→机制→轨迹→用例→根因）；机制测试与模型质量分开；没有观测就没有诊断；安全边界看代码与配置，不看提示词。

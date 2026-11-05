@@ -4,6 +4,8 @@
 > **日期**：2026-11-03 ｜ **环境**：macOS 本地 / DSH superagent 0.2.1-rc.3 / fork 仓库 OCCAgent/dsh-superagent-prototype / 模型 deepseek-flash
 > **可复核性**：所有事件均附 trigger / decision / ticket / PR / worker report 证据；状态库 `~/.dsh/state/superagent/orchestrator.sqlite` 可复查。
 > **截至时间点**：WU-1/2/3 合并（PR #3/#4/#5）、WU-4 已出 PR #6（open 待审）、WU-5/6 执行中。
+>
+> **2026-11-05 补记**：PR #12（2026-11-04 合并）后，评估模型变更可热切换运行中的主会话；执行模型仍只对新建 Session 生效。5.1 的“删主会话”流程是 2026-11-03 的历史记录。
 
 ---
 
