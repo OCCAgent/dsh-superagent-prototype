@@ -68,7 +68,7 @@
   ~/.local/bin/lark-bot-e2e config strict-mode bot --global
   ~/.local/bin/lark-bot-e2e api GET /open-apis/bot/v3/info --as bot --format ndjson
   ```
-  然后在 `superagent-e2e` 的 `cordis.patch.yml` 启用 `dsh-superagent-feishu`；启动 3085 后在 Source 设置里填 wrapper、测试群和 allowed 用户。e2e 测试群为 `oc_9d5195712a27b205b37e03dd19b1f488`；同一 bot 不能由两个 profile 同时消费，测试前需换成专用 bot 或临时停 3082。e2e bot 至少需 `im:message`、`im:message:readonly`、`im:message.history:readonly`、`im:chat:readonly`、`im:chat.members:read`、`im:message:send_as_bot`；缺任一项会在 history/轮询报 `source message unavailable` 或权限错误。移除 OCCLab 需要 `im:chat` + `im:chat.members:write_only`，OCCLab 未申请，需在群设置手动移除。
+  然后在 `superagent-e2e` 的 `cordis.patch.yml` 启用 `dsh-superagent-feishu`；启动 3085 后在 Source 设置里填 wrapper、测试群和 allowed 用户。e2e 测试群为 `oc_9d5195712a27b205b37e03dd19b1f488`；同一 bot 不能由两个 profile 同时消费，测试前需换成专用 bot 或临时停 3082。e2e bot 群聊读取需 `im:message`（或 `im:message:readonly`）加 `im:message.group_msg`（界面名“获取群组中所有消息”，群历史必需），再补 `im:chat:readonly`、`im:chat.members:read`；`im:message.history:readonly` 是旧版 scope，控制台可能不展示，不需要单独申请。缺少群聊读取会在 history/轮询报 `source message unavailable` 或权限错误。移除 OCCLab 需要 `im:chat` + `im:chat.members:write_only`，OCCLab 未申请，需在群设置手动移除。
 - **GitHub**：e2e 建议用独立测试仓库/账号，避免测试 PR 污染 `OCCAgent/dsh-superagent-prototype`。
 
 ### 0.4 术语速查
