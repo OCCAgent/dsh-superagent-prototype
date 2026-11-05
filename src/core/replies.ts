@@ -2,7 +2,7 @@
 import { key } from './ids.ts'
 import { UserError } from './errors.ts'
 import { latestAssignment, liveTicket, ticketOutcome } from './model.ts'
-import type { ChannelRef, Ticket, Trigger } from './model.ts'
+import type { ChannelRef, Decision, Ticket, Trigger } from './model.ts'
 import type { ReplyStatus } from './ports.ts'
 import { EnginePart } from './part.ts'
 
@@ -19,9 +19,10 @@ export interface Reply { id: string; status: ReplyStatus; reused: boolean }
 
 /**
  * Replies writes the Engine's messages to Channels through the Outbox port: an acknowledgement, the answer to a person's
- * question, a ticket's result, and its question for a person, each only when its rule allows it, under a deterministic id
- * that keeps it from going out twice (idempotent). The Engine routes `reply` here; Tickets asks it for the acknowledgement
- * an accept carries, and Assignments asks it to withdraw a question a report replaced.
+ * question, a ticket's result, its question for a person, and the receipt for an explicit request whose Eval timed out, each
+ * only when its rule allows it, under a deterministic id that keeps it from going out twice (idempotent). The Engine routes
+ * `reply` here; Tickets asks it for the acknowledgement an accept carries, Assignments asks it to withdraw a question a
+ * report replaced, and Evals asks it for the timeout receipt.
  */
 export class Replies extends EnginePart {
   /**
@@ -42,6 +43,21 @@ export class Replies extends EnginePart {
    */
   acknowledgeAccepted(ticketId: string, trigger: Trigger, text: string): void {
     if (trigger.channel && trigger.human) this.options.outbox.send({ id: key('ack', trigger.id), channel: trigger.channel, text, kind: 'acknowledgement', ticketId })
+  }
+  /**
+   * Queues one short receipt in its conversation for an explicit request whose Eval timed out and ended `unavailable`, so
+   * the request does not appear ignored; a Policy-change requeue and a decision an assessor made queue none. The text follows
+   * the request's language: Chinese when it has Han characters and no kana, otherwise English.
+   */
+  timeoutReceipt(decision: Decision, trigger: Trigger | undefined): void {
+    if (decision.kind !== 'unavailable' || decision.strength !== 'explicit'
+      || !decision.reason.some(reason => reason.code === 'timeout')) return
+    if (!trigger?.human || !trigger.channel) return
+    const chinese = /\p{Script=Han}/u.test(trigger.text) && !/[\p{Script=Hiragana}\p{Script=Katakana}]/u.test(trigger.text)
+    const text = chinese
+      ? '评估超时，本次请求没有得出结论。可以稍后重发，或在面板中重新评估。'
+      : 'The assessment timed out, so no decision was made; send the request again later, or re-evaluate it in the panel.'
+    this.options.outbox.send({ id: key('eval-timeout', decision.id), channel: trigger.channel, text, kind: 'notice' })
   }
   /** Withdraw a ticket's question for a person from the outbox, unless it went out already. */
   withdrawAttention(attentionId: string): void { this.options.outbox.withdraw(key('attention-reply', attentionId)) }
