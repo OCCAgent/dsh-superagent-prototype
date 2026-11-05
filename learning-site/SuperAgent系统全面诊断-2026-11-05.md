@@ -147,4 +147,55 @@ for table in ('trigger', 'decision', 'ticket', 'outbox'):
 PY
 ```
 
+## 7 测试环境：三个隔离 Profile 的现状与配置
+
+截至 2026-11-05 19:20，三个 Profile 已创建，`dsh --profile <name> --dump-config` 均通过：
+
+| Profile | 面板端口 | stateDir | Feishu 插件 |
+|---|---|---|---|
+| `selfharness` | 3083 | `~/.dsh/state/selfharness` | 关闭 |
+| `superagent-test` | 3084 | `~/.dsh/state/superagent-test` | 关闭 |
+| `superagent-e2e` | 3085 | `~/.dsh/state/superagent-e2e` | 关闭，待专用 bot 后开启 |
+
+结论：**环境骨架已更新，但尚未就绪**——三个 stateDir 都还没创建（服务未启动），没有模型配置，e2e 也没有接飞书机器人。代码层仍未隔离：三个 Profile 都 `link` 到同一工作树 `~/src/dsh-superagent-prototype`；要测不同 Harness 版本，应各自指向独立 worktree，否则改代码会同时影响三层。
+
+### 7.1 启动与模型
+
+```bash
+cd "/Users/opencity/Documents/GitHub/DeepSeek Harness/dsh-superagent"
+./scripts/dsh-superagent start --profile superagent-test --url http://127.0.0.1:3084
+./scripts/dsh-superagent status --profile superagent-test --url http://127.0.0.1:3084
+# 面板 token 在 .artifacts/dsh-superagent-superagent-test-*.log 的 "dsh web:" 行
+```
+
+每个 Profile 的 stateDir 独立，模型配置也各自落在自己的状态库。首次启动后，在面板设置或 `PUT /orchestrator/api/settings/eval|executor`（带当前 revision）设置：
+
+| 层 | eval | executor | 备注 |
+|---|---|---|---|
+| `selfharness` | 不适用 | 不适用 | 阶段 1 走本地脚本 + 固定 flash；Profile 只负责隔离 |
+| `superagent-test` | flash | flash | `maxWorkers=1`；保持 observe，避免自动接单改变四特征判据 |
+| `superagent-e2e` | flash | flash | `maxWorkers=1`；e2e 再按需加并行 |
+
+### 7.2 e2e 专用飞书机器人
+
+1. 在飞书开放平台新建独立应用（机器人能力），开通接收消息与发消息权限，发布后把机器人拉进 e2e 专用群；拿到 App ID/Secret。
+2. 新建独立 lark-cli 配置目录与 wrapper（不要复用 live 的 `~/.lark-cli-dsh-superagent`）：
+
+```sh
+#!/bin/sh
+export LARKSUITE_CLI_CONFIG_DIR="$HOME/.lark-cli-dsh-superagent-e2e"
+exec "$HOME/.local/bin/lark-cli" "$@"
+```
+
+3. 在终端（不要在 Agent 内）初始化：`LARKSUITE_CLI_CONFIG_DIR=... lark-cli config init --app-id cli_xxx --app-secret-stdin --brand feishu`，并按用户确认设置 `strict-mode bot`。
+4. 在 `~/.dsh/profiles/superagent-e2e/cordis.patch.yml` 打开插件：
+
+```yaml
+- id: dsh-superagent-feishu
+  disabled: false
+```
+
+5. 启动 e2e 后，在面板把 `source:feishu` 的 `cli` 指向该 wrapper，`chats` 填 e2e 群、`listen: mentions`，`allowed` 填测试人；保存并重启，发一条真 @ 验证。
+6. **不要让 live（3082）与 e2e（3085）共用同一个飞书 bot**；否则同一事件会被两个服务消费，产生重复工单/竞争。测试层如需飞书，也应另配 bot 或只走 GitHub。
+
 **学习要点**：诊断先分层（环境→机制→轨迹→用例→根因）；机制测试与模型质量分开；没有观测就没有诊断；安全边界看代码与配置，不看提示词。
