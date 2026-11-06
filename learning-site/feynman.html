@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>费曼拆解 · Super-agent 学习站</title>
+  <meta name="description" content="Super-agent 学习站：概念、进化、费曼拆解与测试日志。">
+  <style>
+:root{
+  --brand:#B8734A; --brand-dark:#8F5232; --gold:#D4A017; --ink:#3A2A1A;
+  --muted:#7C6A56; --paper:#FBF7F0; --card:#FFFDF9; --line:#E7DCCB;
+  --shadow:0 10px 30px rgba(58,42,26,.08);
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Songti SC","Noto Serif CJK SC",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.75 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--brand-dark);text-underline-offset:3px}
+a:hover{color:var(--brand)}
+.skip{position:absolute;left:-999px;top:0;background:var(--ink);color:#fff;padding:.6rem 1rem;z-index:99;border-radius:0 0 8px 0}
+.skip:focus{left:0;top:0}
+.wrap{width:min(1080px,92vw);margin:0 auto}
+.site-head{position:sticky;top:0;z-index:10;background:rgba(251,247,240,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.head-in{display:flex;align-items:center;justify-content:space-between;gap:1rem 1.5rem;min-height:68px;flex-wrap:wrap;padding:.55rem 0}
+.brand{display:inline-flex;align-items:center;gap:.65rem;text-decoration:none;color:var(--ink);font-family:var(--serif);font-weight:700;letter-spacing:.01em}
+.brand-mark{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--brand);color:#fff;font:700 12px/1 var(--sans);letter-spacing:.08em}
+.nav{display:flex;gap:.2rem;flex-wrap:wrap;align-items:center}
+.nav a{padding:.34rem .68rem;border-radius:999px;text-decoration:none;color:var(--muted);font-size:.9rem;white-space:nowrap;border:1px solid transparent}
+.nav a:hover{color:var(--ink);background:#F4EBDD}
+.nav a[aria-current="page"]{background:var(--ink);color:#FFF9EF;border-color:var(--ink)}
+main{padding:0 0 4rem}
+.hero{padding:3.4rem 0 2.6rem}
+.eyebrow{display:inline-flex;align-items:center;gap:.55rem;font:700 .72rem/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--brand);margin:0 0 1rem}
+.eyebrow::before{content:"";width:26px;height:2px;background:var(--gold)}
+h1,h2,h3{font-family:var(--serif);line-height:1.28;margin:0 0 .6rem;font-weight:700}
+h1{font-size:clamp(2rem,4.6vw,3.05rem);letter-spacing:-.01em;margin-bottom:.5rem}
+h2{font-size:clamp(1.3rem,2.5vw,1.75rem);margin-top:3.2rem;padding-top:1.3rem;border-top:1px solid var(--line)}
+h3{font-size:1.06rem;margin-top:0}
+.lede{font-size:1.08rem;color:var(--muted);max-width:64ch;margin:.5rem 0 0}
+.hero .lede{font-size:1.16rem}
+.meta{display:flex;gap:1.2rem;flex-wrap:wrap;margin:1.4rem 0 0;padding:0;list-style:none;color:var(--muted);font-size:.82rem}
+.meta li{display:inline-flex;align-items:center;gap:.42rem}
+.meta li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--gold)}
+.crumbs{font-size:.82rem;color:var(--muted);padding:1.1rem 0 0}
+.crumbs a{text-decoration:none}
+.crumbs span{color:var(--line)}
+.tag{display:inline-block;padding:.14rem .55rem;border-radius:999px;background:#F3E7D6;color:var(--brand-dark);font-size:.72rem;font-weight:700;letter-spacing:.04em;vertical-align:middle}
+.tag.gold{background:#FBF0CF;color:#8A6A0B}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem;margin:1.6rem 0}
+.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.25rem 1.3rem;text-decoration:none;color:inherit;box-shadow:var(--shadow);transition:transform .15s ease,border-color .15s ease}
+.card:hover{transform:translateY(-2px);border-color:var(--brand)}
+.card h3{margin-bottom:.35rem}
+.card p{margin:0;color:var(--muted);font-size:.94rem}
+.card .go{display:inline-block;margin-top:.85rem;color:var(--brand);font-weight:700;font-size:.84rem;letter-spacing:.02em}
+.steps{list-style:none;padding:0;margin:1.5rem 0;counter-reset:step;display:grid;gap:.75rem}
+.steps li{position:relative;padding:1rem 1.1rem 1rem 3.4rem;background:var(--card);border:1px solid var(--line);border-radius:12px;color:var(--muted);font-size:.95rem}
+.steps li::before{counter-increment:step;content:counter(step,decimal-leading-zero);position:absolute;left:1.05rem;top:1.05rem;font:700 .78rem/1 var(--mono);color:var(--brand);letter-spacing:.04em}
+.steps li strong{color:var(--ink);font-family:var(--serif);font-size:1rem;display:block;margin-bottom:.1rem}
+.pending{margin:1.4rem 0;padding:1rem 1.2rem;border:1px dashed var(--line);border-radius:12px;background:#FCF8F1;color:var(--muted);font-size:.94rem}
+.pending b{color:var(--brand-dark)}
+.note{margin:2rem 0;padding:1rem 1.2rem;border-left:4px solid var(--gold);background:#FFF8E8;border-radius:0 10px 10px 0;color:#5A4528;font-size:.94rem}
+.note b{color:var(--ink)}
+.prose{max-width:68ch}
+.prose p{margin:.8rem 0;color:#5C4B38}
+.table-wrap{overflow-x:auto;margin:1.2rem 0;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{padding:.65rem .8rem;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowrap}
+.matrix td,.matrix th{font-size:.9rem}
+.matrix td span{display:block;color:var(--muted);font-size:.8rem;margin-top:.15rem}
+.matrix .empty{background:#FFF8E8;border:1px dashed var(--gold)}
+.compare th:first-child{width:6.5rem}
+.compare td{font-size:.9rem;color:#5C4B38}
+.compare td b{color:var(--ink)}
+.qa{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1rem 1.2rem;margin:.7rem 0}
+.qa summary{cursor:pointer;list-style:none;font-family:var(--serif);font-weight:700;color:var(--ink);display:flex;gap:.6rem;align-items:flex-start}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary::before{content:"+";flex:0 0 auto;color:var(--brand);font-family:var(--sans);font-weight:800;width:1rem;text-align:center}
+.qa[open] summary::before{content:"−"}
+.qa p{margin:.85rem 0 0;padding-top:.75rem;border-top:1px solid var(--line);color:#5C4B38;font-size:.94rem}
+.site-foot{border-top:1px solid var(--line);padding:2rem 0 2.4rem;color:var(--muted);font-size:.85rem}
+.foot-in{display:flex;justify-content:space-between;gap:1rem 2rem;flex-wrap:wrap}
+.foot-in p{margin:0}
+.foot-in a{color:var(--brand-dark)}
+@media (max-width:640px){
+  .hero{padding:2.4rem 0 2rem}
+  .head-in{min-height:0;padding:.7rem 0}
+  .nav{width:100%;gap:.15rem}
+  .nav a{padding:.3rem .55rem;font-size:.84rem}
+  h2{margin-top:2.4rem}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .card{transition:none}
+}
+</style>
+</head>
+<body>
+  <a class="skip" href="#main">跳到正文</a>
+  <header class="site-head">
+    <div class="wrap head-in">
+      <a class="brand" href="index.html"><span class="brand-mark">SA</span><span>Super-agent 学习站</span></a>
+      <nav class="nav" aria-label="主导航">
+        <a href="index.html">首页</a>
+        <a href="concept.html">概念(A论文)</a>
+        <a href="evolution.html">进化(B论文)</a>
+        <a href="feynman.html" aria-current="page">费曼拆解</a>
+        <a href="learning-ladder.html">学习阶梯</a>
+        <a href="test-log.html">测试日志</a>
+        <a href="prototype.html">原型</a>
+        <a href="experiment.html">实验</a>
+      </nav>
+    </div>
+  </header>
+  <main id="main">
+    <div class="wrap">
+      <p class="crumbs"><a href="index.html">首页</a> <span>/</span> 费曼拆解</p>
+      <section class="hero">
+        <p class="eyebrow">方法 · 费曼拆解</p>
+        <h1>一个管组织，一个管进化</h1>
+        <p class="lede">两篇论文不是上下集：A 把 harness 做成组织，B 让 harness 会进化。先看一张 2×2 地图与对照表，再用 10 道苏格拉底式问题自测。</p>
+        <ul class="meta">
+          <li>两篇论文</li>
+          <li>2×2 对比</li>
+          <li>10 道自测题</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>先看 2×2 地图</h2>
+        <p class="section-lede">把「单 Agent / 多任务系统」和「固定 harness / 自进化 harness」交叉，地图就很清楚。</p>
+        <div class="table-wrap">
+          <table class="matrix">
+            <thead>
+              <tr><th>系统形态</th><th>harness 人工固定</th><th>harness 自进化</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>单 Agent</th>
+                <td>普通 coding agent<span>Claude Code、Codex 等</span></td>
+                <td><b>Self-Harness</b><span>固定模型，自己改工装</span></td>
+              </tr>
+              <tr>
+                <th>Super-agent</th>
+                <td><b>Exploring Super-agent Design</b><span>把工装做成组织</span></td>
+                <td class="empty"><b>空位</b><span>让整个组织自己进化工装</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="prose">
+          <p>右下角是两篇拼起来最值得想的下一步：把 Self-Harness 的「证据 → 提议 → 回归」循环，从单个模型扩展到整个 Super-agent 系统。难点也很清楚——证据单位从单条轨迹变成跨 Thread/Worker 的事件流，回归集要从基准扩展到历史回放与 held-out 团队，准入要灰度、归因、可回滚，还要决定谁批准。</p>
+        </div>
+      </section>
+
+      <section>
+        <h2>两篇论文对照表</h2>
+        <p class="section-lede">按设计动机、核心机制、验证方式、局限四个维度并排看。</p>
+        <div class="table-wrap">
+          <table class="compare">
+            <thead>
+              <tr><th>维度</th><th>A · Exploring Super-agent Design</th><th>B · Self-Harness</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th>设计动机</th>
+                <td>单会话 ReAct 的瓶颈从模型能力转向人的注意力：Agent 要常在线、能并行、能主动、跨渠道连续。</td>
+                <td>手工为每个模型调 harness 不可扩展；Meta-Harness 贵、未必有更强模型、失败模式还容易错配。</td>
+              </tr>
+              <tr>
+                <th>核心机制</th>
+                <td>双层架构（Router/Worker）、Trigger 四道关、全双工与多通道、计算/状态/环境分离、Watchdog；把计算机系统思想搬进 Agent。</td>
+                <td>失败签名聚类 → 多样最小提案 → held-in/held-out 双边回归；只改声明式可编辑面，留下可审计版本链。</td>
+              </tr>
+              <tr>
+                <th>验证方式</th>
+                <td>合成负载（约 300 条群聊/CI 消息，约 20 个工作请求）、耗时工具模拟编码、每配置 5 次；Router 批处理压测 1→40 条/分钟。</td>
+                <td>单基准 64 题、3 个模型、每候选重复 2 次；用 held-in 看是否解决动机证据，用 held-out 看是否弄坏别的。</td>
+              </tr>
+              <tr>
+                <th>局限</th>
+                <td>合成负载、简化环境、非真实编码；只验证调度与路由，不能推出真实研发效率或代码质量提升。</td>
+                <td>单基准、重复次数少、只能有界修改；依赖评估器质量，跨基准/跨团队泛化未验证。</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note"><b>怎么读：</b>A 回答「组织怎么搭」，B 回答「工装怎么改」。两篇共用同一个 harness 概念，但一个把它做成身体，一个给它装上变异与选择机制。</p>
+        <div class="note"><b>再看一层：</b>Self-Harness 更像「带验证集的自动调优」——误差分析 → 假设 → 验证，而不是自然选择。它能优化测得到的东西，却发现不了没测的东西。</div>
+      </section>
+
+      <section>
+        <h2>十个苏格拉底式自测题</h2>
+        <p class="section-lede">先自己答，再点开对照。答案按底稿整理，不追求标准表述，追求讲得通。</p>
+
+        <details class="qa">
+          <summary>Q1 为什么「每个事件开一个新会话」不是 Super-agent？</summary>
+          <p>它只解决了并发，没有解决连续性。任务相关时会缺全局上下文；多个会话分别回复用户，交互也会混乱。Super-agent 要「连续 + 产出」同时成立，所以需要 Router 维持全局、Worker 隔离执行的两层结构。</p>
+        </details>
+
+        <details class="qa">
+          <summary>Q2 Router 不执行任务，为什么不会成为瓶颈？</summary>
+          <p>它只做轻量交互和派发；一个推理 turn 内到达的 Trigger 排队，下一个 turn 合并成一次调用，prefill 并行，所以请求耗时随批量增长很慢。压测里到达率 1→40 条/分钟，摊销到每个决策的时间反而从 6.4s 降到 1.6s。上限是上下文长度和单 turn 可准确处理的 Trigger 数。</p>
+        </details>
+
+        <details class="qa">
+          <summary>Q3 Fast Path / Slow Path 分别指什么？为什么这样分？</summary>
+          <p>Fast Path 是确定性的程序化策略（来源、群、白名单、三种响应模式），低成本挡掉大多数噪音；Slow Path 是大模型结合上下文和 prompt 策略做语义判断。把稳定的判断下沉成代码、把模糊的判断留给模型，才能同时控成本和延迟。</p>
+        </details>
+
+        <details class="qa">
+          <summary>Q4 订阅透传解决了什么？没解决什么？</summary>
+          <p>解决了「同一 Thread 的后续事件不必每次都经过 Router」，省下 Router 的决策次数和 token（实验里约 −30% 决策、−37% token）。它不解决任务本身的正确性，也不替代跨任务协调——那仍由 Router 负责。</p>
+        </details>
+
+        <details class="qa">
+          <summary>Q5 Inline &amp; Spill 与 Chain of Recall 是什么关系？</summary>
+          <p>Inline &amp; Spill 是「单个对象怎么放进/放出窗口」的微观操作；Chain of Recall 把同一原则应用到对象图上，让模型顺着 ID 引用一跳一跳找回多跳之前的上下文。前者是缓存策略，后者是基于缓存的检索路径。</p>
+        </details>
+
+        <details class="qa">
+          <summary>Q6 计算/状态/环境分离的两级各解决什么？</summary>
+          <p>第一级把无状态计算放进弹性容器、状态放进数据库，解决「设备一睡 Agent 就停」；第二级把执行环境留在本地、只装无状态 daemon，解决「环境搬不动/搬不全」。两级合起来让 Agent 既常在线，又能连到真实机器。</p>
+        </details>
+
+        <details class="qa">
+          <summary>Q7 Watchdog 与普通监控的区别？</summary>
+          <p>普通监控看进程、端口、错误率；Watchdog 还用一个独立的 Agent Session 判断「任务有没有实质进展、有没有跑偏」，并且能用自然语言被询问、能在运行时调整主系统。它监控的是「干活这件事本身」。</p>
+        </details>
+
+        <details class="qa">
+          <summary>Q8 Self-Harness 与 Meta-Harness 的区别？</summary>
+          <p>Meta-Harness 用更强的外部 Agent 去改弱模型的 harness；Self-Harness 让被评估的同一个固定模型，在当前 harness 下提出对自己的有界修改。前者是外部搜索，后者是把改进闭环内化，避免外部模型的成本与失败模式错配。</p>
+        </details>
+
+        <details class="qa">
+          <summary>Q9 为什么接受规则要求 held-in 和 held-out 都不降？</summary>
+          <p>held-in 检验「是否真的解决了 motivating evidence」，held-out 检验「有没有为了修这个而弄坏别的」。只看总分会让「拆东墙补西墙」的过拟合改动混进来；双边不降是一种保守的回归门。</p>
+        </details>
+
+        <details class="qa">
+          <summary>Q10 两篇拼起来，最自然的下一步是什么？</summary>
+          <p>把 Self-Harness 的三步循环用到 Super-agent 的系统 harness 上：用跨任务执行轨迹挖协调、上下文、路由层面的失败模式，提有界改动，在历史回放和 held-out 团队上做回归，再灰度上线。关键难点是证据单位、回归集、准入规则和「谁批准」。</p>
+        </details>
+      </section>
+
+      <section>
+        <h2>接着读</h2>
+        <div class="prose">
+          <p>拆解到此为止：A 给组织，B 给进化，2×2 的右下角留给下一轮系统实验。接下来去测试日志，看阶段 0/1 的真实记录与阶段 2 的 WU 进度。</p>
+        </div>
+        <div class="grid">
+          <a class="card" href="evolution.html">
+            <h3>回看：进化 <span class="tag">B 论文</span></h3>
+            <p>三步闭环与 held-in/held-out 的细节，在进化页。</p>
+            <span class="go">回到进化页 →</span>
+          </a>
+          <a class="card" href="test-log.html">
+            <h3>接着读：测试日志 <span class="tag gold">记录</span></h3>
+            <p>阶段实测数据、WU 验收与遗留问题。</p>
+            <span class="go">进入测试日志 →</span>
+          </a>
+        </div>
+      </section>
+    </div>
+  </main>
+  <footer class="site-foot">
+    <div class="wrap foot-in">
+      <p>阶段 2 · 学习站 · WU-5 费曼拆解</p>
+      <p><a href="index.html">回到首页</a> · 静态 HTML · 无外部依赖</p>
+    </div>
+  </footer>
+</body>
+</html>

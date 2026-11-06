@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>原型 · Super-agent 学习站</title>
+  <meta name="description" content="从论文到原型：概念映射、七个阶段、三处偏离、Watchdog 缺口与 L1–L5 掌握路线。">
+  <style>
+:root{
+  --brand:#B8734A; --brand-dark:#8F5232; --gold:#D4A017; --ink:#3A2A1A;
+  --muted:#7C6A56; --paper:#FBF7F0; --card:#FFFDF9; --line:#E7DCCB;
+  --shadow:0 10px 30px rgba(58,42,26,.08);
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Songti SC","Noto Serif CJK SC",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.75 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--brand-dark);text-underline-offset:3px}
+a:hover{color:var(--brand)}
+.skip{position:absolute;left:-999px;top:0;background:var(--ink);color:#fff;padding:.6rem 1rem;z-index:99;border-radius:0 0 8px 0}
+.skip:focus{left:0;top:0}
+.wrap{width:min(1080px,92vw);margin:0 auto}
+.site-head{position:sticky;top:0;z-index:10;background:rgba(251,247,240,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.head-in{display:flex;align-items:center;justify-content:space-between;gap:1rem 1.5rem;min-height:68px;flex-wrap:wrap;padding:.55rem 0}
+.brand{display:inline-flex;align-items:center;gap:.65rem;text-decoration:none;color:var(--ink);font-family:var(--serif);font-weight:700;letter-spacing:.01em}
+.brand-mark{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--brand);color:#fff;font:700 12px/1 var(--sans);letter-spacing:.08em}
+.nav{display:flex;gap:.2rem;flex-wrap:wrap;align-items:center}
+.nav a{padding:.34rem .68rem;border-radius:999px;text-decoration:none;color:var(--muted);font-size:.9rem;white-space:nowrap;border:1px solid transparent}
+.nav a:hover{color:var(--ink);background:#F4EBDD}
+.nav a[aria-current="page"]{background:var(--ink);color:#FFF9EF;border-color:var(--ink)}
+main{padding:0 0 4rem}
+.hero{padding:3.4rem 0 2.6rem}
+.eyebrow{display:inline-flex;align-items:center;gap:.55rem;font:700 .72rem/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--brand);margin:0 0 1rem}
+.eyebrow::before{content:"";width:26px;height:2px;background:var(--gold)}
+h1,h2,h3{font-family:var(--serif);line-height:1.28;margin:0 0 .6rem;font-weight:700}
+h1{font-size:clamp(2rem,4.6vw,3.05rem);letter-spacing:-.01em;margin-bottom:.5rem}
+h2{font-size:clamp(1.3rem,2.5vw,1.75rem);margin-top:3.2rem;padding-top:1.3rem;border-top:1px solid var(--line)}
+h3{font-size:1.06rem;margin-top:0}
+.lede{font-size:1.08rem;color:var(--muted);max-width:64ch;margin:.5rem 0 0}
+.hero .lede{font-size:1.16rem}
+.meta{display:flex;gap:1.2rem;flex-wrap:wrap;margin:1.4rem 0 0;padding:0;list-style:none;color:var(--muted);font-size:.82rem}
+.meta li{display:inline-flex;align-items:center;gap:.42rem}
+.meta li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--gold)}
+.crumbs{font-size:.82rem;color:var(--muted);padding:1.1rem 0 0}
+.crumbs a{text-decoration:none}
+.crumbs span{color:var(--line)}
+.tag{display:inline-block;padding:.14rem .55rem;border-radius:999px;background:#F3E7D6;color:var(--brand-dark);font-size:.72rem;font-weight:700;letter-spacing:.04em;vertical-align:middle}
+.tag.gold{background:#FBF0CF;color:#8A6A0B}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem;margin:1.6rem 0}
+.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.25rem 1.3rem;text-decoration:none;color:inherit;box-shadow:var(--shadow);transition:transform .15s ease,border-color .15s ease}
+.card:hover{transform:translateY(-2px);border-color:var(--brand)}
+.card h3{margin-bottom:.35rem}
+.card p{margin:0;color:var(--muted);font-size:.94rem}
+.card .go{display:inline-block;margin-top:.85rem;color:var(--brand);font-weight:700;font-size:.84rem;letter-spacing:.02em}
+.steps{list-style:none;padding:0;margin:1.5rem 0;counter-reset:step;display:grid;gap:.75rem}
+.steps li{position:relative;padding:1rem 1.1rem 1rem 3.4rem;background:var(--card);border:1px solid var(--line);border-radius:12px;color:var(--muted);font-size:.95rem}
+.steps li::before{counter-increment:step;content:counter(step,decimal-leading-zero);position:absolute;left:1.05rem;top:1.05rem;font:700 .78rem/1 var(--mono);color:var(--brand);letter-spacing:.04em}
+.steps li strong{color:var(--ink);font-family:var(--serif);font-size:1rem;display:block;margin-bottom:.1rem}
+.pending{margin:1.4rem 0;padding:1rem 1.2rem;border:1px dashed var(--line);border-radius:12px;background:#FCF8F1;color:var(--muted);font-size:.94rem}
+.pending b{color:var(--brand-dark)}
+.note{margin:2rem 0;padding:1rem 1.2rem;border-left:4px solid var(--gold);background:#FFF8E8;border-radius:0 10px 10px 0;color:#5A4528;font-size:.94rem}
+.note b{color:var(--ink)}
+.prose{max-width:68ch}
+.prose p{margin:.8rem 0;color:#5C4B38}
+.table-wrap{overflow-x:auto;margin:1.2rem 0;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{padding:.65rem .8rem;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowrap}
+.definition{margin:2.2rem 0 0;padding:1.4rem 1.6rem;background:linear-gradient(135deg,#FFF8E8,#FFFDF9);border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:0 14px 14px 0}
+.def-kicker{display:inline-block;font:700 .7rem/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--brand);margin-bottom:.5rem}
+.definition p{margin:0;font-family:var(--serif);font-size:1.12rem;line-height:1.75;color:var(--ink)}
+.section-lede{max-width:62ch;color:var(--muted);margin:.2rem 0 0}
+.layer{display:inline-block;font:700 .7rem/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--brand);margin-bottom:.45rem}
+.test-grid .card{border-top:3px solid var(--gold)}
+.page-index{list-style:none;padding:0;margin:1.4rem 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:.6rem 1.4rem}
+.page-index li{display:flex;flex-direction:column;padding:.8rem 0;border-bottom:1px solid var(--line)}
+.page-index a{font-family:var(--serif);font-weight:700;text-decoration:none;color:var(--ink);font-size:1.02rem}
+.page-index a:hover{color:var(--brand)}
+.page-index span{color:var(--muted);font-size:.86rem}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin:1.4rem 0}
+.facts>div{padding:1rem 1.2rem;background:var(--card);border:1px solid var(--line);border-top:2px solid var(--gold);border-radius:0 0 10px 10px}
+.facts span{display:block;font:700 .7rem/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--brand);margin-bottom:.35rem}
+.facts p{margin:0;color:var(--ink);font-size:.95rem}
+.site-foot{border-top:1px solid var(--line);padding:2rem 0 2.4rem;color:var(--muted);font-size:.85rem}
+.foot-in{display:flex;justify-content:space-between;gap:1rem 2rem;flex-wrap:wrap}
+.foot-in p{margin:0}
+.foot-in a{color:var(--brand-dark)}
+@media (max-width:640px){
+  .hero{padding:2.4rem 0 2rem}
+  .head-in{min-height:0;padding:.7rem 0}
+  .nav{width:100%;gap:.15rem}
+  .nav a{padding:.3rem .55rem;font-size:.84rem}
+  h2{margin-top:2.4rem}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .card{transition:none}
+}
+
+.dev{border-top:3px solid var(--gold)}
+.dev h3{margin-bottom:.35rem}
+.dev p{margin:0;color:#5C4B38;font-size:.95rem}
+.failure-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.8rem;margin:1.2rem 0}
+.failure{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.9rem 1rem}
+.failure b{display:block;font-family:var(--serif);font-size:1.05rem;margin-bottom:.2rem}
+.failure span{color:var(--muted);font-size:.86rem}
+.signals{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.8rem;margin:1.2rem 0}
+.signal{background:#FCF8F1;border:1px dashed var(--line);border-radius:10px;padding:.9rem 1rem;color:#5C4B38;font-size:.9rem}
+.signal b{color:var(--brand-dark)}
+</style>
+</head>
+<body>
+  <a class="skip" href="#main">跳到正文</a>
+  <header class="site-head">
+    <div class="wrap head-in">
+      <a class="brand" href="index.html"><span class="brand-mark">SA</span><span>Super-agent 学习站</span></a>
+      <nav class="nav" aria-label="主导航">
+        <a href="index.html">首页</a>
+        <a href="concept.html">概念(A论文)</a>
+        <a href="evolution.html">进化(B论文)</a>
+        <a href="feynman.html">费曼拆解</a>
+        <a href="learning-ladder.html">学习阶梯</a>
+        <a href="test-log.html">测试日志</a>
+        <a href="prototype.html" aria-current="page">原型</a>
+        <a href="experiment.html">实验</a>
+      </nav>
+    </div>
+  </header>
+  <main id="main">
+    <div class="wrap">
+      <p class="crumbs"><a href="index.html">首页</a> <span>/</span> 原型</p>
+      <section class="hero">
+        <p class="eyebrow">原型 · 论文到实现</p>
+        <h1>论文给骨架，原型补边界</h1>
+        <p class="lede">论文回答「怎么组织」；原型回答「一次被授权的工作，怎么安全做完并留下证据」。下面是对照、七个阶段、三处偏离，以及缺失的 Watchdog。</p>
+        <ul class="meta">
+          <li>概念对照</li>
+          <li>7 个阶段</li>
+          <li>L1–L5 掌握路线</li>
+        </ul>
+      </section>
+
+      <section>
+        <p class="note"><b>先校准：</b>原型不是论文的逐条实现。仓库 README 明确说它经过改编，不等同论文或内部版本；下面的对应是<strong>概念对应</strong>，不是代码等价。</p>
+      </section>
+
+      <section>
+        <h2>概念映射：论文的词，落到哪里</h2>
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead><tr><th>论文概念</th><th>原型概念</th><th>差异要点</th></tr></thead>
+            <tbody>
+              <tr><td>Router</td><td><b>Main Session</b>（orchestrator）+ Eval</td><td>判断拆成 Gate（确定性）与 Assessment（模型）两层；Eval 无状态。</td></tr>
+              <tr><td>Worker</td><td><b>Executor Session</b>（worker-&lt;ticket-id&gt;）</td><td>不只隔离上下文，还有独立目录、执行环境与 worker 槽位。</td></tr>
+              <tr><td>会话</td><td><b>Ticket</b></td><td>工单有自己的生命周期，不跟随 Session。</td></tr>
+              <tr><td>任务派发</td><td><b>Assignment</b></td><td>工单与执行器实例的绑定，可多次、可替换。</td></tr>
+              <tr><td>透传</td><td><b>Subscription fan-out</b></td><td>扇出到 Ticket 的 Input；不过 Gate、不授予新权限，但仍经领域层，因此可审计。</td></tr>
+              <tr><td>过滤</td><td><b>Gate + Assessment</b></td><td>Gate 是白名单、规则与强度；Assessment 才是模型研判。</td></tr>
+              <tr><td>触发</td><td><b>Trigger + Disposition</b></td><td>每个 Trigger 的去向（filtered / evaluated / fanned out）都被记录。</td></tr>
+              <tr><td>—</td><td><b>Policy / Mandate</b></td><td>论文几乎没展开的授权层：谁、以什么强度、多大范围。</td></tr>
+              <tr><td>—</td><td><b>Channel / Correlation</b></td><td>Channel 是写回；Correlation 只加上下文，从不路由。</td></tr>
+              <tr><td>—</td><td><b>Disposition</b></td><td>每个 Trigger 的去向（filtered / evaluated / fanned out）都被记录，是审计与排查的入口。</td></tr>
+              <tr><td>Watchdog</td><td>HealthBoard + 重试 + 恢复注记</td><td>自愈更像确定性流程，没有与论文对应的独立 Agent 控制环。</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>三处偏离：原型比论文多做了什么</h2>
+        <div class="grid">
+          <article class="card dev">
+            <h3>授权前移</h3>
+            <p>论文问「这条消息要不要处理」；原型的 Gate 先问「谁、在哪个来源、以什么强度、授权了多大范围」，再生成不可变的 Mandate。执行只问「在不在范围内」。</p>
+          </article>
+          <article class="card dev">
+            <h3>审计成为数据</h3>
+            <p>Trigger 有 Disposition，判断有 Decision，工单有 Assignment 与 Report，消息有 outbox 记录。于是「为什么这条没回」「为什么这个工单停了」都能查。</p>
+          </article>
+          <article class="card dev">
+            <h3>状态自持</h3>
+            <p>工单不跟随 Session：它可以被交接、恢复、换执行器，所以定义自己的七个阶段。代价是概念更多，收益是可授权、可审计、可恢复。</p>
+          </article>
+        </div>
+        <p class="note"><b>一句话：</b>论文回答「怎么组织」，原型回答「一次被授权的工作，怎么安全地做完并留下证据」。</p>
+      </section>
+
+      <section>
+        <h2>七个阶段与两条恢复路径</h2>
+        <p class="section-lede">工单不是「跑着 / 没跑」两种状态，而是七种，取决于它在等什么。判断从上往下，第一条命中即止。</p>
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead><tr><th>阶段</th><th>条件</th><th>面板显示</th></tr></thead>
+            <tbody>
+              <tr><td>person / delivery</td><td>投递 Input 失败，正在退避重试</td><td>输入未送达</td></tr>
+              <tr><td>person / answer</td><td>有一个待回答的 Attention</td><td>等待回答</td></tr>
+              <tr><td>person / review</td><td>最新 Report 是 ready</td><td>等待审阅</td></tr>
+              <tr><td>person / blocked、failed</td><td>最新 Report 是 blocked/failed，且之后没有人再说话</td><td>受阻 / 失败</td></tr>
+              <tr><td>working / queued</td><td>没有 Assignment，或 Assignment 还在 pending</td><td>排队中</td></tr>
+              <tr><td>idle</td><td>最新 Report 是 waiting，或 Assignment 已结束</td><td>等待触发</td></tr>
+              <tr><td>working</td><td>其余</td><td>执行中</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="grid">
+          <article class="card dev">
+            <h3>retry：人的决定</h3>
+            <p>结束当前 Assignment，在同一 Session、目录、分支、PR 上起一个新的。它假设执行现场还在，只是这一轮没跑好。</p>
+          </article>
+          <article class="card dev">
+            <h3>restart：宿主的事实</h3>
+            <p>所有运行中的 Assignment 统一以 host restarted 结束；新 Assignment 带恢复注记：先查目录、git 历史、GitHub，确认哪些外部动作已经做过，再决定是否重复。</p>
+          </article>
+        </div>
+        <p class="note"><b>别混为一谈：</b>把 retry 当 restart，恢复时会重复外部动作；把 restart 当 retry，会以为现场还活着。</p>
+      </section>
+
+      <section>
+        <h2>缺失的控制环：Watchdog</h2>
+        <p class="section-lede">原型有健康看板、失败重试、恢复注记、七种阶段，但没有论文里那个独立 Agent 控制环。缺的不是监控，是<strong>任务级进展判断</strong>和<strong>分级干预权限</strong>。</p>
+        <div class="failure-grid">
+          <div class="failure"><b>死</b><span>会话或进程没了，工单停在半路。</span></div>
+          <div class="failure"><b>卡</b><span>活着，但长时间没有实质产出。</span></div>
+          <div class="failure"><b>飘</b><span>有产出，但偏离授权范围或目标。</span></div>
+          <div class="failure"><b>假</b><span>声称完成，产物缺失或不可用。</span></div>
+        </div>
+        <p class="prose">不能直接照抄论文：每个活跃工单都让模型定期看一眼，成本随并发线性涨；长编译、大重构、等 CI 都像「没进展」；Watchdog 要读工单内容，而工单内容是不可信输入。稳的做法是用论文自己的快慢路径原则来补它。</p>
+        <ol class="steps">
+          <li><strong>进度账本</strong>只有代码提交、产物变化、验证结果、外部事件、报告迁移、交付成功算进展；心跳、日志、回复都不算。每个阶段的预算不同，长任务要显式声明「我预计 40 分钟编译」。</li>
+          <li><strong>规则筛可疑</strong>快路径十条规则：无进展、同一错误重复、ready 但产物不存在、槽位超限、投递失败、空转、危险命令、反复回退、成本燃烧等。规则只产出「可疑」，不产出结论。</li>
+          <li><strong>模型裁决</strong>只对可疑工单，输入有界证据包（Mandate、时间线、触发的规则、当前阶段、Worker 原话）。输出结构化裁决：classification、confidence、hypothesis、evidence、recommended_action；必须给证据。</li>
+          <li><strong>权限阶梯</strong>L0 影子 → L1 通知 → L2 提醒 → L3 暂停 → L4 重派/回滚（不建议自动）。每一级都要有可统计的成功率与误伤率，晋升看记录，不看愿望。</li>
+          <li><strong>安全边界</strong>独立进程、独立预算、独立凭据；它读的内容一律当不可信输入，防注入；可逆优先，先通知再提醒再暂停；它自己也要有心跳、死手开关和动作审计。</li>
+        </ol>
+        <p class="note"><b>上线节奏：</b>先影子运行，再红队测试，最后才给有限权限。监控者本身也是一个需要被监控的系统。</p>
+      </section>
+
+      <section>
+        <h2>掌握路线：L1–L5</h2>
+        <p class="section-lede">「完全掌握」需要一个可检验的定义。每级都有通过标准，不达标就停在原地补。</p>
+        <p class="note"><b>完整版：</b>五级各自的八项、练习、常见错误与自检见 <a href="learning-ladder.html">学习阶梯</a>；本页保留速览。</p>
+        <ol class="steps">
+          <li><strong>L1 复述</strong>不看文档，用 10 分钟讲清：为什么 Router 不干活、四关各解决什么、为什么透传不提升速度、为什么存算要分离。外行能听懂，被追问「不做会怎样」时能给出具体后果。</li>
+          <li><strong>L2 画图</strong>手画 Source → Trigger → Thread → Eval → Decision → Ticket → Assignment → Report → Channel；标出七个阶段、三个失败点、两条恢复路径。随便指一个节点，能说出输入、输出和失败后的去向。</li>
+          <li><strong>L3 定位</strong>找到 Gate（src/policy.ts）、Assessment（src/app/assessment.ts）、Ticket 阶段（src/core/stage.ts）、worker 槽位（src/executor/dsh.ts）、扇出与工单生命周期（src/core/tickets.ts、src/core/intake.ts）；查一条 Trigger 的 Disposition → Decision → Ticket → Assignment，自己推阶段再和面板对照。</li>
+          <li><strong>L4 预测</strong>给定负载（如 60 条/分钟）或故障（Router 重启、端点离线、重复投递），预测先崩哪里、用户看到什么；预测与实测一致，或差异能解释。</li>
+          <li><strong>L5 改造</strong>设计一个新 Source/Channel、Router 分片方案，或补上 Watchdog；写清失败场景、权限与回滚。方案能通过「如果我是评审会问的十个问题」，至少三个失败场景有明确处理。</li>
+        </ol>
+        <h3>四个「假掌握」信号</h3>
+        <div class="signals">
+          <div class="signal"><b>能背名词，画不出失败路径。</b>记住的是术语，不是状态机。</div>
+          <div class="signal"><b>能画正常流程，说不清 blocked → working。</b>没理解「谁有权限推进它」。</div>
+          <div class="signal"><b>能读代码，预测不了 60 条/分钟先崩哪。</b>还没有量级感。</div>
+          <div class="signal"><b>能改代码，写不出验收标准。</b>还没到 L5。</div>
+        </div>
+      </section>
+
+      <section>
+        <h2>接着读</h2>
+        <div class="grid">
+          <a class="card" href="concept.html">
+            <h3>回看：概念 <span class="tag">A 论文</span></h3>
+            <p>先有论文骨架：四个特征与五个模块。</p>
+            <span class="go">回到概念页 →</span>
+          </a>
+          <a class="card" href="test-log.html">
+            <h3>去测试日志 <span class="tag gold">记录</span></h3>
+            <p>阶段 0/2 的实测、WU 进度与持续问题日志。</p>
+            <span class="go">进入测试日志 →</span>
+          </a>
+        </div>
+      </section>
+    </div>
+  </main>
+  <footer class="site-foot">
+    <div class="wrap foot-in">
+      <p>阶段 2 · 学习站 · 原型页</p>
+      <p><a href="index.html">回到首页</a> · 静态 HTML · 无外部依赖</p>
+    </div>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,213 @@
+{
+  "environment": {
+    "harness": "in-memory Runtime + fake DSH host",
+    "repeats": 1,
+    "maxWorkers": 1
+  },
+  "continuity": {
+    "held": false,
+    "spec_case_met": false,
+    "cases": [
+      {
+        "id": "C1",
+        "kind": "typical",
+        "scenario": "PR comment on the ticket PR, no direct reference",
+        "attributed": 1,
+        "expected": 1,
+        "pass": true
+      },
+      {
+        "id": "C2",
+        "kind": "perturbed",
+        "scenario": "unrelated chatter in chat B, then the chat A follow-up",
+        "followup_attributed": 1,
+        "expected": 1,
+        "pass": true
+      },
+      {
+        "id": "C3",
+        "kind": "negative",
+        "scenario": "unrelated chatter in chat B must not attach to the chat A ticket",
+        "unrelated_leaked": 0,
+        "expected": 0,
+        "pass": true
+      },
+      {
+        "id": "C4",
+        "kind": "specified-unlinked",
+        "scenario": "requirement in Feishu chat B, no reference to chat A",
+        "auto_attributed": 0,
+        "expected": 1,
+        "related_tickets_seen": 0,
+        "pass": false
+      }
+    ],
+    "base_environment": {
+      "chats": 2,
+      "github_repository": 1
+    },
+    "new_tickets_from_linked_followups": 0,
+    "human_clarifications": 0,
+    "failure_layer": "architecture",
+    "failure_reason": "The only structural links are the originating thread, a ticket PR thread and a trigger shared by several threads; Correlation adds context but never routes, so an unlinked channel yields a separate candidate carrying 0 related tickets. Attaching it would need an explicit pointer or the router attaching by meaning, which the assessment prompt does not ask for.",
+    "deep": {
+      "held_as_entity": true,
+      "cases": [
+        {
+          "id": "C5",
+          "kind": "post-completion cross-app",
+          "resumed": 1,
+          "new_ticket": 0,
+          "mandate_preserved": 1
+        },
+        {
+          "id": "C5b",
+          "kind": "bot after end",
+          "resumed": 0,
+          "pass": true
+        },
+        {
+          "id": "C6",
+          "kind": "fresh Session",
+          "session_recreated": 1,
+          "ticket_preserved": 1,
+          "directory_preserved": 1,
+          "stored_report_preserved": 1
+        },
+        {
+          "id": "C7",
+          "kind": "multiple Tasks",
+          "cross_task_leaks": 0
+        },
+        {
+          "id": "C8",
+          "kind": "explicit attach from chat B",
+          "attached": 1,
+          "new_ticket": 0
+        }
+      ],
+      "analysis": "The Ticket is the durable entity: it survives Session loss, completion and later human messages on its Threads. Automatic cross-application/entity resolution is absent: chat B only attaches when the router supplies the relation, and CI cannot wake an ended Ticket."
+    }
+  },
+  "productivity": {
+    "held": true,
+    "cases": [
+      {
+        "id": "P1",
+        "kind": "typical",
+        "scenario": "five independent requests, one worker slot, a high-priority request accepted while saturated",
+        "accepted_while_busy": 4,
+        "queued": 4,
+        "max_parallel_workers": 1
+      },
+      {
+        "id": "P2",
+        "kind": "perturbed",
+        "scenario": "a person's follow-up to the running ticket during the queue",
+        "delivered_without_slot": 1
+      }
+    ],
+    "submitted": 5,
+    "accepted_while_all_slots_busy": 4,
+    "distinct_work_directories": 5,
+    "crosstalk_events": 0,
+    "human_clarifications": 0,
+    "failure_layer": null
+  },
+  "proactivity": {
+    "held": true,
+    "cases": [
+      {
+        "id": "A1",
+        "kind": "typical (observe)",
+        "scenario": "CI failure, rule enabled, observe mode, no mention",
+        "candidate": 1,
+        "would_accept": 1,
+        "tickets": 0
+      },
+      {
+        "id": "A2",
+        "kind": "typical (auto)",
+        "scenario": "the same CI failure after switching to auto",
+        "tickets": 1,
+        "strength": "inferred",
+        "matched_rules": [
+          "ci-fix"
+        ]
+      },
+      {
+        "id": "A3",
+        "kind": "negative (observe)",
+        "scenario": "neutral unaddressed discussion in observe mode",
+        "candidates": 0,
+        "tickets": 0
+      },
+      {
+        "id": "A4",
+        "kind": "negative (auto)",
+        "scenario": "neutral unaddressed discussion in auto mode",
+        "candidates": 0,
+        "tickets": 0
+      },
+      {
+        "id": "A5",
+        "kind": "perturbed",
+        "scenario": "CI success on another branch under the same rule",
+        "tickets": 0
+      }
+    ],
+    "observe_candidates": 1,
+    "observe_would_accept": 1,
+    "observe_tickets": 0,
+    "auto_tickets": 1,
+    "neutral_observe_tickets": 0,
+    "neutral_auto_tickets": 0,
+    "ci_ticket_strength": "inferred",
+    "human_clarifications": 0,
+    "failure_layer": null
+  },
+  "persistence": {
+    "held": true,
+    "cases": [
+      {
+        "id": "D1",
+        "kind": "typical",
+        "scenario": "host stops while the only worker is busy",
+        "recovered": 1,
+        "recovery_note": true,
+        "assignment_states": [
+          "ended",
+          "running"
+        ],
+        "ticket_directory_preserved": 1,
+        "session_reused": 1
+      },
+      {
+        "id": "D2",
+        "kind": "perturbed",
+        "scenario": "host stops after dispatch, before the first report, with another ticket queued",
+        "recovered": 1,
+        "queued_preserved": 1,
+        "ticket_directory_preserved": 1,
+        "session_reused": 1
+      }
+    ],
+    "in_flight_restarts": 2,
+    "human_steps": 0,
+    "duplicate_tickets": 0
+  },
+  "verdict": {
+    "features_held": 3,
+    "features_total": 4,
+    "exit_criterion_met": true,
+    "held": [
+      "productivity",
+      "proactivity",
+      "persistence"
+    ],
+    "failed": [
+      "continuity"
+    ],
+    "rule": "at least three of four features hold; a failure names its architecture or implementation layer"
+  }
+}

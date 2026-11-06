@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>概念(A论文) · Super-agent 学习站</title>
+  <meta name="description" content="Super-agent 学习站：概念、进化、费曼拆解与测试日志。">
+  <style>
+:root{
+  --brand:#B8734A; --brand-dark:#8F5232; --gold:#D4A017; --ink:#3A2A1A;
+  --muted:#7C6A56; --paper:#FBF7F0; --card:#FFFDF9; --line:#E7DCCB;
+  --shadow:0 10px 30px rgba(58,42,26,.08);
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Songti SC","Noto Serif CJK SC",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.75 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--brand-dark);text-underline-offset:3px}
+a:hover{color:var(--brand)}
+.skip{position:absolute;left:-999px;top:0;background:var(--ink);color:#fff;padding:.6rem 1rem;z-index:99;border-radius:0 0 8px 0}
+.skip:focus{left:0;top:0}
+.wrap{width:min(1080px,92vw);margin:0 auto}
+.site-head{position:sticky;top:0;z-index:10;background:rgba(251,247,240,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.head-in{display:flex;align-items:center;justify-content:space-between;gap:1rem 1.5rem;min-height:68px;flex-wrap:wrap;padding:.55rem 0}
+.brand{display:inline-flex;align-items:center;gap:.65rem;text-decoration:none;color:var(--ink);font-family:var(--serif);font-weight:700;letter-spacing:.01em}
+.brand-mark{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--brand);color:#fff;font:700 12px/1 var(--sans);letter-spacing:.08em}
+.nav{display:flex;gap:.2rem;flex-wrap:wrap;align-items:center}
+.nav a{padding:.34rem .68rem;border-radius:999px;text-decoration:none;color:var(--muted);font-size:.9rem;white-space:nowrap;border:1px solid transparent}
+.nav a:hover{color:var(--ink);background:#F4EBDD}
+.nav a[aria-current="page"]{background:var(--ink);color:#FFF9EF;border-color:var(--ink)}
+main{padding:0 0 4rem}
+.hero{padding:3.4rem 0 2.6rem}
+.eyebrow{display:inline-flex;align-items:center;gap:.55rem;font:700 .72rem/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--brand);margin:0 0 1rem}
+.eyebrow::before{content:"";width:26px;height:2px;background:var(--gold)}
+h1,h2,h3{font-family:var(--serif);line-height:1.28;margin:0 0 .6rem;font-weight:700}
+h1{font-size:clamp(2rem,4.6vw,3.05rem);letter-spacing:-.01em;margin-bottom:.5rem}
+h2{font-size:clamp(1.3rem,2.5vw,1.75rem);margin-top:3.2rem;padding-top:1.3rem;border-top:1px solid var(--line)}
+h3{font-size:1.06rem;margin-top:0}
+.lede{font-size:1.08rem;color:var(--muted);max-width:64ch;margin:.5rem 0 0}
+.hero .lede{font-size:1.16rem}
+.meta{display:flex;gap:1.2rem;flex-wrap:wrap;margin:1.4rem 0 0;padding:0;list-style:none;color:var(--muted);font-size:.82rem}
+.meta li{display:inline-flex;align-items:center;gap:.42rem}
+.meta li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--gold)}
+.crumbs{font-size:.82rem;color:var(--muted);padding:1.1rem 0 0}
+.crumbs a{text-decoration:none}
+.crumbs span{color:var(--line)}
+.tag{display:inline-block;padding:.14rem .55rem;border-radius:999px;background:#F3E7D6;color:var(--brand-dark);font-size:.72rem;font-weight:700;letter-spacing:.04em;vertical-align:middle}
+.tag.gold{background:#FBF0CF;color:#8A6A0B}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem;margin:1.6rem 0}
+.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.25rem 1.3rem;text-decoration:none;color:inherit;box-shadow:var(--shadow);transition:transform .15s ease,border-color .15s ease}
+.card:hover{transform:translateY(-2px);border-color:var(--brand)}
+.card h3{margin-bottom:.35rem}
+.card p{margin:0;color:var(--muted);font-size:.94rem}
+.card .go{display:inline-block;margin-top:.85rem;color:var(--brand);font-weight:700;font-size:.84rem;letter-spacing:.02em}
+.steps{list-style:none;padding:0;margin:1.5rem 0;counter-reset:step;display:grid;gap:.75rem}
+.steps li{position:relative;padding:1rem 1.1rem 1rem 3.4rem;background:var(--card);border:1px solid var(--line);border-radius:12px;color:var(--muted);font-size:.95rem}
+.steps li::before{counter-increment:step;content:counter(step,decimal-leading-zero);position:absolute;left:1.05rem;top:1.05rem;font:700 .78rem/1 var(--mono);color:var(--brand);letter-spacing:.04em}
+.steps li strong{color:var(--ink);font-family:var(--serif);font-size:1rem;display:block;margin-bottom:.1rem}
+.pending{margin:1.4rem 0;padding:1rem 1.2rem;border:1px dashed var(--line);border-radius:12px;background:#FCF8F1;color:var(--muted);font-size:.94rem}
+.pending b{color:var(--brand-dark)}
+.note{margin:2rem 0;padding:1rem 1.2rem;border-left:4px solid var(--gold);background:#FFF8E8;border-radius:0 10px 10px 0;color:#5A4528;font-size:.94rem}
+.note b{color:var(--ink)}
+.prose{max-width:68ch}
+.prose p{margin:.8rem 0;color:#5C4B38}
+.table-wrap{overflow-x:auto;margin:1.2rem 0;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{padding:.65rem .8rem;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowrap}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin:1.4rem 0}
+.feature{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.2rem 1.3rem;display:flex;flex-direction:column}
+.feature .fnum{font:700 .78rem/1 var(--mono);color:var(--brand);letter-spacing:.06em;margin-bottom:.55rem}
+.feature h3{margin-bottom:.3rem}
+.feature .en{font-family:var(--sans);font-size:.78rem;font-weight:600;color:var(--muted);letter-spacing:.04em;margin-left:.35rem}
+.feature .plain{margin:.45rem 0 .7rem;color:var(--ink);font-size:.97rem}
+.feature .counter,.feature .supports{margin:0;font-size:.82rem;color:var(--muted)}
+.feature .counter b,.feature .supports b{color:var(--brand-dark);font-weight:700}
+.feature .supports{margin-top:auto;padding-top:.6rem}
+.modules{margin:1.2rem 0 0;border-top:1px solid var(--line)}
+.module{display:grid;grid-template-columns:2.8rem 1fr;gap:.6rem 1rem;padding:1.35rem 0;border-bottom:1px solid var(--line)}
+.module .mnum{font:700 .95rem/1 var(--mono);color:var(--brand);padding-top:.2rem}
+.module h3{margin-bottom:.25rem}
+.module .plain{margin:0 0 .45rem;color:#5C4B38}
+.module .supports{margin:0;font-size:.8rem;color:var(--muted)}
+.module .supports b{color:var(--brand-dark)}
+.figure{margin:1.6rem 0 0;padding:1rem;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow-x:auto}
+.figure svg{display:block;width:100%;min-width:640px;height:auto}
+.figure figcaption{margin:.8rem 0 0;color:var(--muted);font-size:.84rem;text-align:center}
+.figure figcaption b{color:var(--brand-dark)}
+.site-foot{border-top:1px solid var(--line);padding:2rem 0 2.4rem;color:var(--muted);font-size:.85rem}
+.foot-in{display:flex;justify-content:space-between;gap:1rem 2rem;flex-wrap:wrap}
+.foot-in p{margin:0}
+.foot-in a{color:var(--brand-dark)}
+@media (max-width:640px){
+  .hero{padding:2.4rem 0 2rem}
+  .head-in{min-height:0;padding:.7rem 0}
+  .nav{width:100%;gap:.15rem}
+  .nav a{padding:.3rem .55rem;font-size:.84rem}
+  h2{margin-top:2.4rem}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .card{transition:none}
+}
+</style>
+</head>
+<body>
+  <a class="skip" href="#main">跳到正文</a>
+  <header class="site-head">
+    <div class="wrap head-in">
+      <a class="brand" href="index.html"><span class="brand-mark">SA</span><span>Super-agent 学习站</span></a>
+      <nav class="nav" aria-label="主导航">
+        <a href="index.html">首页</a>
+        <a href="concept.html" aria-current="page">概念(A论文)</a>
+        <a href="evolution.html">进化(B论文)</a>
+        <a href="feynman.html">费曼拆解</a>
+        <a href="learning-ladder.html">学习阶梯</a>
+        <a href="test-log.html">测试日志</a>
+        <a href="prototype.html">原型</a>
+        <a href="experiment.html">实验</a>
+      </nav>
+    </div>
+  </header>
+  <main id="main">
+    <div class="wrap">
+      <p class="crumbs"><a href="index.html">首页</a> <span>/</span> 概念(A论文)</p>
+      <section class="hero">
+        <p class="eyebrow">概念 · A 论文</p>
+        <h1>Exploring Super-agent Design</h1>
+        <p class="lede">当瓶颈从「模型会不会」变成「人盯不盯得住」，Agent 就不再是一个更长的会话，而是一套能派活、能记住、能自愈的组织。</p>
+        <ul class="meta">
+          <li>A 论文精读</li>
+          <li>4 个特征 + 5 个模块</li>
+          <li>WU-3 正文</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>先记住一句话</h2>
+        <div class="prose">
+          <p>A 论文的钥匙：它不提出新理论，而是把计算机系统里的经典思想搬进 Agent 系统——调度器、进程隔离、发布–订阅、缓存、快慢路径、推测执行、存算分离、看门狗。记住这条，下面五个模块都会变得顺理成章。</p>
+        </div>
+      </section>
+
+      <section>
+        <h2>四个特征</h2>
+        <p class="section-lede">论文先定义目标，再倒推架构。四个特征不是愿望清单，而是五个模块的需求来源。</p>
+        <div class="feature-grid">
+          <article class="feature">
+            <span class="fnum">01</span>
+            <h3>连续<span class="en">Continuous</span></h3>
+            <p class="plain">你在飞书、GitHub 这些本来就在的地方直接说话，换渠道也不用复述背景——它始终是同一个 Agent。</p>
+            <p class="counter"><b>反面：</b>每个渠道一个孤立会话，用户自己复述背景。</p>
+            <p class="supports"><b>主要由：</b>Router 层 + 全局记忆</p>
+          </article>
+          <article class="feature">
+            <span class="fnum">02</span>
+            <h3>产出<span class="en">Productive</span></h3>
+            <p class="plain">它响应快，能并行推进多个复杂任务；上一条命令还没跑完，你也能接着下新指令。</p>
+            <p class="counter"><b>反面：</b>一个长任务卡住整个对话，用户只能等。</p>
+            <p class="supports"><b>主要由：</b>Worker 并发 + 全双工</p>
+          </article>
+          <article class="feature">
+            <span class="fnum">03</span>
+            <h3>主动<span class="en">Proactive</span></h3>
+            <p class="plain">它监听群消息、PR、CI 这些环境事件，该处理就处理，不该说话时保持安静。</p>
+            <p class="counter"><b>反面：</b>只有被 @ 才动，否则永远沉默。</p>
+            <p class="supports"><b>主要由：</b>Trigger + 两级过滤 + 推测执行</p>
+          </article>
+          <article class="feature">
+            <span class="fnum">04</span>
+            <h3>持久<span class="en">Persistent</span></h3>
+            <p class="plain">它一直在线上，长跑中能从异常恢复；设备可以睡、可以换，任务不断线。</p>
+            <p class="counter"><b>反面：</b>合盖就停，换台设备就失忆。</p>
+            <p class="supports"><b>主要由：</b>计算 / 状态 / 环境分离 + Watchdog</p>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <h2>五个模块</h2>
+        <p class="section-lede">模块不是五个功能点，而是对四个特征的五种回答。下图是它们的位置关系，下面逐条给一句人话解释。</p>
+
+        <figure class="figure">
+          <svg viewBox="0 0 960 620" role="img" aria-labelledby="arch-title arch-desc">
+            <title id="arch-title">Super-agent 架构示意</title>
+            <desc id="arch-desc">渠道事件经过 Trigger 四道关进入 Router，Router 把任务派给隔离的 Worker；持久状态、执行环境与 Watchdog 位于主循环之外。</desc>
+            <defs>
+              <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#B8734A"/>
+              </marker>
+              <marker id="arrd" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L10,5 L0,10 z" fill="#8F5232"/>
+              </marker>
+            </defs>
+            <style>
+              .ab{fill:#FFFDF9;stroke:#E7DCCB;stroke-width:2}
+              .ab-dark{fill:#3A2A1A;stroke:#3A2A1A}
+              .ab-trig{fill:#FFF8E8;stroke:#D4A017;stroke-width:2}
+              .ab-watch{fill:#FBF7F0;stroke:#B8734A;stroke-width:2;stroke-dasharray:7 5}
+              .at{font-family:"Iowan Old Style",Palatino,"Songti SC",serif;font-size:18px;font-weight:700;fill:#3A2A1A}
+              .as{font-family:-apple-system,"PingFang SC",sans-serif;font-size:12.5px;fill:#7C6A56}
+              .at-light{fill:#FFF9EF}
+              .as-light{fill:#D9C7B4}
+              .al{font-family:-apple-system,"PingFang SC",sans-serif;font-size:12px;font-weight:700;fill:#8F5232}
+              .aline{stroke:#B8734A;stroke-width:2;fill:none}
+              .adash{stroke:#8F5232;stroke-width:1.6;fill:none;stroke-dasharray:6 5}
+              .abadge{fill:#D4A017}
+              .abadge-t{font-family:-apple-system,sans-serif;font-size:12px;font-weight:800;fill:#3A2A1A}
+            </style>
+
+            <rect x="250" y="16" width="460" height="56" rx="12" class="ab"/>
+            <text x="480" y="41" text-anchor="middle" class="at">人所在的地方：飞书 · GitHub · 邮件</text>
+            <text x="480" y="60" text-anchor="middle" class="as">在原来的工作流里说话，不要求改变习惯</text>
+            <line x1="480" y1="72" x2="480" y2="102" class="aline" marker-end="url(#arr)"/>
+            <text x="492" y="92" class="al">环境事件</text>
+
+            <rect x="250" y="106" width="460" height="66" rx="12" class="ab-trig"/>
+            <text x="480" y="133" text-anchor="middle" class="at">Trigger 四道关</text>
+            <text x="480" y="155" text-anchor="middle" class="as">过滤 → 路由 → 上下文 → 时机</text>
+            <line x1="480" y1="172" x2="480" y2="202" class="aline" marker-end="url(#arr)"/>
+
+            <rect x="180" y="206" width="600" height="84" rx="14" class="ab-dark"/>
+            <text x="480" y="236" text-anchor="middle" class="at at-light">Router 层 · 全局序列点</text>
+            <text x="480" y="258" text-anchor="middle" class="as as-light">交互 · 记忆 · 派活 · 跨任务协调；不执行具体任务</text>
+            <text x="480" y="277" text-anchor="middle" class="as as-light">批处理 Trigger，统一对外回复</text>
+
+            <line x1="480" y1="290" x2="480" y2="314" class="aline"/>
+            <line x1="184" y1="314" x2="776" y2="314" class="aline"/>
+            <line x1="184" y1="314" x2="184" y2="330" class="aline" marker-end="url(#arr)"/>
+            <line x1="480" y1="314" x2="480" y2="330" class="aline" marker-end="url(#arr)"/>
+            <line x1="776" y1="314" x2="776" y2="330" class="aline" marker-end="url(#arr)"/>
+            <text x="492" y="307" class="al">派活 / 订阅透传</text>
+
+            <rect x="64" y="332" width="240" height="92" rx="12" class="ab"/>
+            <text x="184" y="360" text-anchor="middle" class="at">Worker A</text>
+            <text x="184" y="382" text-anchor="middle" class="as">隔离上下文 · 单任务 · 全套工具</text>
+            <text x="184" y="402" text-anchor="middle" class="as">只向 Router 汇报</text>
+
+            <rect x="360" y="332" width="240" height="92" rx="12" class="ab"/>
+            <text x="480" y="360" text-anchor="middle" class="at">Worker B</text>
+            <text x="480" y="382" text-anchor="middle" class="as">隔离上下文 · 单任务 · 全套工具</text>
+            <text x="480" y="402" text-anchor="middle" class="as">只向 Router 汇报</text>
+
+            <rect x="656" y="332" width="240" height="92" rx="12" class="ab"/>
+            <text x="776" y="360" text-anchor="middle" class="at">Worker C</text>
+            <text x="776" y="382" text-anchor="middle" class="as">隔离上下文 · 单任务 · 全套工具</text>
+            <text x="776" y="402" text-anchor="middle" class="as">只向 Router 汇报</text>
+
+            <rect x="64" y="480" width="240" height="88" rx="12" class="ab"/>
+            <text x="184" y="508" text-anchor="middle" class="at">状态库</text>
+            <text x="184" y="530" text-anchor="middle" class="as">持久会话 · Thread 图</text>
+            <text x="184" y="550" text-anchor="middle" class="as">与计算解耦</text>
+            <line x1="184" y1="424" x2="184" y2="476" class="adash" marker-end="url(#arrd)"/>
+            <text x="194" y="456" class="al">状态</text>
+
+            <rect x="360" y="480" width="240" height="88" rx="12" class="ab"/>
+            <text x="480" y="508" text-anchor="middle" class="at">执行环境</text>
+            <text x="480" y="530" text-anchor="middle" class="as">本机 daemon / 云主机</text>
+            <text x="480" y="550" text-anchor="middle" class="as">按需连接，不搬环境</text>
+            <line x1="480" y1="424" x2="480" y2="476" class="adash" marker-end="url(#arrd)"/>
+            <text x="490" y="456" class="al">执行</text>
+
+            <rect x="656" y="480" width="240" height="88" rx="12" class="ab-watch"/>
+            <text x="776" y="508" text-anchor="middle" class="at">Watchdog</text>
+            <text x="776" y="530" text-anchor="middle" class="as">主系统之外的独立控制环</text>
+            <text x="776" y="550" text-anchor="middle" class="as">监控 · 重试 · 自愈</text>
+            <path d="M776,480 L930,480 L930,248 L784,248" class="adash" marker-end="url(#arrd)"/>
+
+            <circle cx="250" cy="16" r="13" class="abadge"/>
+            <text x="250" y="20.5" text-anchor="middle" class="abadge-t">3</text>
+            <circle cx="250" cy="106" r="13" class="abadge"/>
+            <text x="250" y="110.5" text-anchor="middle" class="abadge-t">2</text>
+            <circle cx="180" cy="206" r="13" class="abadge"/>
+            <text x="180" y="210.5" text-anchor="middle" class="abadge-t">1</text>
+            <circle cx="64" cy="480" r="13" class="abadge"/>
+            <text x="64" y="484.5" text-anchor="middle" class="abadge-t">4</text>
+            <circle cx="656" cy="480" r="13" class="abadge"/>
+            <text x="656" y="484.5" text-anchor="middle" class="abadge-t">5</text>
+          </svg>
+          <figcaption>图：渠道事件经 Trigger 进入 Router，Router 派活给隔离 Worker；状态库、执行环境与 Watchdog（编号 1–5）位于主循环之外。</figcaption>
+        </figure>
+
+        <div class="modules">
+          <article class="module">
+            <span class="mnum">01</span>
+            <div>
+              <h3>双层架构：Router + Worker</h3>
+              <p class="plain">Router 只负责跟人打交道、记全局、派活；Worker 在隔离上下文里只干一件事，干完向 Router 汇报。</p>
+              <p class="supports"><b>支撑：</b>连续、产出。Router 不执行任务是结构保证，不是 prompt 祈祷。</p>
+            </div>
+          </article>
+          <article class="module">
+            <span class="mnum">02</span>
+            <div>
+              <h3>事件驱动：Trigger 的四道关</h3>
+              <p class="plain">把「人打字」换成环境事件，再用四道关决定看不看、送给谁、带什么上下文、什么时候先做。</p>
+              <p class="supports"><b>支撑：</b>主动、连续。稳定的判断下沉成代码，模糊的判断留给模型。</p>
+            </div>
+          </article>
+          <article class="module">
+            <span class="mnum">03</span>
+            <div>
+              <h3>面向人的交互：全双工与多通道</h3>
+              <p class="plain">前台对话和后台任务解耦，长任务跑着也能插话；不同渠道用不同的说话方式，IM 尤其克制。</p>
+              <p class="supports"><b>支撑：</b>产出、连续。异步 ReAct 让 <code>start()</code> 立刻返回，结果作为新事件回到会话。</p>
+            </div>
+          </article>
+          <article class="module">
+            <span class="mnum">04</span>
+            <div>
+              <h3>计算、状态、环境分离</h3>
+              <p class="plain">跑 Agent 的计算可以随时重启，会话状态放数据库，代码和环境留在你自己的机器上按需连接。</p>
+              <p class="supports"><b>支撑：</b>持久。计算与状态分离，计算与执行环境分离，环境按需连接而不是搬上云。</p>
+            </div>
+          </article>
+          <article class="module">
+            <span class="mnum">05</span>
+            <div>
+              <h3>Watchdog：主系统之外的独立控制环</h3>
+              <p class="plain">主系统之外再放一个有工具的 Agent，定时检查基础设施和任务是否真的在推进，跑偏就修。</p>
+              <p class="supports"><b>支撑：</b>持久。它同时是监控者和运维接口，可以用自然语言问「刚才为什么失败」。</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <h2>它们怎么咬合</h2>
+        <div class="prose">
+          <p>四个特征定目标，五个模块给结构。关键不是「有几个 Agent」，而是三条结构性约束：Router 不执行任务、Worker 上下文隔离、事件按 Thread 路由。</p>
+          <p>所以论文的结论不是「换个更强的模型」，而是「把会话变成实现细节」：用户看到的是连续的交互，系统内部才是一次次隔离的执行。</p>
+        </div>
+        <div class="grid">
+          <a class="card" href="evolution.html">
+            <h3>接着读：进化 <span class="tag">B 论文</span></h3>
+            <p>如果 Super-agent 是一套组织，那这套组织能不能自己改进自己？</p>
+            <span class="go">进入进化页 →</span>
+          </a>
+        </div>
+      </section>
+    </div>
+  </main>
+  <footer class="site-foot">
+    <div class="wrap foot-in">
+      <p>阶段 2 · 学习站 · WU-3 概念页</p>
+      <p><a href="index.html">回到首页</a> · 静态 HTML · 无外部依赖</p>
+    </div>
+  </footer>
+</body>
+</html>

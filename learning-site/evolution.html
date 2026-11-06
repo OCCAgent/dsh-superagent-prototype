@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>进化(B论文) · Super-agent 学习站</title>
+  <meta name="description" content="Super-agent 学习站：概念、进化、费曼拆解与测试日志。">
+  <style>
+:root{
+  --brand:#B8734A; --brand-dark:#8F5232; --gold:#D4A017; --ink:#3A2A1A;
+  --muted:#7C6A56; --paper:#FBF7F0; --card:#FFFDF9; --line:#E7DCCB;
+  --shadow:0 10px 30px rgba(58,42,26,.08);
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Songti SC","Noto Serif CJK SC",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.75 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--brand-dark);text-underline-offset:3px}
+a:hover{color:var(--brand)}
+.skip{position:absolute;left:-999px;top:0;background:var(--ink);color:#fff;padding:.6rem 1rem;z-index:99;border-radius:0 0 8px 0}
+.skip:focus{left:0;top:0}
+.wrap{width:min(1080px,92vw);margin:0 auto}
+.site-head{position:sticky;top:0;z-index:10;background:rgba(251,247,240,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.head-in{display:flex;align-items:center;justify-content:space-between;gap:1rem 1.5rem;min-height:68px;flex-wrap:wrap;padding:.55rem 0}
+.brand{display:inline-flex;align-items:center;gap:.65rem;text-decoration:none;color:var(--ink);font-family:var(--serif);font-weight:700;letter-spacing:.01em}
+.brand-mark{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--brand);color:#fff;font:700 12px/1 var(--sans);letter-spacing:.08em}
+.nav{display:flex;gap:.2rem;flex-wrap:wrap;align-items:center}
+.nav a{padding:.34rem .68rem;border-radius:999px;text-decoration:none;color:var(--muted);font-size:.9rem;white-space:nowrap;border:1px solid transparent}
+.nav a:hover{color:var(--ink);background:#F4EBDD}
+.nav a[aria-current="page"]{background:var(--ink);color:#FFF9EF;border-color:var(--ink)}
+main{padding:0 0 4rem}
+.hero{padding:3.4rem 0 2.6rem}
+.eyebrow{display:inline-flex;align-items:center;gap:.55rem;font:700 .72rem/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--brand);margin:0 0 1rem}
+.eyebrow::before{content:"";width:26px;height:2px;background:var(--gold)}
+h1,h2,h3{font-family:var(--serif);line-height:1.28;margin:0 0 .6rem;font-weight:700}
+h1{font-size:clamp(2rem,4.6vw,3.05rem);letter-spacing:-.01em;margin-bottom:.5rem}
+h2{font-size:clamp(1.3rem,2.5vw,1.75rem);margin-top:3.2rem;padding-top:1.3rem;border-top:1px solid var(--line)}
+h3{font-size:1.06rem;margin-top:0}
+.lede{font-size:1.08rem;color:var(--muted);max-width:64ch;margin:.5rem 0 0}
+.hero .lede{font-size:1.16rem}
+.meta{display:flex;gap:1.2rem;flex-wrap:wrap;margin:1.4rem 0 0;padding:0;list-style:none;color:var(--muted);font-size:.82rem}
+.meta li{display:inline-flex;align-items:center;gap:.42rem}
+.meta li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--gold)}
+.crumbs{font-size:.82rem;color:var(--muted);padding:1.1rem 0 0}
+.crumbs a{text-decoration:none}
+.crumbs span{color:var(--line)}
+.tag{display:inline-block;padding:.14rem .55rem;border-radius:999px;background:#F3E7D6;color:var(--brand-dark);font-size:.72rem;font-weight:700;letter-spacing:.04em;vertical-align:middle}
+.tag.gold{background:#FBF0CF;color:#8A6A0B}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem;margin:1.6rem 0}
+.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.25rem 1.3rem;text-decoration:none;color:inherit;box-shadow:var(--shadow);transition:transform .15s ease,border-color .15s ease}
+.card:hover{transform:translateY(-2px);border-color:var(--brand)}
+.card h3{margin-bottom:.35rem}
+.card p{margin:0;color:var(--muted);font-size:.94rem}
+.card .go{display:inline-block;margin-top:.85rem;color:var(--brand);font-weight:700;font-size:.84rem;letter-spacing:.02em}
+.steps{list-style:none;padding:0;margin:1.5rem 0;counter-reset:step;display:grid;gap:.75rem}
+.steps li{position:relative;padding:1rem 1.1rem 1rem 3.4rem;background:var(--card);border:1px solid var(--line);border-radius:12px;color:var(--muted);font-size:.95rem}
+.steps li::before{counter-increment:step;content:counter(step,decimal-leading-zero);position:absolute;left:1.05rem;top:1.05rem;font:700 .78rem/1 var(--mono);color:var(--brand);letter-spacing:.04em}
+.steps li strong{color:var(--ink);font-family:var(--serif);font-size:1rem;display:block;margin-bottom:.1rem}
+.pending{margin:1.4rem 0;padding:1rem 1.2rem;border:1px dashed var(--line);border-radius:12px;background:#FCF8F1;color:var(--muted);font-size:.94rem}
+.pending b{color:var(--brand-dark)}
+.note{margin:2rem 0;padding:1rem 1.2rem;border-left:4px solid var(--gold);background:#FFF8E8;border-radius:0 10px 10px 0;color:#5A4528;font-size:.94rem}
+.note b{color:var(--ink)}
+.prose{max-width:68ch}
+.prose p{margin:.8rem 0;color:#5C4B38}
+.table-wrap{overflow-x:auto;margin:1.2rem 0;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{padding:.65rem .8rem;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowrap}
+.loop{display:grid;grid-template-columns:repeat(3,1fr);gap:1.6rem;margin:1.6rem 0 1.2rem;list-style:none;padding:0}
+.loop-step{position:relative;background:var(--card);border:1px solid var(--line);border-top:3px solid var(--gold);border-radius:12px;padding:1.2rem 1.25rem}
+.loop-step .lstep{font:700 .75rem/1 var(--mono);color:var(--brand);letter-spacing:.08em;display:block;margin-bottom:.55rem}
+.loop-step h3{margin-bottom:.15rem}
+.loop-step .en{display:block;font-size:.78rem;color:var(--muted);font-weight:600;letter-spacing:.03em;margin-bottom:.5rem}
+.loop-step p{margin:0;color:#5C4B38;font-size:.93rem}
+.loop-step:not(:last-child)::after{content:"→";position:absolute;right:-1.3rem;top:50%;transform:translateY(-50%);font-size:1.2rem;font-weight:700;color:var(--brand);z-index:1}
+.loop-return{display:flex;gap:.8rem;align-items:flex-start;padding:1rem 1.2rem;border:1px dashed var(--line);border-radius:12px;background:#FCF8F1;color:var(--muted);font-size:.94rem}
+.loop-return .icon{font-size:1.5rem;line-height:1;color:var(--brand)}
+.loop-return p{margin:0}
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin:1.3rem 0}
+.side{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1.15rem 1.25rem}
+.side.in{border-top:3px solid var(--gold)}
+.side.out{border-top:3px solid var(--brand)}
+.side h3{margin:.55rem 0 .3rem}
+.side p{margin:0;color:#5C4B38;font-size:.94rem}
+.rule{margin:1.3rem 0;padding:1rem 1.2rem;background:var(--ink);color:#FFF9EF;border-radius:10px;font-family:var(--mono);font-size:.92rem;text-align:center;letter-spacing:.01em}
+.glossary{margin:1.2rem 0 0;padding:0}
+.glossary dt{font-family:var(--serif);font-weight:700;font-size:1.02rem;margin-top:1.1rem}
+.glossary dt span{font-family:var(--sans);font-size:.76rem;font-weight:600;color:var(--muted);letter-spacing:.04em;margin-left:.4rem}
+.glossary dd{margin:.2rem 0 0;color:#5C4B38;padding-bottom:.9rem;border-bottom:1px solid var(--line)}
+@media (max-width:720px){
+  .loop{grid-template-columns:1fr;gap:1.4rem}
+  .loop-step:not(:last-child)::after{content:"↓";right:50%;top:auto;bottom:-1.25rem;transform:translateX(50%)}
+}
+.site-foot{border-top:1px solid var(--line);padding:2rem 0 2.4rem;color:var(--muted);font-size:.85rem}
+.foot-in{display:flex;justify-content:space-between;gap:1rem 2rem;flex-wrap:wrap}
+.foot-in p{margin:0}
+.foot-in a{color:var(--brand-dark)}
+@media (max-width:640px){
+  .hero{padding:2.4rem 0 2rem}
+  .head-in{min-height:0;padding:.7rem 0}
+  .nav{width:100%;gap:.15rem}
+  .nav a{padding:.3rem .55rem;font-size:.84rem}
+  h2{margin-top:2.4rem}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .card{transition:none}
+}
+</style>
+</head>
+<body>
+  <a class="skip" href="#main">跳到正文</a>
+  <header class="site-head">
+    <div class="wrap head-in">
+      <a class="brand" href="index.html"><span class="brand-mark">SA</span><span>Super-agent 学习站</span></a>
+      <nav class="nav" aria-label="主导航">
+        <a href="index.html">首页</a>
+        <a href="concept.html">概念(A论文)</a>
+        <a href="evolution.html" aria-current="page">进化(B论文)</a>
+        <a href="feynman.html">费曼拆解</a>
+        <a href="learning-ladder.html">学习阶梯</a>
+        <a href="test-log.html">测试日志</a>
+        <a href="prototype.html">原型</a>
+        <a href="experiment.html">实验</a>
+      </nav>
+    </div>
+  </header>
+  <main id="main">
+    <div class="wrap">
+      <p class="crumbs"><a href="index.html">首页</a> <span>/</span> 进化(B论文)</p>
+      <section class="hero">
+        <p class="eyebrow">进化 · B 论文</p>
+        <h1>Self-Harness: Harnesses That Improve Themselves</h1>
+        <p class="lede">手工调 harness 追不上模型迭代，于是把「改进」本身变成一个可审计的状态转移：失败签名、最小提案，再在没见过的题上回归。</p>
+        <ul class="meta">
+          <li>B 论文精读</li>
+          <li>3 步闭环</li>
+          <li>WU-4 正文</li>
+        </ul>
+      </section>
+
+      <section>
+        <p class="note"><b>核心区别：</b>不换模型、不引入更强的外部 Agent、不改模型参数——让被评估的那个模型，自己在当前 harness 下提出对 harness 的修改。固定模型 M、固定评估器 ℰ，只有 harness h 在变，所以任何涨跌都能归因到 harness。</p>
+      </section>
+
+      <section>
+        <h2>三步闭环</h2>
+        <p class="section-lede">先诊断，再开药，最后用没见过的题验药。三步对应论文里的 Weakness Mining、Harness Proposal、Proposal Validation。</p>
+        <ol class="loop">
+          <li class="loop-step">
+            <span class="lstep">01 / 3</span>
+            <h3>轨迹采集</h3>
+            <span class="en">Weakness Mining</span>
+            <p>在 held-in 上跑任务，收集轨迹、输出与判定；按失败签名 (c, q, m) 聚类，输出只描述病因、不规定改法的证据包。</p>
+          </li>
+          <li class="loop-step">
+            <span class="lstep">02 / 3</span>
+            <h3>弱点提案</h3>
+            <span class="en">Harness Proposal</span>
+            <p>同一个固定模型以 proposer 身份，提出 K 个「多样但最小」的改动；每个绑定一个失败机制和一个可编辑面，并附审计记录。</p>
+          </li>
+          <li class="loop-step">
+            <span class="lstep">03 / 3</span>
+            <h3>回归采纳</h3>
+            <span class="en">Proposal Validation</span>
+            <p>每个提案都当作新的 harness 变体，在 held-in 与 held-out 上重跑；两边都不降、至少一边升，才合入下一版。</p>
+          </li>
+        </ol>
+        <div class="loop-return">
+          <span class="icon" aria-hidden="true">↺</span>
+          <p><b>闭环：</b>通过的提案合入 h<sub>t+1</sub>，下一轮从新的 harness 继续；被拒绝的只记日志，不改当前状态。改进不是一次分数，而是一条有据可查的版本链。</p>
+        </div>
+        <div class="prose">
+          <p>失败签名不是「超时」这种粗标签，而是三元组：验证器拒绝的终端原因、轨迹里导致失败的因果状态、以及可复用的 agent 机制。三项都一致才进同一个簇——评估者负责诊断，提议者负责开药，两者不混。</p>
+        </div>
+      </section>
+
+      <section>
+        <h2>held-in / held-out：两边都不降</h2>
+        <p class="section-lede">每个提案都在同一个评估器下重跑两套题，接受规则非常保守。</p>
+        <div class="split">
+          <div class="side in">
+            <span class="tag gold">held-in</span>
+            <h3>见过的题</h3>
+            <p>提议者看过失败证据的那部分任务。用来检验：它是否真的解决了被指出的问题。</p>
+          </div>
+          <div class="side out">
+            <span class="tag">held-out</span>
+            <h3>没见过的题</h3>
+            <p>提议者从未见过的任务。用来检验：它有没有为了修 A 而弄坏 B。</p>
+          </div>
+        </div>
+        <p class="rule">Δ<sub>in</sub> ≥ 0 且 Δ<sub>ho</sub> ≥ 0 且 max(Δ<sub>in</sub>, Δ<sub>ho</sub>) &gt; 0</p>
+        <div class="prose">
+          <p><b>为什么不用总分：</b>总分会把「拆东墙补西墙」藏起来。一个改动可能让 held-in 涨 5 个点、held-out 掉 4 个点，总分仍然是正的，但它很可能只是背下了已见过的失败。</p>
+          <p><b>held-out 怎么防自欺：</b>它把「记住答案」和「学会方法」分开——只有在没见过的题上也不退步，才说明改动是泛化的，而不是对证据的过拟合。评估有随机性时，还要重复跑、按聚合通过数应用同一规则，降低一次好运被采纳的概率。</p>
+          <p><b>可审计：</b>每次 h<sub>t</sub> → h<sub>t+1</sub> 都留下记录：改了什么面、针对哪个失败模式、预期效果、回归风险、两边涨跌、重复次数、采纳还是拒绝。</p>
+        </div>
+      </section>
+
+      <section>
+        <h2>术语表</h2>
+        <dl class="glossary">
+          <dt>轨迹<span>trajectory τ</span></dt>
+          <dd>一次任务执行中模型的动作、工具调用、观察和中间产物的完整记录；失败签名从轨迹里提取。</dd>
+          <dt>提案<span>proposal</span></dt>
+          <dd>对 harness 的一个最小、可审计的改动，绑定具体失败机制和可编辑面。</dd>
+          <dt>held-in</dt>
+          <dd>提议者看过失败证据的任务集合，用来确认改动确实解决了动机证据。</dd>
+          <dt>held-out</dt>
+          <dd>提议者没见过的任务集合，用来确认改动没有为了修 A 而弄坏 B。</dd>
+        </dl>
+      </section>
+
+      <section>
+        <h2>接回概念页</h2>
+        <div class="prose">
+          <p>同一个「harness」，两篇论文用法不同：A 把 harness 做成组织，B 让 harness 会进化。下一步去费曼拆解，把两篇放进同一张 2×2。</p>
+        </div>
+        <div class="grid">
+          <a class="card" href="concept.html">
+            <h3>回看：概念 <span class="tag">A 论文</span></h3>
+            <p>先有组织，再谈进化：Router、Worker 与 Trigger 的基本盘。</p>
+            <span class="go">回到概念页 →</span>
+          </a>
+          <a class="card" href="feynman.html">
+            <h3>接着读：费曼拆解 <span class="tag gold">方法</span></h3>
+            <p>讲给外行、连续追问、再回讲一遍，把两篇论文放进同一张对照表。</p>
+            <span class="go">进入拆解页 →</span>
+          </a>
+        </div>
+      </section>
+    </div>
+  </main>
+  <footer class="site-foot">
+    <div class="wrap foot-in">
+      <p>阶段 2 · 学习站 · WU-4 进化页</p>
+      <p><a href="index.html">回到首页</a> · 静态 HTML · 无外部依赖</p>
+    </div>
+  </footer>
+</body>
+</html>

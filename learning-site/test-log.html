@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>测试日志 · Super-agent 学习站</title>
+  <meta name="description" content="Super-agent 学习站：概念、进化、费曼拆解与测试日志。">
+  <style>
+:root{
+  --brand:#B8734A; --brand-dark:#8F5232; --gold:#D4A017; --ink:#3A2A1A;
+  --muted:#7C6A56; --paper:#FBF7F0; --card:#FFFDF9; --line:#E7DCCB;
+  --shadow:0 10px 30px rgba(58,42,26,.08);
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Songti SC","Noto Serif CJK SC",serif;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.75 var(--sans);-webkit-font-smoothing:antialiased}
+a{color:var(--brand-dark);text-underline-offset:3px}
+a:hover{color:var(--brand)}
+.skip{position:absolute;left:-999px;top:0;background:var(--ink);color:#fff;padding:.6rem 1rem;z-index:99;border-radius:0 0 8px 0}
+.skip:focus{left:0;top:0}
+.wrap{width:min(1080px,92vw);margin:0 auto}
+.site-head{position:sticky;top:0;z-index:10;background:rgba(251,247,240,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.head-in{display:flex;align-items:center;justify-content:space-between;gap:1rem 1.5rem;min-height:68px;flex-wrap:wrap;padding:.55rem 0}
+.brand{display:inline-flex;align-items:center;gap:.65rem;text-decoration:none;color:var(--ink);font-family:var(--serif);font-weight:700;letter-spacing:.01em}
+.brand-mark{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--brand);color:#fff;font:700 12px/1 var(--sans);letter-spacing:.08em}
+.nav{display:flex;gap:.2rem;flex-wrap:wrap;align-items:center}
+.nav a{padding:.34rem .68rem;border-radius:999px;text-decoration:none;color:var(--muted);font-size:.9rem;white-space:nowrap;border:1px solid transparent}
+.nav a:hover{color:var(--ink);background:#F4EBDD}
+.nav a[aria-current="page"]{background:var(--ink);color:#FFF9EF;border-color:var(--ink)}
+main{padding:0 0 4rem}
+.hero{padding:3.4rem 0 2.6rem}
+.eyebrow{display:inline-flex;align-items:center;gap:.55rem;font:700 .72rem/1 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--brand);margin:0 0 1rem}
+.eyebrow::before{content:"";width:26px;height:2px;background:var(--gold)}
+h1,h2,h3{font-family:var(--serif);line-height:1.28;margin:0 0 .6rem;font-weight:700}
+h1{font-size:clamp(2rem,4.6vw,3.05rem);letter-spacing:-.01em;margin-bottom:.5rem}
+h2{font-size:clamp(1.3rem,2.5vw,1.75rem);margin-top:3.2rem;padding-top:1.3rem;border-top:1px solid var(--line)}
+h3{font-size:1.06rem;margin-top:0}
+.lede{font-size:1.08rem;color:var(--muted);max-width:64ch;margin:.5rem 0 0}
+.hero .lede{font-size:1.16rem}
+.meta{display:flex;gap:1.2rem;flex-wrap:wrap;margin:1.4rem 0 0;padding:0;list-style:none;color:var(--muted);font-size:.82rem}
+.meta li{display:inline-flex;align-items:center;gap:.42rem}
+.meta li::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--gold)}
+.crumbs{font-size:.82rem;color:var(--muted);padding:1.1rem 0 0}
+.crumbs a{text-decoration:none}
+.crumbs span{color:var(--line)}
+.tag{display:inline-block;padding:.14rem .55rem;border-radius:999px;background:#F3E7D6;color:var(--brand-dark);font-size:.72rem;font-weight:700;letter-spacing:.04em;vertical-align:middle}
+.tag.gold{background:#FBF0CF;color:#8A6A0B}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem;margin:1.6rem 0}
+.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.25rem 1.3rem;text-decoration:none;color:inherit;box-shadow:var(--shadow);transition:transform .15s ease,border-color .15s ease}
+.card:hover{transform:translateY(-2px);border-color:var(--brand)}
+.card h3{margin-bottom:.35rem}
+.card p{margin:0;color:var(--muted);font-size:.94rem}
+.card .go{display:inline-block;margin-top:.85rem;color:var(--brand);font-weight:700;font-size:.84rem;letter-spacing:.02em}
+.steps{list-style:none;padding:0;margin:1.5rem 0;counter-reset:step;display:grid;gap:.75rem}
+.steps li{position:relative;padding:1rem 1.1rem 1rem 3.4rem;background:var(--card);border:1px solid var(--line);border-radius:12px;color:var(--muted);font-size:.95rem}
+.steps li::before{counter-increment:step;content:counter(step,decimal-leading-zero);position:absolute;left:1.05rem;top:1.05rem;font:700 .78rem/1 var(--mono);color:var(--brand);letter-spacing:.04em}
+.steps li strong{color:var(--ink);font-family:var(--serif);font-size:1rem;display:block;margin-bottom:.1rem}
+.pending{margin:1.4rem 0;padding:1rem 1.2rem;border:1px dashed var(--line);border-radius:12px;background:#FCF8F1;color:var(--muted);font-size:.94rem}
+.pending b{color:var(--brand-dark)}
+.note{margin:2rem 0;padding:1rem 1.2rem;border-left:4px solid var(--gold);background:#FFF8E8;border-radius:0 10px 10px 0;color:#5A4528;font-size:.94rem}
+.note b{color:var(--ink)}
+.prose{max-width:68ch}
+.prose p{margin:.8rem 0;color:#5C4B38}
+.table-wrap{overflow-x:auto;margin:1.2rem 0;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{padding:.65rem .8rem;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+th{font-family:var(--serif);color:var(--ink);background:#FAF5EC;white-space:nowrap}
+.log-table th{white-space:nowrap}
+.log-table td{font-size:.88rem;color:#5C4B38}
+.log-table td b{color:var(--ink)}
+.tag.ok{background:#E6F0E2;color:#3E6B34}
+.tag.no{background:#F6E3DE;color:#8A3A2A}
+.tag.part{background:#FBF0CF;color:#8A6A0B}
+.tag{white-space:nowrap}
+.log-table .type{white-space:nowrap}
+.problem{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1rem 1.2rem;margin:.8rem 0}
+.problem header{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:.45rem}
+.problem time{font:700 .75rem/1 var(--mono);color:var(--muted)}
+.problem .ph{margin:0 0 .55rem;color:var(--ink);font-weight:600}
+.problem dl{display:grid;grid-template-columns:4rem 1fr;gap:.25rem .8rem;margin:0;font-size:.88rem}
+.problem dt{color:var(--brand-dark);font-weight:700}
+.problem dd{margin:0;color:#5C4B38}
+.tag.now{background:#3A2A1A;color:#FFF9EF}
+.site-foot{border-top:1px solid var(--line);padding:2rem 0 2.4rem;color:var(--muted);font-size:.85rem}
+.foot-in{display:flex;justify-content:space-between;gap:1rem 2rem;flex-wrap:wrap}
+.foot-in p{margin:0}
+.foot-in a{color:var(--brand-dark)}
+@media (max-width:640px){
+  .hero{padding:2.4rem 0 2rem}
+  .head-in{min-height:0;padding:.7rem 0}
+  .nav{width:100%;gap:.15rem}
+  .nav a{padding:.3rem .55rem;font-size:.84rem}
+  h2{margin-top:2.4rem}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  .card{transition:none}
+}
+</style>
+</head>
+<body>
+  <a class="skip" href="#main">跳到正文</a>
+  <header class="site-head">
+    <div class="wrap head-in">
+      <a class="brand" href="index.html"><span class="brand-mark">SA</span><span>Super-agent 学习站</span></a>
+      <nav class="nav" aria-label="主导航">
+        <a href="index.html">首页</a>
+        <a href="concept.html">概念(A论文)</a>
+        <a href="evolution.html">进化(B论文)</a>
+        <a href="feynman.html">费曼拆解</a>
+        <a href="learning-ladder.html">学习阶梯</a>
+        <a href="test-log.html" aria-current="page">测试日志</a>
+        <a href="prototype.html">原型</a>
+        <a href="experiment.html">实验</a>
+      </nav>
+    </div>
+  </header>
+  <main id="main">
+    <div class="wrap">
+      <p class="crumbs"><a href="index.html">首页</a> <span>/</span> 测试日志</p>
+      <section class="hero">
+        <p class="eyebrow">记录 · 测试日志</p>
+        <h1>测试日志</h1>
+        <p class="lede">阶段 0 的六项判据、阶段 2 的六个 WU、第一层 Harness 自改进、第二层四特征逐项验证、实时双群连续性验证，以及如何继续测试，都记在这里。</p>
+        <ul class="meta">
+          <li>6 个 WU</li>
+          <li>阶段 0 六项判据</li>
+          <li>第一层实测</li>
+          <li>第二层 3/4 成立</li>
+          <li>实时跨群续接已验证</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>阶段 2 · 六个 WU</h2>
+        <p class="section-lede">每个单元一个独立 PR；合并状态以 PR 为准。</p>
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead>
+              <tr><th>单元</th><th>范围</th><th>PR</th><th>状态</th><th>自检</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><b>WU-1</b></td><td>站点骨架：5 页 + README + 统一导航</td>
+                <td><a href="https://github.com/OCCAgent/dsh-superagent-prototype/pull/3">#3</a></td>
+                <td><span class="tag ok">已合并</span></td><td>shot.py PASS</td>
+              </tr>
+              <tr>
+                <td><b>WU-2</b></td><td>首页：一句话定义、三层测试导航、项目背景</td>
+                <td><a href="https://github.com/OCCAgent/dsh-superagent-prototype/pull/4">#4</a></td>
+                <td><span class="tag ok">已合并</span></td><td>shot.py PASS</td>
+              </tr>
+              <tr>
+                <td><b>WU-3</b></td><td>概念页：四特征、五模块、架构示意</td>
+                <td><a href="https://github.com/OCCAgent/dsh-superagent-prototype/pull/5">#5</a></td>
+                <td><span class="tag ok">已合并</span></td><td>shot.py PASS</td>
+              </tr>
+              <tr>
+                <td><b>WU-4</b></td><td>进化页：三步闭环、held-in/held-out、术语表</td>
+                <td><a href="https://github.com/OCCAgent/dsh-superagent-prototype/pull/6">#6</a></td>
+                <td><span class="tag ok">已合并</span></td><td>shot.py PASS</td>
+              </tr>
+              <tr>
+                <td><b>WU-5</b></td><td>费曼拆解页：2×2 对比、10 道自测题</td>
+                <td><a href="https://github.com/OCCAgent/dsh-superagent-prototype/pull/7">#7</a></td>
+                <td><span class="tag ok">已合并</span></td><td>shot.py PASS</td>
+              </tr>
+              <tr>
+                <td><b>WU-6</b></td><td>测试日志页 + README 打开/继续测试说明</td>
+                <td>本 PR</td>
+                <td><span class="tag now">完成</span></td><td>shot.py PASS</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>第一层 · Harness 自改进实测</h2>
+        <p class="section-lede">轨迹来源是阶段 2 的真实运行记录（trigger / PR / worker 状态）。共 5 条行为边界：3 条弱点、2 条优点。</p>
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead>
+              <tr><th>编号</th><th>实测发现</th><th>类型</th><th>提案</th><th>采纳状态</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><b>F1</b></td>
+                <td>判定为「重复/无新工作」的消息不会得到群内回执，用户容易误以为被无视。</td>
+                <td class="type">弱点</td>
+                <td>任务模板加「如判定无需新工作，请回复原因」；dropped 必回执。</td>
+                <td><span class="tag no">未采纳</span></td>
+              </tr>
+              <tr>
+                <td><b>F2</b></td>
+                <td>PR 合并会终止当前 worker assignment，连续派发时后一单元可能被丢弃。</td>
+                <td class="type">弱点</td>
+                <td>PR 合并不立即结束 assignment；丢失单元自动重投。</td>
+                <td><span class="tag no">未采纳</span></td>
+              </tr>
+              <tr>
+                <td><b>F3</b></td>
+                <td>不 @ 的消息也会入库 trigger，过滤实际发生在 disposition/Eval 层，与 A2 判据描述不符。</td>
+                <td class="type">弱点</td>
+                <td>修正 A2 判据；增加 mention-only 过滤。</td>
+                <td><span class="tag part">部分采纳</span></td>
+              </tr>
+              <tr>
+                <td><b>F4</b></td>
+                <td>Worker 能核实 git 历史与 PR 状态，识别重复请求并拒绝无效工作。</td>
+                <td class="type">优点</td>
+                <td>沉淀为使用姿势：任务里写明「已完成的不要重做」。</td>
+                <td><span class="tag ok">已采纳</span></td>
+              </tr>
+              <tr>
+                <td><b>F5</b></td>
+                <td>同一 Thread 的后续消息会追加进同一工单，不碎片化建单，插话能并入当前任务。</td>
+                <td class="type">优点</td>
+                <td>沉淀为使用姿势：同一项目的多个 WU 在同一话题下连续下发。</td>
+                <td><span class="tag ok">已采纳</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note"><b>采纳口径：</b>代码级采纳 0 条；判据修正 1 条（F3）；行为规范 2 条（F4/F5）；未落地 2 条（F1/F2）。<b>为什么零代码级采纳：</b>本轮目标是完成学习网站，规则/机制改动属于阶段 3 剧本 B；按方案 E1-6，「无一采纳 + 原因分析」是合法结果，伪造采纳率是红线。</p>
+        <p class="pending"><b>数据说明：</b>阶段 1 Harness 基线没有单独跑脚本实验；本页的可复用轨迹来自阶段 2 的真实运行记录，与仓库中的《阶段2实测发现与学习素材》一致。F1/F2 的修复验证留待阶段 3。</p>
+      </section>
+
+      <section>
+        <h2>第二层 · 四特征逐项验证</h2>
+        <p class="section-lede">每个特征至少 2 个用例（典型 + 扰动）；连续性和主动性各加 1 个“不应发生”的负向用例。退出判据：至少 3/4 成立，失败项必须归因到架构层或实现层。</p>
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead>
+              <tr><th>用例</th><th>类型</th><th>场景</th><th>结果</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><b>C1 连续</b></td><td>典型</td><td>工单 PR 评论追加需求，不引用原飞书消息</td><td><span class="tag ok">通过</span> 归到同一工单</td></tr>
+              <tr><td><b>C2 连续</b></td><td>扰动</td><td>群 B 无关闲聊后，群 A 原 Thread 追加</td><td><span class="tag ok">通过</span> 1/1 归属</td></tr>
+              <tr><td><b>C3 连续</b></td><td>负向</td><td>群 B 的无关闲聊</td><td><span class="tag ok">通过</span> 0 泄漏</td></tr>
+              <tr><td><b>C4 连续</b></td><td>规范指定</td><td>群 A 发起；群 B 追加需求、无显式引用</td><td><span class="tag no">不成立</span> 0/1，候选无关联工单</td></tr>
+              <tr><td><b>P1 高效</b></td><td>典型</td><td>1 个 worker 槽位下连发 5 个独立任务</td><td><span class="tag ok">通过</span> 4 排队、1 运行</td></tr>
+              <tr><td><b>P2 高效</b></td><td>扰动</td><td>队列满时运行中工单收到人的插话</td><td><span class="tag ok">通过</span> 立即送达</td></tr>
+              <tr><td><b>A1 主动</b></td><td>典型 · observe</td><td>CI 失败 + 规则授权，无 @</td><td><span class="tag part">记录</span> 候选 + would-accept，0 工单</td></tr>
+              <tr><td><b>A2 主动</b></td><td>典型 · auto</td><td>同一环境切 auto，重复 CI 失败</td><td><span class="tag ok">通过</span> inferred 建单</td></tr>
+              <tr><td><b>A3 主动</b></td><td>负向 · observe</td><td>中性讨论、未 @、无匹配规则</td><td><span class="tag ok">通过</span> 0 误触发</td></tr>
+              <tr><td><b>A4 主动</b></td><td>负向 · auto</td><td>同上，auto 模式</td><td><span class="tag ok">通过</span> 0 误触发</td></tr>
+              <tr><td><b>A5 主动</b></td><td>扰动</td><td>同一规则下 CI 成功</td><td><span class="tag ok">通过</span> 0 建单</td></tr>
+              <tr><td><b>D1 持久</b></td><td>典型</td><td>worker 执行中宿主停止并重启</td><td><span class="tag ok">通过</span> 目录/Session 保留，recovery note 继续</td></tr>
+              <tr><td><b>D2 持久</b></td><td>扰动</td><td>派工后未回报时重启，另有排队工单</td><td><span class="tag ok">通过</span> 2/2 保留、仅 1 运行</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="note"><b>架构层归因（连续 C4）：</b>实现只用三种结构关系建立归属——发起 Thread、工单跟随的 PR Thread、同一 Trigger 同属多个 Thread。Correlation 只补上下文、不路由；attach 要求消息显式指向工单。因此 C4 在确定性基线中不成立：没有 Router 判断或显式指向时，新群消息不会自动归属。实时 Router 的语义 attach 可以补上这条路径（见下节）；按第三层入口判据，操作者已决定先以“同一 Thread 追加”作为判据 4 开跑，跨渠道归属列为后续改进。</p>
+        <p class="note"><b>连续深挖：</b>Ticket 才是持久实体。PR 合并、工单结束后，人在 PR 评论追加要求可恢复同一工单（Mandate 不变）；删掉 worker Session 后重启，Ticket/目录/progress 报告保留、Session 重建；两个工单的跟进 0 串任务。边界：CI 不能唤醒结束工单；群 B 更新可由 Router 语义 attach 进入群 A 工单（实时用例已验证），但跨群/跨端的结构化自动归属不存在，attach 依赖 Router 判断。七层分析见仓库 <code>experiments/four-features/continuity-deep-dive.md</code>。</p>
+        <p class="section-lede"><b>Token 成本（与延迟同等重要）：</b>learning-site 6 个 WU 共 52,284,551 total tokens，其中 cache read 51,922,304（99.3%），约 8.71M / WU。第三层暂定 cap = 3 × 基线 ≈ 26.1M total tokens / 工作单元；未收敛即超预算时转人工复核，不自动重试。</p>
+        <p class="pending"><b>数据说明：</b>机制基线是可复现的 Runtime 级实验（fake DSH host、脚本化 Router/worker 步骤），只验证协调机制；真实运行数据为单部署、小样本观测，不足以宣称正式 p50/p95。完整用例、指标、token 表与现场协议见仓库 <code>experiments/four-features/README.md</code>。</p>
+      </section>
+
+      <section>
+        <h2>连续性深挖 · 实时双群验证</h2>
+        <p class="section-lede">确定性基线给出“没有 Router 判断就不自动归属”的结论；随后补了一次真实双飞书群实验，检验 Router 语义判断能否把群 B 的追加接到群 A 的同一任务上。</p>
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead>
+              <tr><th>项</th><th>实测</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><b>环境</b></td><td>机器人在两个飞书群；Source 设为接收其他群的 @；本页不记录群名、群 ID、消息原文</td></tr>
+              <tr><td><b>输入</b></td><td>群 B 一条追加要求，未引用群 A 的任务，也未给任务 ID</td></tr>
+              <tr><td><b>归属</b></td><td><span class="tag ok">通过</span> Router 将消息 attach 到同一 Ticket；决策 routed；0 新工单</td></tr>
+              <tr><td><b>后续</b></td><td>群 B 的 Thread 已订阅到该 Ticket；该 Thread 后续消息直接 fan-out，不再经 Router</td></tr>
+              <tr><td><b>投递</b></td><td>Input 已读，已投递给当前 Assignment</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>为什么这次能续上</h3>
+        <p>主 Session 能看到运行中的 Ticket 与测试上下文，把“群 B 的追加”判断为同一任务，走的是 <code>attach</code>：结束候选 Eval、把 Trigger 作为 Input 加入 Ticket、把群 B Thread 订阅到 Ticket。第一次 attach 之后，后续消息由订阅 fan-out 直达，不再需要每次语义判断。</p>
+
+        <h3>为什么 C4 仍然不成立</h3>
+        <p>这次成功是 <b>Router 语义判断</b>，不是结构化的实体解析。确定性基线里，候选只看当前 Thread 的 Ticket（<code>related_tickets=0</code>）；Ticket 身份来自“接受哪条 Trigger”，没有业务键；跨 Source 身份不映射；Correlation 只补上下文、不路由。因此“没有 Router 判断、也没有显式指向”时，新群消息不会自动归属。</p>
+        <p>这也修正了“只给第二个群加机器人就能修好连续性”的直觉：加机器人只解决<b>消息能不能进来</b>；能不能<b>归属到同一件事</b>，取决于 Thread/订阅、显式 attach 或 Router 判断。</p>
+
+        <h3>七层连续性：什么在、什么不在</h3>
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead>
+              <tr><th>层</th><th>机制</th><th>本用例中的表现</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><b>L0 事件</b></td><td>Trigger 幂等入库</td><td>群 B 消息只入库一次</td></tr>
+              <tr><td><b>L1 线程</b></td><td>Thread + 订阅 fan-out</td><td>attach 后群 B Thread 订阅到工单</td></tr>
+              <tr><td><b>L2 工单</b></td><td>Ticket 持久实体</td><td>仍是同一 Ticket，0 新工单</td></tr>
+              <tr><td><b>L3 派工</b></td><td>Assignment 可多次</td><td>Input 投递给当前 Assignment</td></tr>
+              <tr><td><b>L4 会话</b></td><td>DSH Session（可重建）</td><td>本用例未丢 Session；丢 Session 的实验见 C6</td></tr>
+              <tr><td><b>L5 工作区</b></td><td>Ticket 目录 / git</td><td>本轮未改动工作区</td></tr>
+              <tr><td><b>L6 外部产物</b></td><td>PR / Issue 跟随</td><td>PR #9 已合并，工单仍可续接</td></tr>
+              <tr><td><b>L7 身份</b></td><td>各 Source 白名单</td><td>同一个人在飞书/GitHub 仍是两个 actor，不映射</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>对跨会话 / 跨应用 / 跨端 / 多任务的含义</h3>
+        <ul class="steps">
+          <li><strong>跨会话</strong>：Ticket、目录、PR、Report 是持久契约；Session 可重建，旧推理不保证保留。</li>
+          <li><strong>跨应用</strong>：绑定 PR/Issue Thread 可直接续接；新应用/新群需要 Router attach 或业务键。</li>
+          <li><strong>跨端</strong>：系统没有“设备实体”；新群/新端就是新 Thread，靠 attach 后的订阅延续。</li>
+          <li><strong>多任务</strong>：Ticket 默认隔离；attach 错了会串任务，因此需要显式、可审计的关系。</li>
+        </ul>
+
+        <h3>下一步：从“能判断”到“可保证”</h3>
+        <ul class="steps">
+          <li><strong>业务键</strong>：仓库 + issue/PR 编号，或项目/任务 ID；命中即 attach，不靠语义猜。</li>
+          <li><strong>跨 Source 身份映射</strong>：是否把同一个人在飞书与 GitHub 映射为同一 principal，是 Policy 决策。</li>
+          <li><strong>候选相关工单扩展 + attach 护栏</strong>：让 Eval 看到相关工单，但 attach 仍需显式动作，避免误合并。</li>
+          <li><strong>父子/TaskGroup 与工作状态落盘</strong>：支持多 WU 项目，并减少对旧 Session 历史的依赖。</li>
+        </ul>
+
+        <p class="pending"><b>证据边界：</b>这是一条实时用例、单部署；Router 语义判断参与，不能当作“结构化自动归属”已实现。<b>隐私：</b>本页不记录群名、群 ID、消息原文，也不包含该群内容。</p>
+      </section>
+
+      <section>
+        <h2>阶段 0 · 六项判据</h2>
+        <p class="section-lede">阶段 0 收官时六项全部通过，详细记录见仓库中的阶段 0 执行报告。</p>
+        <div class="table-wrap">
+          <table class="log-table">
+            <thead>
+              <tr><th>判据</th><th>记录</th><th>结果</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>E0-1 服务健康</td><td>所有子系统 ready（13/13）</td><td><span class="tag ok">通过</span></td></tr>
+              <tr><td>E0-2 主会话模型</td><td>deepseek-v4-pro → deepseek-flash（停→备份→删→重启→验证）</td><td><span class="tag ok">通过</span></td></tr>
+              <tr><td>E0-3 状态库</td><td>trigger / decision / ticket / outbox 可读（共 9 表）</td><td><span class="tag ok">通过</span></td></tr>
+              <tr><td>E0-4 飞书通道</td><td>真 @ → 回复「在的」；@ 提问建单</td><td><span class="tag ok">通过</span></td></tr>
+              <tr><td>E0-5 GitHub 通道</td><td>accept(explicitRouted) → 工单 completed；修复两个配置死锁</td><td><span class="tag ok">通过</span></td></tr>
+              <tr><td>E0-6 仓库占位</td><td>learning-site 占位已 push 至 fork 仓库</td><td><span class="tag ok">通过</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2>持续问题日志</h2>
+        <p class="section-lede">今日最新 5 条；完整历史与字段说明见 <a href="problems.md">problems.md</a>。</p>
+        <article class="problem">
+          <header><span class="tag ok">已解决</span><time datetime="2026-11-04">2026-11-04</time></header>
+          <p class="ph">PR #9 一直显示「可合并」但合不了</p>
+          <dl>
+            <dt>根因</dt><dd>main 前进到 <code>85bd2e3</code> 后 PR base 仍是 <code>0f9be20</code>，<code>docs/007</code> 两边各加一行形成冲突。</dd>
+            <dt>处置</dt><dd>合入 main、保留两行、跑测试后合并。</dd>
+            <dt>证据</dt><dd>PR #9 / <code>93504d6</code></dd>
+          </dl>
+        </article>
+        <article class="problem">
+          <header><span class="tag part">已绕过</span><time datetime="2026-11-04">2026-11-04</time></header>
+          <p class="ph"><code>git push</code> 报 <code>could not read Username</code>，沙箱内 <code>gh auth status</code> 失效</p>
+          <dl>
+            <dt>根因</dt><dd>沙箱进程读不到 macOS 钥匙串，gh 取不到已有凭据（宿主机上凭据有效）。</dd>
+            <dt>处置</dt><dd>用宿主机权限执行推送/合并。</dd>
+            <dt>证据</dt><dd>本次会话日志</dd>
+          </dl>
+        </article>
+        <article class="problem">
+          <header><span class="tag part">恢复中</span><time datetime="2026-11-04">2026-11-04</time></header>
+          <p class="ph"><code>ab27</code> 工单停在 <code>LlmError: DeepSeek Messages stream ended</code></p>
+          <dl>
+            <dt>根因</dt><dd>DeepSeek 流中断；工单进入 idle，<code>retry</code> 对 idle 不生效。</dd>
+            <dt>处置</dt><dd>服务重启触发恢复注记，新 Assignment 用 DeepSeek 继续。</dd>
+            <dt>证据</dt><dd>工单 <code>ab27e4b5</code></dd>
+          </dl>
+        </article>
+        <article class="problem">
+          <header><span class="tag ok">已解决</span><time datetime="2026-11-04">2026-11-04</time></header>
+          <p class="ph">部署代码落后 main 21 个提交</p>
+          <dl>
+            <dt>根因</dt><dd>服务跑在 <code>Documents/.../dsh-superagent</code>（<code>6337fc8</code>），工作克隆在 <code>~/src/...</code>。</dd>
+            <dt>处置</dt><dd>IPv4 修复走 PR #11；profile 链接切到 fork main；重启生效。</dd>
+            <dt>证据</dt><dd>PR #11 / <code>43c69f4</code></dd>
+          </dl>
+        </article>
+        <article class="problem">
+          <header><span class="tag part">观察中</span><time datetime="2026-11-04">2026-11-04</time></header>
+          <p class="ph">全量 <code>pnpm check</code> 13 个超时</p>
+          <dl>
+            <dt>根因</dt><dd>并行/本机负载，单独复跑均通过。</dd>
+            <dt>处置</dt><dd>记录为 flaky，后续补基线对比。</dd>
+            <dt>证据</dt><dd>four-features worktree</dd>
+          </dl>
+        </article>
+      </section>
+
+      <section>
+        <h2>如何继续测试</h2>
+        <ol class="steps">
+          <li><strong>本地打开</strong>双击 <code>index.html</code>，或运行 <code>python3 -m http.server 8000 --directory learning-site</code> 后访问本地地址；全站无外部依赖，<code>file://</code> 可用。</li>
+          <li><strong>改完自检</strong>运行 <code>python3 learning-site/shot.py</code>，必须 0 error / blocker；报告与 1280×800 截图写入 <code>learning-site/.shot/</code>。</li>
+          <li><strong>推进一个 WU</strong>一个单元一个分支 / PR，PR 附 Before/After；同时更新本页进度表与 README 的 WU 表。</li>
+          <li><strong>进入下一层</strong>第二层已逐项验证：3/4 成立，连续性失败归因架构层（无显式引用的跨渠道归属未实现）；先按实验 README 的现场协议补做真实双渠道/重启验证，再进入阶段 3。</li>
+        </ol>
+        <div class="grid">
+          <a class="card" href="feynman.html">
+            <h3>回看：费曼拆解 <span class="tag gold">方法</span></h3>
+            <p>2×2 地图与 10 道自测题，先把两篇论文讲通。</p>
+            <span class="go">回到拆解页 →</span>
+          </a>
+          <a class="card" href="README.md">
+            <h3>完整说明 <span class="tag">README</span></h3>
+            <p>页面索引、视觉 token、自检方式与继续测试的完整步骤。</p>
+            <span class="go">打开 README →</span>
+          </a>
+        </div>
+      </section>
+    </div>
+  </main>
+  <footer class="site-foot">
+    <div class="wrap foot-in">
+      <p>阶段 2 · 学习站 · WU-6 测试日志</p>
+      <p><a href="index.html">回到首页</a> · 静态 HTML · 无外部依赖</p>
+    </div>
+  </footer>
+</body>
+</html>
