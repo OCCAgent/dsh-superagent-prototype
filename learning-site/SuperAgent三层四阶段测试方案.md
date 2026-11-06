@@ -46,7 +46,7 @@
 | 状态库 | `~/.dsh/state/superagent/orchestrator.sqlite`（只读） | trigger/decision/ticket/outbox 四表 = 证据链 |
 | 论文拆解底稿 | `~/.dsh/state/superagent/work/explain-superagent-papers-e1e19d43fa3d/deliverables/Super-agent与Self-Harness-费曼拆解.md`（63.5KB） | 阶段 2 学习网站的内容素材之一 |
 
-> **模型切换（2026-11-05 回写）**：保存新的 eval/executor 模型会热切换主会话的下一次请求（PR #12）；只有主会话内自选过模型时才不跟随。上轮"必须删主会话 `session.v4.jsonl.zstd`"的流程已废弃，仅在排查旧会话自选模型时作为最后手段（先备份）。方案仍全程固定 flash，不为测试切换模型。
+> **模型切换（2026-11-05 回写）**：保存新的评估模型会热切换到主会话的下一次请求（PR #12）；执行模型只对新建 Worker Session 生效。只有主会话内自选过模型时才不跟随。上轮「必须删主会话 `session.v4.jsonl.zstd`」的流程已废弃，仅在排查旧会话自选模型时作为最后手段（先备份）。方案仍全程固定 flash，不为测试切换模型。
 
 #### 0.3.1 三层隔离 Profile（2026-11-05 创建）
 
@@ -255,7 +255,7 @@ LobeHub 的实践（半年用 LobeHub 开发 LobeHub）：主管 Agent 承接目
 | **产出（高效）** | P1：连续派发 WU-2、WU-3 两个单元（不等 WU-2 完成就发 WU-3） | 飞书两条 @，间隔 <1 分钟 | maxWorkers=1 时排队；两个 Worker 独立目录互不污染 | 两任务各自产出独立 PR；无上下文串扰 |
 | 产出 | P2：WU-4 执行中插入新要求（"页面加一节'术语表'"） | WU-4 进行中发飞书 @ | 新消息进入该 Thread 直通/插话 | 原任务按新要求完成，不重启不丢进度 |
 | **主动** | A1：对已合并的 WU-2 首页 PR 评论指出一个错别字并 @OCCAgent | GitHub PR 评论 | GitHub Source 产生 trigger → 判定 → 是否建票修复 | 产生新工单或当场修复，群里有汇报 |
-| 主动 | A2：在 DYJ 群发一条与项目无关的消息（不 @） | 普通群消息 | 两级过滤第一级（程序规则） | 不产生 decision/工单；trigger 可入库（Source 记录消息，gate 不接单） |
+| 主动 | A2：在 DYJ 群发一条与项目无关的消息（不 @） | 普通群消息 | 两级过滤第一级（程序规则） | 不产生 decision/工单；trigger 可入库（Source 记录消息，gate 不接单），并可作为该 Thread 的上下文（2026-11-05 修正） |
 | **持久** | D1：WU-5 执行期间**不操作** 15 分钟以上，观察是否持续完成并交回 | 时间观测 | Worker 在隔离目录推进，不依赖前台交互 | 任务照常完成、PR 照常开出 |
 | 持久 | D2：阶段 2 中途执行一次 `./scripts/dsh-superagent restart` | 重启服务 | 未完成工单是否自动恢复（带"恢复说明"） | 工单恢复继续，或如实报告"被打断"且不丢已落盘产物 |
 
