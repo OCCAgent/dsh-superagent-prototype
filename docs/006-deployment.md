@@ -86,6 +86,17 @@ The fourth command creates `~/.dsh/profiles/superagent` from the DeepSeek Harnes
 
 Run the profile-creation command only for a new installation. If the profile already exists, that command replaces it and deletes its `cordis.patch.yml`, including machine configuration. Do not use it for upgrades.
 
+### Isolated test profiles
+
+To run several test layers beside the deployment profile, create one profile per layer, for example `selfharness`, `superagent-test` and `superagent-e2e`:
+
+```sh
+dsh <name> --from-default-profile web --dump-config > /dev/null
+dsh plugin --profile <name> add "link:$PWD"
+```
+
+DSH 0.2.1-rc.3 has no `dsh profile create` subcommand; these two commands are the supported equivalent. Give each profile its own `webserver.port` and `dsh-superagent.stateDir` in its `cordis.patch.yml` (see [Machine configuration](#machine-configuration)); otherwise the profiles share the state database and contend for the panel port. Leave `dsh-superagent-feishu` disabled in profiles that must not receive Feishu events; an end-to-end profile needs a dedicated bot so it does not compete with the live profile.
+
 ## Machine configuration
 
 Copy [examples/profile.cordis.patch.yml](../examples/profile.cordis.patch.yml) to `~/.dsh/profiles/superagent/cordis.patch.yml`, replacing that file, and replace every `<placeholder>`. For Feishu, also enable the `dsh-superagent-feishu` entry there. The `webserver` entry sets the panel's port.

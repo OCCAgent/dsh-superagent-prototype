@@ -160,7 +160,7 @@ describe('eval', () => {
     h.engine.evaluateDue()
     expect(h.requests.map(candidate => candidate.thread.key)).toEqual(['chat:A', 'chat:B'])
   })
-  it('counts an Eval\'s deadline from its delivery, queues its Triggers again twice when it expires, then records it unavailable', async () => {
+  it('expires a delivery no message names after the Eval timeout, queues its Triggers again twice, then records it unavailable', async () => {
     const h = harness()
     h.engine.receive(trigger('1')); h.pump()
     // A candidate the assessor's Session has not taken does not expire.
@@ -196,6 +196,33 @@ describe('eval', () => {
     expect(h.repo.decisions.byThread('chat:t1')).toEqual([expect.objectContaining({ kind: 'unavailable', reason: [{ code: 'timeout' }] })])
     expect(h.outbox).toEqual([{ id: expect.any(String), channel: trigger('1').channel, kind: 'notice',
       text: '评估超时，本次请求没有得出结论。可以稍后重发，或在面板中重新评估。' }])
+  })
+  it('counts a delivered card\'s deadline from the step that claims it, within the queue cap', () => {
+    const h = harness()
+    h.engine.receive(trigger('1')); h.pump()
+    const evalId = h.requests[0]!.evalId
+    h.engine.candidatePlanned(evalId, 'card-1')
+    h.engine.candidateDelivered(evalId)
+    // A card waiting in the inbox gets five minutes, so a busy Session does not consume the assessment timeout.
+    h.tick(299); h.pump()
+    expect(h.engine.candidate('1')?.evalId).toBe(evalId)
+    h.engine.candidateClaimed('card-1'); h.pump()
+    // Once claimed, the assessment has its full timeout from the claim.
+    h.tick(59); h.pump()
+    expect(h.engine.candidate('1')?.evalId).toBe(evalId)
+    h.tick(2); h.pump()
+    expect(h.engine.candidate('1')?.evalId).not.toBe(evalId)
+    expect(h.repo.decisions.byThread('chat:t1')).toEqual([])
+  })
+  it('expires a delivered card that no step claims after the queue cap', () => {
+    const h = harness()
+    h.engine.receive(trigger('1')); h.pump()
+    const evalId = h.requests[0]!.evalId
+    h.engine.candidatePlanned(evalId, 'card-2')
+    h.engine.candidateDelivered(evalId)
+    h.tick(301); h.pump()
+    expect(h.engine.candidate('1')?.evalId).not.toBe(evalId)
+    expect(h.repo.decisions.byThread('chat:t1')).toEqual([])
   })
 })
 describe('subscription fan-out', () => {

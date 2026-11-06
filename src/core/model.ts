@@ -145,9 +145,13 @@ export interface Evaluation {
   basis: MandateBasis
   policyVersion: string
   startedAt: string
-  /** Timestamp when the candidate reached the assessor's Session; it cannot expire before, and its deadline counts from then. */
+  /** Timestamp when the candidate reached the assessor's Session's inbox; the queue cap counts from then. */
   delivered?: string
-  /** Expiration timestamp, counted from delivery (or from start until delivered); a processing pause shifts it forward by the pause duration. */
+  /** Message the candidate card reached the Session under, which its history names when a step claims the card. */
+  messageId?: string
+  /** Timestamp when a step of the assessor's Session claimed the candidate card; the assessment timeout counts from then. */
+  claimed?: string
+  /** Expiration timestamp: the queue cap from delivery until the card is claimed, then the assessment timeout from the claim; a processing pause shifts it forward by the pause duration. */
   deadline: string
   /** Timestamp when processing pause began; resuming shifts `deadline` forward by the pause duration; cleared on resume. */
   pausedAt?: string

@@ -55,7 +55,7 @@ async function api(method: string, path: string): Promise<{ status: number; body
   await http(req, { writeHead: (code: number) => { status = code }, end: (data: string) => { text = data } })
   return { status, body: JSON.parse(text) }
 }
-let agents: Map<string, { id: string; status: string; inbox: { nextTurn: UserMessage[]; nextStep: UserMessage[] }; cancel: ReturnType<typeof vi.fn>; inject: ReturnType<typeof vi.fn> }>
+let agents: Map<string, { id: string; status: string; session: object; inbox: { nextTurn: UserMessage[]; nextStep: UserMessage[] }; cancel: ReturnType<typeof vi.fn>; inject: ReturnType<typeof vi.fn> }>
 const runTool = async (sessionId: string, name: string, args: unknown) => {
   const tool = tools.get(sessionId)?.get(name)
   if (!tool) throw new Error(`Tool ${name} is not registered for ${sessionId}`)
@@ -290,6 +290,20 @@ it('assesses a proactive observation in the orchestrator Session and creates the
   expect(ticket.mandate).toMatchObject({ strength: 'inferred', basis: expect.objectContaining({ via: 'admission', rules: ['copy'], observation: { mode: 'auto' } }) })
   expect(runtime.store.replyStatus(key('ack', again.id))).toBeDefined()
   expect(await runTool(`worker-${ticket.id}`, 'orchestrator_read', { resource: `ticket/${ticket.id}/assignment` })).toMatchObject({ text: expect.stringContaining('Proactively accepted under copy') })
+})
+
+it('starts an Eval deadline when the main Session takes its candidate card into a step', async () => {
+  const trigger = feishu('31', '把副标题改成“浏览网页”', { mentions: [] })
+  await receive(trigger)
+  const thread = runtime.store.threads.get(threadKey(trigger.threads[0]!))!
+  expect(thread.evaluating).toMatchObject({ delivered: expect.any(String), messageId: expect.any(String) })
+  expect(thread.evaluating!.claimed).toBeUndefined()
+  const agent = agents.get(runtime.masterId)!
+  const card = [...agent.inbox.nextTurn, ...agent.inbox.nextStep].find(item => item.content.some(block =>
+    block.type === 'text' && block.text.includes('"kind":"candidate"')))!
+  const ctx = (runtime as unknown as { ctx: Context }).ctx
+  ctx.emit('session/event', agent.session as never, { type: 'user/message', seq: 1, time: Date.now(), surfaceOp: 'append', data: card } as never)
+  expect(runtime.store.threads.get(thread.key)!.evaluating!.claimed).toBeDefined()
 })
 
 it('accepts silently under a rule that says so, gives the worker the rule procedure, and closes it as dropped when nothing is left for a human', async () => {
