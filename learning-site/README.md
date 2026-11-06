@@ -64,6 +64,7 @@ learning-site/
 ├── SuperAgent三层四阶段测试-完整案例分析.md
 ├── SuperAgent三层四阶段测试方案.md
 ├── SuperAgent三层四阶段测试-阶段0执行报告.md
+├── SuperAgent评估超时-e2e联调记录.md # 2026-11-06 真实飞书端到端超时联调（PR #22）
 └── SuperAgent系统全面诊断-2026-11-05.md # 2026-11-05 全面诊断：证据、用例映射与问题剖析
 ```
 
@@ -90,6 +91,7 @@ python3 learning-site/shot.py
 
 - 阶段 0 执行报告：[SuperAgent三层四阶段测试-阶段0执行报告.md](SuperAgent三层四阶段测试-阶段0执行报告.md)
 - 2026-11-05 全面诊断（证据、用例映射与问题剖析）：[SuperAgent系统全面诊断-2026-11-05.md](SuperAgent系统全面诊断-2026-11-05.md)
+- 2026-11-06 评估超时真实飞书端到端联调（PR #22）：[SuperAgent评估超时-e2e联调记录.md](SuperAgent评估超时-e2e联调记录.md)
 - 阶段 2 实测发现：[SuperAgent阶段2-实测发现与学习素材.md](SuperAgent阶段2-实测发现与学习素材.md)
 - 完整案例分析与测试方案：[SuperAgent三层四阶段测试-完整案例分析.md](SuperAgent三层四阶段测试-完整案例分析.md)、[SuperAgent三层四阶段测试方案.md](SuperAgent三层四阶段测试方案.md)
 - 四特征逐项验证（机制基线 + 真实观测 + 现场协议）：[experiments/four-features/README.md](../experiments/four-features/README.md)
