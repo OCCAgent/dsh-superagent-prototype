@@ -63,6 +63,7 @@ curl -s -X POST -H 'x-orchestrator-request: 1' \
 - **Outbox**：`95d713d03b02847865cd9264011ceebc`，`kind=notice`，`status=sent`；
 - **文本**：`评估超时，本次请求没有得出结论。可以稍后重发，或在面板中重新评估。`
 - **目标**：该 trigger 的真实飞书消息 `om_x100b61f31e84d4a4dd1da5ccd22cad5`（会话 `oc_9d5195712a27b205b37e03dd19b1f488`），由 `lark-bot-e2e` 调用 `im +messages-reply` 发出（幂等键为 outbox id）。
+- **飞书侧核对**：随后用 `lark-bot-e2e im +threads-messages-list` 读回该线程，确认回执已真实落库：`message_id=om_x100b61e5f89f08a4cd0b6e35e80f6d7`、`thread_id=omt_1989fdcdb38f5a7d`、发送者 E2E测试机器人、`create_time=2026-11-06 08:12`（UTC+8）。
 
 `thread` 最后状态：`evaluating` 清空、`pending=[]`，回执已发送；3 次到期后按设计收口。
 
