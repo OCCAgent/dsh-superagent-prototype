@@ -345,7 +345,8 @@ export const wecomKind: SourceKind<WecomConfig> = {
     { key: 'botFile', type: 'text', label: { zh: '机器人凭据文件', en: 'Bot credential file' },
       hint: { zh: '机器人 ID 和 Secret 的 JSON。留空时读取 stateDir/wecom/bot.json。', en: 'JSON with the bot ID and secret. Empty reads stateDir/wecom/bot.json.' } },
     { key: 'directMessages', type: 'switch', label: { zh: '接收单聊', en: 'Direct messages' } },
-    { key: 'groups', type: 'rows', label: { zh: '接收的群聊', en: 'Group chats' }, columns: [
+    { key: 'groups', type: 'rows', label: { zh: '接收的群聊', en: 'Group chats' },
+      hint: { zh: '留空时接收机器人所在的全部群，仅 @ 机器人的消息。填写后只接收列出的群。', en: 'Empty receives every group the robot has joined, mentions only; a list narrows it to those chats.' }, columns: [
       { key: 'id', type: 'text', label: { zh: '群聊 chatid', en: 'Chat ID' } },
       { key: 'name', type: 'text', label: { zh: '名字', en: 'Name' }, optional: true }] },
   ],
@@ -355,7 +356,9 @@ export const wecomKind: SourceKind<WecomConfig> = {
       return config.directMessages ? { listened: true, observed: false, row: 'direct' } : { listened: false, reason: 'direct_messages_not_allowed' }
     }
     const chatId = String(meta.chatId ?? '')
-    return config.groups.some(group => group.id === chatId)
+    // An empty list means every group the robot has joined: a chat ID is only visible to the operator through a message
+    // that arrived, so a strict list could never be filled in the first place.
+    return config.groups.length === 0 || config.groups.some(group => group.id === chatId)
       ? { listened: true, observed: false, row: 'group' }
       : { listened: false, reason: 'group_not_allowed' }
   },

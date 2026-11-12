@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { replyChunks, wecomText, wecomTrigger } from '../src/sources/wecom.ts'
+import { replyChunks, wecomKind, wecomText, wecomTrigger } from '../src/sources/wecom.ts'
 
 const message = (over: Record<string, unknown> = {}) => ({
   msgid: 'msg-1', chatid: 'zhangsan', chattype: 'single', from: { userid: 'zhangsan' },
@@ -54,5 +54,25 @@ describe('wecom source', () => {
     expect(chunks.length).toBeGreaterThan(1)
     expect(chunks.every(chunk => Buffer.byteLength(chunk, 'utf8') <= 2_000)).toBe(true)
     expect(chunks.join('')).toBe(text)
+  })
+})
+
+describe('wecom scope', () => {
+  const config = (groups: { id: string }[] = []) => ({ botFile: '', directMessages: true, groups })
+
+  it('listens to every group while the list is empty', () => {
+    expect(wecomKind.scope?.({ meta: { chatType: 'group', chatId: 'chat-1' } }, config())).toMatchObject({ listened: true, row: 'group' })
+  })
+
+  it('narrows groups to the listed chats once one is listed', () => {
+    expect(wecomKind.scope?.({ meta: { chatType: 'group', chatId: 'chat-1' } }, config([{ id: 'chat-2' }])))
+      .toMatchObject({ listened: false, reason: 'group_not_allowed' })
+    expect(wecomKind.scope?.({ meta: { chatType: 'group', chatId: 'chat-2' } }, config([{ id: 'chat-2' }])))
+      .toMatchObject({ listened: true })
+  })
+
+  it('keeps direct messages behind their own switch', () => {
+    expect(wecomKind.scope?.({ meta: { chatType: 'single' } }, { ...config(), directMessages: false }))
+      .toMatchObject({ listened: false, reason: 'direct_messages_not_allowed' })
   })
 })
