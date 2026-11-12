@@ -38,7 +38,7 @@ The Source reads `stateDir/wecom/bot.json` by default, and the **Bot credential 
 
 ## Settings
 
-1. **Source.** Enable the `dsh-superagent-wecom` entry in the profile's `cordis.patch.yml`, as the Feishu entry is enabled. Then set **Receive direct messages**, and list group chats whose `@` mentions should arrive. A group message becomes a Trigger only when the bot is mentioned; a direct message always does.
+1. **Source.** Enable the `dsh-superagent-wecom` entry in the profile's `cordis.patch.yml`, as the Feishu entry is enabled. Then set **Receive direct messages**, and list group chats whose `@` mentions should arrive. A group message becomes a Trigger only when the bot is mentioned; a direct message always does, and a message without a mention never reaches the Source at all. A group's messages all share one Thread keyed by its chat ID, so a group keeps a single conversation; Feishu, by contrast, gives each topic root its own Thread.
 2. **Policy.** Add the `userid` of every person who may ask for work. A message from someone not on the list is recorded as dropped with reason `senderNotMember`, and its sender id is visible in the Source's dropped list, which is how an operator finds the id the first time.
 
 Replies reuse the inbound `req_id` while the gateway still accepts it, and fall back to `aibot_send_msg` afterwards, so a long assessment still reaches the chat. Replies are split at 18,000 bytes because the platform rejects a larger body whole.
