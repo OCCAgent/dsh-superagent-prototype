@@ -34,6 +34,7 @@ export const USER_ERRORS = {
   notQuestion: ['refused', 'An answer must target the original human question, not a worker report or automated trigger'],
   noAnswer: ['refused', 'No worker answer is ready for this human trigger. Wait for the worker\'s report, or request one with orchestrator_ticket_request_status, which acts only on a worker that reported waiting; ordinary progress cannot be relabelled as an answer.'],
   noChannel: ['refused', 'No reply channel for this ticket or trigger'],
+  routerCannotAnswer: ['refused', 'The main Session does not answer directly. Accept the request as a ticket, ignore it silently, or stop a ticket; any answer or read of system state must come from a ticket\'s worker'],
   panelOnlyEnvironment: ['refused', 'The execution environment (ticket directory, prepare command, blocked commands) can only be changed in the management panel'],
   panelOnlyAccounts: ['refused', 'Source fields that setup reads, such as account CLIs, can only be changed in the management panel'],
   setupComplete: ['refused', 'Setup is complete'],
