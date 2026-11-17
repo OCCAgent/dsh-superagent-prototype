@@ -1065,6 +1065,13 @@ describe('replies', () => {
     h.engine.stopTicket(ticketId)
     expect(() => h.engine.reply({ purpose: 'acknowledgement', ticketId, triggerId: '2', text: 'x' })).toThrow(new UserError('ackEnded'))
   })
+  it('never answers a trigger that no ticket reached, even when the sender is a person', () => {
+    const h = harness()
+    const asked = trigger('2', { actor: guest, channel: { source: 'chat', thread: 't1', address: { message: '2' } } })
+    h.engine.receive(asked)
+    expect(() => h.engine.reply({ purpose: 'answer', triggerId: '2', text: 'Answered directly' })).toThrow(new UserError('routerCannotAnswer'))
+    expect(h.outbox).toEqual([])
+  })
   it('sends an answer only after the worker reported it, a result only for a ready ticket, and attention only for its current question', () => {
     const h = harness()
     const ticketId = accepted(h).ticketId!

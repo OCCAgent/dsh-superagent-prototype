@@ -714,6 +714,7 @@ const TEXT = {
   'userError.notQuestion': ['回答必须针对最初由人提出的问题，而不是执行器报告或自动触发。', USER_ERRORS.notQuestion[1]],
   'userError.noAnswer': ['执行器还没有回答这条人发的触发。请等待执行器的报告，或用 orchestrator_ticket_request_status 请求一份（它只对处于等待状态的执行器起作用）；普通进展不能当作回答。', USER_ERRORS.noAnswer[1]],
   'userError.noChannel': ['这个工单或触发没有可以回复的渠道。', USER_ERRORS.noChannel[1]],
+  'userError.routerCannotAnswer': ['主会话不能直接作答。请把请求接成工单、静默忽略，或停止某个工单；任何回答或对系统状态的读取都必须由工单的执行器产出。', USER_ERRORS.routerCannotAnswer[1]],
   'userError.panelOnlyEnvironment': ['执行环境（执行目录、准备命令、禁止调用的命令）只能在管理页修改。', USER_ERRORS.panelOnlyEnvironment[1]],
   'userError.panelOnlyAccounts': ['部署检查读取的来源字段（例如账号 CLI）只能在管理页修改。', USER_ERRORS.panelOnlyAccounts[1]],
   'userError.setupComplete': ['部署检查已通过。', USER_ERRORS.setupComplete[1]],
@@ -745,6 +746,8 @@ const TEXT = {
   'healthCode.sourceOff': ['已关闭', HEALTH_TEXT.sourceOff],
   'healthCode.feishuCliUnset': ['来源已打开，还没有设置机器人的 lark-cli', HEALTH_TEXT.feishuCliUnset],
   'healthCode.feishuBotMissing': ['等待飞书机器人', HEALTH_TEXT.feishuBotMissing],
+  'healthCode.wecomBotMissing': ['等待企业微信机器人凭据', HEALTH_TEXT.wecomBotMissing],
+  'healthCode.wecomContended': ['另一个连接接管了该机器人', HEALTH_TEXT.wecomContended],
   'healthCode.pollFailures': ['连续 {count} 次轮询失败，最近一次：{error}', HEALTH_TEXT.pollFailures],
 } as const satisfies Record<string, readonly [string, string]>
 export type DshSuperagentKey = keyof typeof TEXT

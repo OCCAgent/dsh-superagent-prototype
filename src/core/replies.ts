@@ -82,6 +82,9 @@ export class Replies extends EnginePart {
     if (request.triggerId && !trigger) throw new UserError('unknownTrigger')
     const ticket = request.ticketId ? this.require(request.ticketId)
       : trigger ? this.repo.tickets.list().find(item => this.reaches(item, trigger)) : undefined
+    // Strict separation: the main Session never answers a person directly. An answer, a result, or a question for a
+    // person is only allowed through the ticket that owns the work; accepting and ignoring stay silent.
+    if (!ticket) throw new UserError('routerCannotAnswer')
     if (request.purpose === 'result') {
       const outcome = ticket && ticketOutcome(ticket)
       const reported = !!ticket && liveTicket(ticket) && latestAssignment(ticket)?.report?.state === 'ready'
