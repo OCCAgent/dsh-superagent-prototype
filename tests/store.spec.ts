@@ -262,3 +262,14 @@ it('reads `%` and `_` in a key prefix and a search query as written, not as patt
   expect([store.read.search('50%').map(item => item.id), store.read.search('a_b').map(item => item.id)]).toEqual([['p'], ['r']])
   store.close()
 })
+
+it('restores settings when the revision pointer runs ahead of the newest snapshot', () => {
+  const store = new Store(join(directory, 'orchestrator.sqlite'))
+  const saved = store.saveSettings({ ...store.settings(), paused: true })
+  expect(saved.paused).toBe(true)
+  const newest = store.settingsHistory(1)[0]!.revision
+  store.set(KV.settings.revision, newest + 1) // A write that bumped the pointer without saving the snapshot.
+  expect(store.settings().paused).toBe(true)
+  expect(store.get(KV.settings.revision)).toBe(newest)
+  store.close()
+})
