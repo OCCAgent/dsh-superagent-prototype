@@ -182,8 +182,17 @@ export class Store implements Repositories {
 
   /** Versioned settings snapshots; the current settings are the snapshot of the latest revision. */
   private readonly settingsVersions = new Versions<SettingsVersion>(this, KV.settings.revision, KV.settings.version)
-  /** Current validated settings. */
-  settings(): Settings { return SettingsSchema.parse(this.settingsVersions.current()?.settings ?? {}) }
+  /** Current validated settings. Self-heals a revision pointer left ahead of the newest stored snapshot instead of silently loading defaults. */
+  settings(): Settings {
+    const revision = this.settingsVersions.revision()
+    const snapshot = this.settingsVersions.current()
+    if (snapshot) return SettingsSchema.parse(snapshot.settings)
+    const newest = this.settingsHistory(1)[0]
+    if (!newest) return SettingsSchema.parse({})
+    this.set(KV.settings.revision, newest.revision)
+    console.warn(`settings revision ${revision} has no snapshot; restored to ${newest.revision}`)
+    return SettingsSchema.parse(newest.settings)
+  }
   /** Revision of one settings block; each configuration page saves against its own block for optimistic concurrency. */
   blockRevision(block: SettingsSave): number { return this.get(KV.settings.block(block)) ?? 0 }
   /** Saves settings as the next revision (making it current) and increments `record.block`'s revision counter when present. */
