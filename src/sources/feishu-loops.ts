@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { threadKey, type Thread, type Trigger } from '../core/index.ts'
 import { feishuChatLink } from './feishu-channel.ts'
 import type { FeishuBot } from '../deployment.ts'
-import { validItems, type Commands, type Tally } from '../infra/commands.ts'
+import { CliError, validItems, type Commands, type Tally } from '../infra/commands.ts'
 import { readFeishu, type FeishuRef } from './feishu-read.ts'
 import { feishuRef, feishuTime, feishuTrigger, HistoricalMessageSchema, historyEvent, HistoryPageSchema, SOURCE, topicEvent }
   from './feishu-trigger.ts'
@@ -161,9 +161,15 @@ async function backfillLoop(ctx: SourceContext, signal: AbortSignal): Promise<vo
 }
 /** Feishu history reads can outlive the CLI's HTTP timeout on long threads; scan bounded windows and retry transport failures. */
 const HISTORY_WINDOW_MS = 12 * 3600_000
+/** A window this small is the last resort: a persistent timeout beyond it is surfaced instead of split forever. */
+const HISTORY_MIN_WINDOW_MS = 30 * 60_000
 const HISTORY_RETRY_MS = [800, 2400, 7200] as const
-const TRANSIENT_HISTORY_ERROR = /(timed out|timeout|ECONNRESET|ECONNREFUSED|ETIMEDOUT|EAI_AGAIN|EPIPE|socket hang up|network|fetch failed|502|503|504)/i
+const TRANSIENT_HISTORY_ERROR = /(timed out|timeout|ECONNRESET|ECONNREFUSED|ETIMEDOUT|EAI_AGAIN|ENOTFOUND|EHOSTUNREACH|ENETUNREACH|ECONNABORTED|EPIPE|socket hang up|network|fetch failed)/i
 export function historyRetryable(error: unknown): boolean {
+  // A rate limit is not a transport failure: preserve the cursor and surface it instead of multiplying requests.
+  if (error instanceof CliError && error.code === 429) return false
+  const status = error instanceof CliError ? error.code : undefined
+  if (status !== undefined && [408, 425, 500, 502, 503, 504].includes(status)) return true
   return TRANSIENT_HISTORY_ERROR.test(String(error))
 }
 async function historyPage(commands: Commands, parameters: Record<string, unknown>, signal: AbortSignal) {
@@ -186,18 +192,19 @@ export async function backfillChat(ctx: SourceContext, chatId: string, direct: b
   const topicsKey = KV.feishu.topics(chatId)
   const topics = { ...ctx.state.get(topicsKey) }
   const scan = async (kind: 'chat' | 'thread', id: string): Promise<void> => {
-    const startAt = Date.parse(since)
+    const sinceAt = Date.parse(since)
     const endAt = Date.parse(until)
-    if (!Number.isFinite(startAt) || !Number.isFinite(endAt)) throw new Error('Feishu history range is unreadable')
+    if (!Number.isFinite(sinceAt) || !Number.isFinite(endAt)) throw new Error('Feishu history range is unreadable')
+    // A stale or corrupt cursor must not turn one recovery round into an unbounded request chain; keep the recent horizon.
+    const startAt = Math.max(sinceAt, endAt - POLL_HORIZON_MS)
     const seen = new Set<string>()
     const seconds = (time: number): string => String(Math.floor(time / 1000))
-    for (let windowStart = startAt; windowStart < endAt; windowStart += HISTORY_WINDOW_MS) {
-      const windowEnd = Math.min(windowStart + HISTORY_WINDOW_MS, endAt)
+    const readRange = async (from: number, to: number): Promise<void> => {
       let page: string | undefined
       const pages = new Set<string>()
       do {
         if (signal.aborted) throw signal.reason
-        const parameters = { container_id_type: kind, container_id: id, start_time: seconds(windowStart), end_time: seconds(windowEnd),
+        const parameters = { container_id_type: kind, container_id: id, start_time: seconds(from), end_time: seconds(to),
           sort_type: 'ByCreateTimeAsc', page_size: 50, ...(page ? { page_token: page } : {}) }
         const result = await historyPage(commands, parameters, signal)
         for (const message of validItems(HistoricalMessageSchema, result.items, tally)) {
@@ -215,6 +222,20 @@ export async function backfillChat(ctx: SourceContext, chatId: string, direct: b
         page = result.has_more ? result.page_token : undefined
         if (page) pages.add(page)
       } while (page)
+    }
+    const readWindow = async (from: number, to: number): Promise<void> => {
+      try { await readRange(from, to) }
+      catch (error) {
+        if (signal.aborted || !historyRetryable(error) || to - from <= HISTORY_MIN_WINDOW_MS) throw error
+        // A fixed window is only a best guess; halve the failing range so a busy Thread can still make progress.
+        const mid = from + Math.floor((to - from) / 2)
+        await readWindow(from, mid)
+        await readWindow(mid, to)
+      }
+    }
+    for (let windowStart = startAt; windowStart < endAt; windowStart += HISTORY_WINDOW_MS) {
+      const windowEnd = Math.min(windowStart + HISTORY_WINDOW_MS, endAt)
+      await readWindow(windowStart, windowEnd)
     }
   }
   await scan('chat', chatId)
