@@ -214,6 +214,37 @@ describe('feishu source', () => {
     expect(h.store.get('feishu-history-threads:oc_team')).toEqual({ omt_followed: old })
     h.store.close()
   })
+  it('retries a history page whose network read times out, then takes in the page', async () => {
+    const h = host()
+    vi.spyOn(h.commands, 'withSignal').mockReturnValue(h.commands)
+    const lark = vi.spyOn(h.commands, 'lark')
+      .mockRejectedValueOnce(new Error('Error: API call failed: Get "https://open.feishu.cn/open-apis/im/v1/messages": read tcp 192.168.31.250:61652->120.240.39.80:443: read: operation timed out'))
+      .mockResolvedValueOnce({ has_more: false, items: [{ message_id: 'om_recovered', chat_id: 'oc_team',
+        create_time: String(Date.now()), sender: { id: MEMBER, sender_type: 'user' }, body: { content: '{"text":"@bot fix it"}' } }] })
+    await backfillChat(h, 'oc_team', false, new Date(Date.now() - 60_000).toISOString(), new Date().toISOString(),
+      new AbortController().signal)
+    expect(lark).toHaveBeenCalledTimes(2)
+    expect(h.receive.mock.calls.map(([trigger]) => trigger.meta.messageId)).toEqual(['om_recovered'])
+    h.store.close()
+  })
+  it('splits a long topic recovery into bounded windows so one page cannot outlive the read timeout', async () => {
+    const h = host()
+    const now = Date.now()
+    h.store.set('feishu-history-threads:oc_team', { omt_long: new Date(now - 3600_000).toISOString() })
+    const windows: Array<{ start: number; end: number }> = []
+    vi.spyOn(h.commands, 'withSignal').mockReturnValue(h.commands)
+    vi.spyOn(h.commands, 'lark').mockImplementation(async args => {
+      const params = JSON.parse(args[args.indexOf('--params') + 1]!) as { container_id_type: string; start_time: string; end_time: string }
+      if (params.container_id_type === 'thread') windows.push({ start: Number(params.start_time), end: Number(params.end_time) })
+      return { has_more: false, items: [] }
+    })
+    await backfillChat(h, 'oc_team', false, new Date(now - 30 * 3600_000).toISOString(), new Date(now).toISOString(),
+      new AbortController().signal)
+    expect(windows).toHaveLength(3)
+    expect(windows.every(window => window.end - window.start <= 12 * 3600)).toBe(true)
+    expect(windows[0]!.start).toBe(Math.floor((now - 30 * 3600_000) / 1000))
+    h.store.close()
+  })
   it('refuses a history page with a message outside its chat or topic, and a page token that does not advance', async () => {
     const h = host()
     vi.spyOn(h.commands, 'withSignal').mockReturnValue(h.commands)
