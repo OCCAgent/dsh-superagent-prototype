@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { threadKey, type Thread, type Trigger } from '../core/index.ts'
 import { feishuChatLink } from './feishu-channel.ts'
 import type { FeishuBot } from '../deployment.ts'
-import { validItems, type Tally } from '../infra/commands.ts'
+import { CliError, validItems, type Commands, type Tally } from '../infra/commands.ts'
 import { readFeishu, type FeishuRef } from './feishu-read.ts'
 import { feishuRef, feishuTime, feishuTrigger, HistoricalMessageSchema, historyEvent, HistoryPageSchema, SOURCE, topicEvent }
   from './feishu-trigger.ts'
@@ -77,7 +77,8 @@ async function consume(ctx: SourceContext, signal: AbortSignal): Promise<void> {
   signal.addEventListener('abort', stop, { once: true })
   const timeout = setTimeout(() => { diagnostic = 'Feishu event consumer did not become ready within 45 seconds'; stop() }, 45_000)
   stderr.on('line', (line: string) => {
-    diagnostic = line.slice(0, 4000)
+    // Keep the tail of the whole stream: lark-cli prints its error JSON over several lines, and only keeping the last line leaves a bare `}`.
+    diagnostic = (diagnostic ? `${diagnostic}\n${line}` : line).slice(-4000)
     if (line.startsWith('[event] ready')) {
       ready = true; clearTimeout(timeout)
       ctx.report('feishu', { state: 'ready', detail: 'Listening for bot events', at: new Date().toISOString() })
@@ -159,6 +160,29 @@ async function backfillLoop(ctx: SourceContext, signal: AbortSignal): Promise<vo
     await delay(60_000, undefined, { signal }).catch(() => {})
   }
 }
+/** Feishu history reads can outlive the CLI's HTTP timeout on long threads; scan bounded windows and retry transport failures. */
+const HISTORY_WINDOW_MS = 12 * 3600_000
+/** A window this small is the last resort: a persistent timeout beyond it is surfaced instead of split forever. */
+const HISTORY_MIN_WINDOW_MS = 30 * 60_000
+const HISTORY_RETRY_MS = [800, 2400, 7200] as const
+const TRANSIENT_HISTORY_ERROR = /(timed out|timeout|context deadline exceeded|i\/o timeout|DPoP clock|ECONNRESET|ECONNREFUSED|ETIMEDOUT|EAI_AGAIN|ENOTFOUND|EHOSTUNREACH|ENETUNREACH|ECONNABORTED|EPIPE|socket hang up|network|fetch failed)/i
+export function historyRetryable(error: unknown): boolean {
+  // A rate limit is not a transport failure: preserve the cursor and surface it instead of multiplying requests.
+  if (error instanceof CliError && error.code === 429) return false
+  const status = error instanceof CliError ? error.code : undefined
+  if (status !== undefined && [408, 425, 500, 502, 503, 504].includes(status)) return true
+  return TRANSIENT_HISTORY_ERROR.test(String(error))
+}
+async function historyPage(commands: Commands, parameters: Record<string, unknown>, signal: AbortSignal) {
+  const request = ['api', 'GET', '/open-apis/im/v1/messages', '--params', JSON.stringify(parameters)]
+  for (let attempt = 0; ; attempt++) {
+    try { return HistoryPageSchema.parse(await commands.lark(request)) }
+    catch (error) {
+      if (signal.aborted || !historyRetryable(error) || attempt >= HISTORY_RETRY_MS.length) throw error
+      await delay(HISTORY_RETRY_MS[attempt]!, undefined, { signal })
+    }
+  }
+}
 /**
  * Backfills chat messages and active topic replies between `since` and `until` before the caller advances the chat cursor.
  * Topics are stored as `{ id: lastSeenAt }`, and unsubscribed topics older than the polling horizon are pruned.
@@ -169,29 +193,51 @@ export async function backfillChat(ctx: SourceContext, chatId: string, direct: b
   const topicsKey = KV.feishu.topics(chatId)
   const topics = { ...ctx.state.get(topicsKey) }
   const scan = async (kind: 'chat' | 'thread', id: string): Promise<void> => {
-    let page: string | undefined
-    const pages = new Set<string>()
-    do {
-      if (signal.aborted) throw signal.reason
-      const seconds = (time: string) => String(Math.floor(Date.parse(time) / 1000))
-      const parameters = { container_id_type: kind, container_id: id, start_time: seconds(since), end_time: seconds(until),
-        sort_type: 'ByCreateTimeAsc', page_size: 50, ...(page ? { page_token: page } : {}) }
-      const request = ['api', 'GET', '/open-apis/im/v1/messages', '--params', JSON.stringify(parameters)]
-      const result = HistoryPageSchema.parse(await commands.lark(request))
-      for (const message of validItems(HistoricalMessageSchema, result.items, tally)) {
-        const outside = message.chat_id !== chatId || (kind === 'thread' && message.thread_id !== id)
-        if (outside) throw new Error('Feishu history returned a message outside the requested chat or thread')
-        if (message.deleted) continue
-        const at = feishuTime(message.create_time)
-        if (message.thread_id && !(Date.parse(topics[message.thread_id] ?? '') >= Date.parse(at))) topics[message.thread_id] = at
-        const trigger = feishuTrigger(historyEvent(message, chatId, direct), bot(ctx).botId, bot(ctx).appId)
-        if (trigger) await receive(ctx, trigger)
+    const sinceAt = Date.parse(since)
+    const endAt = Date.parse(until)
+    if (!Number.isFinite(sinceAt) || !Number.isFinite(endAt)) throw new Error('Feishu history range is unreadable')
+    // A stale or corrupt cursor must not turn one recovery round into an unbounded request chain; keep the recent horizon.
+    const startAt = Math.max(sinceAt, endAt - POLL_HORIZON_MS)
+    const seen = new Set<string>()
+    const seconds = (time: number): string => String(Math.floor(time / 1000))
+    const readRange = async (from: number, to: number): Promise<void> => {
+      let page: string | undefined
+      const pages = new Set<string>()
+      do {
+        if (signal.aborted) throw signal.reason
+        const parameters = { container_id_type: kind, container_id: id, start_time: seconds(from), end_time: seconds(to),
+          sort_type: 'ByCreateTimeAsc', page_size: 50, ...(page ? { page_token: page } : {}) }
+        const result = await historyPage(commands, parameters, signal)
+        for (const message of validItems(HistoricalMessageSchema, result.items, tally)) {
+          const outside = message.chat_id !== chatId || (kind === 'thread' && message.thread_id !== id)
+          if (outside) throw new Error('Feishu history returned a message outside the requested chat or thread')
+          if (message.deleted || seen.has(message.message_id)) continue
+          seen.add(message.message_id)
+          const at = feishuTime(message.create_time)
+          if (message.thread_id && !(Date.parse(topics[message.thread_id] ?? '') >= Date.parse(at))) topics[message.thread_id] = at
+          const trigger = feishuTrigger(historyEvent(message, chatId, direct), bot(ctx).botId, bot(ctx).appId)
+          if (trigger) await receive(ctx, trigger)
+        }
+        const stuck = result.has_more && (!result.page_token || pages.has(result.page_token))
+        if (stuck) throw new Error('Feishu history pagination did not advance')
+        page = result.has_more ? result.page_token : undefined
+        if (page) pages.add(page)
+      } while (page)
+    }
+    const readWindow = async (from: number, to: number): Promise<void> => {
+      try { await readRange(from, to) }
+      catch (error) {
+        if (signal.aborted || !historyRetryable(error) || to - from <= HISTORY_MIN_WINDOW_MS) throw error
+        // A fixed window is only a best guess; halve the failing range so a busy Thread can still make progress.
+        const mid = from + Math.floor((to - from) / 2)
+        await readWindow(from, mid)
+        await readWindow(mid, to)
       }
-      const stuck = result.has_more && (!result.page_token || pages.has(result.page_token))
-      if (stuck) throw new Error('Feishu history pagination did not advance')
-      page = result.has_more ? result.page_token : undefined
-      if (page) pages.add(page)
-    } while (page)
+    }
+    for (let windowStart = startAt; windowStart < endAt; windowStart += HISTORY_WINDOW_MS) {
+      const windowEnd = Math.min(windowStart + HISTORY_WINDOW_MS, endAt)
+      await readWindow(windowStart, windowEnd)
+    }
   }
   await scan('chat', chatId)
   // A quiet topic is forgotten unless a subscribed Thread that is still polled follows it.

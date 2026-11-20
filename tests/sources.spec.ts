@@ -4,7 +4,7 @@ import { backfillChat, consumerRetry, feishuKind, feishuTriggerId, feishuRef, fe
   from '../src/sources/feishu.ts'
 import { KV } from '../src/kv.ts'
 import { apply as applyFeishu, pollThreads as pollFeishuThreads } from '../src/sources/feishu.ts'
-import { runFeishu } from '../src/sources/feishu-loops.ts'
+import { runFeishu, historyRetryable } from '../src/sources/feishu-loops.ts'
 import { commentTrigger, githubAddress, githubChannel, issueTrigger, type GithubComment, type GithubIssue } from '../src/sources/github-trigger.ts'
 import { claimPull, observePull, pullEndNotices, pullOf, ticketBranch, type Pull } from '../src/sources/github-pull.ts'
 import { ciCounts, ciFact, ciSummary } from '../src/sources/github-read.ts'
@@ -13,7 +13,7 @@ import { pollThreads as pollGithubThreads } from '../src/sources/github.ts'
 import { SourceRegistry } from '../src/sources/registry.ts'
 import { cursorAt, POLL_HORIZON_MS } from '../src/sources/poll.ts'
 import { Store } from '../src/app/store.ts'
-import { Commands, commandError } from '../src/infra/commands.ts'
+import { CliError, Commands, commandError } from '../src/infra/commands.ts'
 import { HealthBoard } from '../src/infra/health.ts'
 import { testDeployment } from './fixtures/deployment.ts'
 import { SettingsSchema, settingsPolicy } from '../src/policy.ts'
@@ -214,6 +214,95 @@ describe('feishu source', () => {
     expect(h.store.get('feishu-history-threads:oc_team')).toEqual({ omt_followed: old })
     h.store.close()
   })
+  it('retries a history page whose network read times out, then takes in the page', async () => {
+    const h = host()
+    vi.spyOn(h.commands, 'withSignal').mockReturnValue(h.commands)
+    const lark = vi.spyOn(h.commands, 'lark')
+      .mockRejectedValueOnce(new Error('Error: API call failed: Get "https://open.feishu.cn/open-apis/im/v1/messages": read tcp 192.168.31.250:61652->120.240.39.80:443: read: operation timed out'))
+      .mockResolvedValueOnce({ has_more: false, items: [{ message_id: 'om_recovered', chat_id: 'oc_team',
+        create_time: String(Date.now()), sender: { id: MEMBER, sender_type: 'user' }, body: { content: '{"text":"@bot fix it"}' } }] })
+    await backfillChat(h, 'oc_team', false, new Date(Date.now() - 60_000).toISOString(), new Date().toISOString(),
+      new AbortController().signal)
+    expect(lark).toHaveBeenCalledTimes(2)
+    expect(h.receive.mock.calls.map(([trigger]) => trigger.meta.messageId)).toEqual(['om_recovered'])
+    h.store.close()
+  })
+  it('splits a long topic recovery into bounded windows so one page cannot outlive the read timeout', async () => {
+    const h = host()
+    const now = Date.now()
+    h.store.set('feishu-history-threads:oc_team', { omt_long: new Date(now - 3600_000).toISOString() })
+    const windows: Array<{ start: number; end: number }> = []
+    vi.spyOn(h.commands, 'withSignal').mockReturnValue(h.commands)
+    vi.spyOn(h.commands, 'lark').mockImplementation(async args => {
+      const params = JSON.parse(args[args.indexOf('--params') + 1]!) as { container_id_type: string; start_time: string; end_time: string }
+      if (params.container_id_type === 'thread') windows.push({ start: Number(params.start_time), end: Number(params.end_time) })
+      return { has_more: false, items: [] }
+    })
+    await backfillChat(h, 'oc_team', false, new Date(now - 30 * 3600_000).toISOString(), new Date(now).toISOString(),
+      new AbortController().signal)
+    expect(windows).toHaveLength(3)
+    expect(windows.every(window => window.end - window.start <= 12 * 3600)).toBe(true)
+    expect(windows[0]!.start).toBe(Math.floor((now - 30 * 3600_000) / 1000))
+    h.store.close()
+  })
+  it('takes a message once when adjacent windows return it twice', async () => {
+    const h = host()
+    const now = Date.now()
+    const message = { message_id: 'om_edge', chat_id: 'oc_team', create_time: String(now - 12 * 3600_000),
+      sender: { id: MEMBER, sender_type: 'user' }, body: { content: '{"text":"@bot note"}' } }
+    vi.spyOn(h.commands, 'withSignal').mockReturnValue(h.commands)
+    const lark = vi.spyOn(h.commands, 'lark').mockResolvedValue({ has_more: false, items: [message] })
+    await backfillChat(h, 'oc_team', false, new Date(now - 13 * 3600_000).toISOString(), new Date(now).toISOString(),
+      new AbortController().signal)
+    expect(lark).toHaveBeenCalledTimes(2)
+    expect(h.receive).toHaveBeenCalledTimes(1)
+    h.store.close()
+  })
+  it('reads each bounded window from its own first page', async () => {
+    const h = host()
+    const now = Date.now()
+    const requests: Array<{ start: string; end: string; page?: string }> = []
+    vi.spyOn(h.commands, 'withSignal').mockReturnValue(h.commands)
+    vi.spyOn(h.commands, 'lark').mockImplementation(async args => {
+      const params = JSON.parse(args[args.indexOf('--params') + 1]!) as { container_id_type: string; start_time: string; end_time: string; page_token?: string }
+      if (params.container_id_type === 'chat') requests.push({ start: params.start_time, end: params.end_time, page: params.page_token })
+      return params.page_token ? { has_more: false, items: [] } : { has_more: true, page_token: 'p1', items: [] }
+    })
+    await backfillChat(h, 'oc_team', false, new Date(now - 13 * 3600_000).toISOString(), new Date(now).toISOString(),
+      new AbortController().signal)
+    expect(requests).toHaveLength(4)
+    expect(requests.filter(request => request.page === undefined)).toHaveLength(2)
+    expect(requests[0]!.page).toBeUndefined()
+    expect(requests[2]!.page).toBeUndefined()
+    h.store.close()
+  })
+  it('classifies transport failures without retrying rate limits', () => {
+    expect(historyRetryable(new Error('getaddrinfo ENOTFOUND open.feishu.cn'))).toBe(true)
+    expect(historyRetryable(new Error('Post "https://accounts.feishu.cn": context deadline exceeded'))).toBe(true)
+    expect(historyRetryable(new Error('failed to synchronize DPoP clock'))).toBe(true)
+    expect(historyRetryable(new CliError('gateway', 503))).toBe(true)
+    expect(historyRetryable(new CliError('rate limited', 429))).toBe(false)
+    expect(historyRetryable(new Error('rate limited'))).toBe(false)
+  })
+  it('splits a failing history window instead of failing the whole recovery', async () => {
+    const h = host()
+    const now = Date.now()
+    const spans: number[] = []
+    vi.spyOn(h.commands, 'withSignal').mockReturnValue(h.commands)
+    vi.spyOn(h.commands, 'lark').mockImplementation(async args => {
+      const params = JSON.parse(args[args.indexOf('--params') + 1]!) as { container_id_type: string; start_time: string; end_time: string }
+      if (params.container_id_type !== 'chat') return { has_more: false, items: [] }
+      const span = Number(params.end_time) - Number(params.start_time)
+      spans.push(span)
+      if (span > 6 * 3600) throw new Error('read: operation timed out')
+      return { has_more: false, items: [] }
+    })
+    await backfillChat(h, 'oc_team', false, new Date(now - 13 * 3600_000).toISOString(), new Date(now).toISOString(),
+      new AbortController().signal)
+    expect(spans.some(span => span <= 6 * 3600)).toBe(true)
+    expect(spans.length).toBeGreaterThan(2)
+    h.store.close()
+  }, 20_000)
   it('refuses a history page with a message outside its chat or topic, and a page token that does not advance', async () => {
     const h = host()
     vi.spyOn(h.commands, 'withSignal').mockReturnValue(h.commands)
