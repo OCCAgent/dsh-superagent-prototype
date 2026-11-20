@@ -278,6 +278,8 @@ describe('feishu source', () => {
   })
   it('classifies transport failures without retrying rate limits', () => {
     expect(historyRetryable(new Error('getaddrinfo ENOTFOUND open.feishu.cn'))).toBe(true)
+    expect(historyRetryable(new Error('Post "https://accounts.feishu.cn": context deadline exceeded'))).toBe(true)
+    expect(historyRetryable(new Error('failed to synchronize DPoP clock'))).toBe(true)
     expect(historyRetryable(new CliError('gateway', 503))).toBe(true)
     expect(historyRetryable(new CliError('rate limited', 429))).toBe(false)
     expect(historyRetryable(new Error('rate limited'))).toBe(false)

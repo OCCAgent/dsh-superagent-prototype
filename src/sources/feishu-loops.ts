@@ -77,7 +77,8 @@ async function consume(ctx: SourceContext, signal: AbortSignal): Promise<void> {
   signal.addEventListener('abort', stop, { once: true })
   const timeout = setTimeout(() => { diagnostic = 'Feishu event consumer did not become ready within 45 seconds'; stop() }, 45_000)
   stderr.on('line', (line: string) => {
-    diagnostic = line.slice(0, 4000)
+    // Keep the tail of the whole stream: lark-cli prints its error JSON over several lines, and only keeping the last line leaves a bare `}`.
+    diagnostic = (diagnostic ? `${diagnostic}\n${line}` : line).slice(-4000)
     if (line.startsWith('[event] ready')) {
       ready = true; clearTimeout(timeout)
       ctx.report('feishu', { state: 'ready', detail: 'Listening for bot events', at: new Date().toISOString() })
@@ -164,7 +165,7 @@ const HISTORY_WINDOW_MS = 12 * 3600_000
 /** A window this small is the last resort: a persistent timeout beyond it is surfaced instead of split forever. */
 const HISTORY_MIN_WINDOW_MS = 30 * 60_000
 const HISTORY_RETRY_MS = [800, 2400, 7200] as const
-const TRANSIENT_HISTORY_ERROR = /(timed out|timeout|ECONNRESET|ECONNREFUSED|ETIMEDOUT|EAI_AGAIN|ENOTFOUND|EHOSTUNREACH|ENETUNREACH|ECONNABORTED|EPIPE|socket hang up|network|fetch failed)/i
+const TRANSIENT_HISTORY_ERROR = /(timed out|timeout|context deadline exceeded|i\/o timeout|DPoP clock|ECONNRESET|ECONNREFUSED|ETIMEDOUT|EAI_AGAIN|ENOTFOUND|EHOSTUNREACH|ENETUNREACH|ECONNABORTED|EPIPE|socket hang up|network|fetch failed)/i
 export function historyRetryable(error: unknown): boolean {
   // A rate limit is not a transport failure: preserve the cursor and surface it instead of multiplying requests.
   if (error instanceof CliError && error.code === 429) return false
